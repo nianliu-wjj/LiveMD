@@ -1,0 +1,568 @@
+html[data-typora-theme="pixyll"] {
+	--control-text-color: #777;
+}
+
+/**
+ * forked from pixyll.com
+ * MIT license
+ */
+
+@font-face {
+	font-family: 'Merriweather';
+	font-style: normal;
+	font-weight: normal;
+	src: local('Merriweather Light'), local('Merriweather-Light'), url('./pixyll/merriweather-v19-latin-300.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Merriweather';
+	font-style: normal;
+	font-weight: bold;
+	src: local('Merriweather Heavy'), local('Merriweather-Heavy'), url('./pixyll/merriweather-v19-latin-700.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Merriweather';
+	font-style: italic;
+	font-weight: normal;
+	src: local('Merriweather Light Italic'), local('Merriweather-LightItalic'), url('./pixyll/merriweather-v19-latin-300italic.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Merriweather';
+	font-style: italic;
+	font-weight: bold;
+	src: local('Merriweather Heavy Italic'), local('Merriweather-HeavyItalic'), url('./pixyll/merriweather-v19-latin-700italic.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: normal;
+	src: local('Lato Light'), local('Lato-Light'), url('./pixyll/lato-v14-latin-300.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: bold;
+	src: local('Lato Black'), local('Lato-Blcak'), url('./pixyll/lato-v14-latin-900.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Lato';
+	font-style: italic;
+	font-weight: normal;
+	src: local('Lato LightItalic'), local('Lato-LightItalic'), url('./pixyll/lato-v14-latin-300italic.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+	font-family: 'Lato';
+	font-style: italic;
+	font-weight: bold;
+	src: local('Lato BlackItalic'), local('Lato-BlackItalic'), url('./pixyll/lato-v14-latin-900italic.woff') format('woff');
+	unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor h1,
+html[data-typora-theme="pixyll"] .h1,
+html[data-typora-theme="pixyll"] .f1 {
+	font-size: 2rem;
+	line-height: 2.5rem;
+}
+html[data-typora-theme="pixyll"] .livemd-editor h2,
+html[data-typora-theme="pixyll"] .h2,
+html[data-typora-theme="pixyll"] .f2 {
+	font-size: 1.5rem;
+	line-height: 2rem;
+}
+html[data-typora-theme="pixyll"] .livemd-editor h3,
+html[data-typora-theme="pixyll"] .h3,
+html[data-typora-theme="pixyll"] .f3 {
+	font-size: 1.25rem;
+	line-height: 1.5rem;
+}
+html[data-typora-theme="pixyll"] .livemd-editor p,
+html[data-typora-theme="pixyll"] .p,
+html[data-typora-theme="pixyll"] .f4,
+html[data-typora-theme="pixyll"] .livemd-editor h4,
+html[data-typora-theme="pixyll"] .livemd-editor h5,
+html[data-typora-theme="pixyll"] .livemd-editor h6,
+html[data-typora-theme="pixyll"] .livemd-editor dl,
+html[data-typora-theme="pixyll"] .livemd-editor ol,
+html[data-typora-theme="pixyll"] .livemd-editor ul,
+html[data-typora-theme="pixyll"] pre[cid],
+html[data-typora-theme="pixyll"] div[cid],
+html[data-typora-theme="pixyll"] #typora-source {
+	font-size: 1.125rem;
+	line-height: 1.5rem;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor h4 {
+	font-size: 1.13rem;
+}
+/*
+ Pixyll
+ A simple, beautiful theme for Jekyll that emphasizes content rather than aesthetic fluff.
+ Best served with BASSCSS (http://jxnblk.github.io/basscss)
+ Crafted with <3 by John Otander (@4lpine) - ©2015 John Otander MIT License http://opensource.org/licenses/MIT
+
+*/
+
+html[data-typora-theme="pixyll"] {
+	font-family: "Merriweather", "PT Serif", Georgia, "Times New Roman", "STSong", 'Segoe UI Emoji','SF Pro', Serif;
+	line-height: 1.5rem;
+	font-weight: 400;
+}
+
+html[data-typora-theme="pixyll"] .editor-zoom-surface {
+	max-width: 914px;
+	color: #333;
+}
+
+@media only screen and (min-width: 1400px) {
+	html[data-typora-theme="pixyll"] .editor-zoom-surface {
+		max-width: 1100px;
+	}
+}
+
+@media only screen and (min-width: 1700px) {
+	html[data-typora-theme="pixyll"] .editor-zoom-surface {
+		max-width: 1200px;
+	}
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor img {
+	width: auto;
+	max-width: 100%;
+}
+html[data-typora-theme="pixyll"] {
+	font-size: 1.5rem;
+	box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+}
+
+html[data-typora-theme="pixyll"] .ty-table-edit {
+	background: #ededed;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor table {
+	width: 100%;
+	font-size: 1.125rem;
+}
+html[data-typora-theme="pixyll"] .livemd-editor table > thead > tr > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > thead > tr > td,
+html[data-typora-theme="pixyll"] .livemd-editor table > tbody > tr > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > tbody > tr > td,
+html[data-typora-theme="pixyll"] .livemd-editor table > tfoot > tr > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > tfoot > tr > td {
+	padding: 12px;
+	line-height: 1.2;
+	vertical-align: top;
+	border-top: 1px solid #333;
+}
+html[data-typora-theme="pixyll"] .livemd-editor table > thead > tr > th {
+	vertical-align: bottom;
+	border-bottom: 2px solid #333;
+}
+html[data-typora-theme="pixyll"] .livemd-editor table > caption + thead > tr:first-child > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > caption + thead > tr:first-child > td,
+html[data-typora-theme="pixyll"] .livemd-editor table > colgroup + thead > tr:first-child > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > colgroup + thead > tr:first-child > td,
+html[data-typora-theme="pixyll"] .livemd-editor table > thead:first-child > tr:first-child > th,
+html[data-typora-theme="pixyll"] .livemd-editor table > thead:first-child > tr:first-child > td {
+	border-top: 0;
+}
+html[data-typora-theme="pixyll"] .livemd-editor table > tbody + tbody {
+	border-top: 2px solid #333;
+}
+html[data-typora-theme="pixyll"] .livemd-editor p {
+	font-weight: 300;
+	line-height: 1.5;
+}
+html[data-typora-theme="pixyll"] .livemd-editor abbr {
+	border-bottom: 1px black dotted;
+	cursor: help;
+}
+html[data-typora-theme="pixyll"] .livemd-editor pre,
+html[data-typora-theme="pixyll"] .livemd-editor code {
+	font-family: Menlo, Monaco, "Courier New", monospace;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor code,
+html[data-typora-theme="pixyll"] .livemd-code-block  {
+	color: #7a7a7a;
+}
+
+html[data-typora-theme="pixyll"] .livemd-code-block {
+	padding: 1.125em;
+	margin-bottom: 0.88em;
+	font-size: 1rem;
+	border: 1px solid #7a7a7a;
+	padding-bottom: 0.5rem;
+	padding-top: 0.5rem;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor blockquote {
+	padding: 1.33em;
+	font-style: italic;
+	border-left: 5px solid #7a7a7a;
+	color: #555;
+}
+html[data-typora-theme="pixyll"] .livemd-editor blockquote em {
+	color: #000;
+}
+html[data-typora-theme="pixyll"] .livemd-editor blockquote footer {
+	font-size: .85rem;
+	font-style: normal;
+	background-color: #fff;
+	color: #7a7a7a;
+	border-color: transparent;
+}
+html[data-typora-theme="pixyll"] .livemd-editor h1,
+html[data-typora-theme="pixyll"] .h1,
+html[data-typora-theme="pixyll"] .livemd-editor h2,
+html[data-typora-theme="pixyll"] .h2,
+html[data-typora-theme="pixyll"] .livemd-editor h3,
+html[data-typora-theme="pixyll"] .h3,
+html[data-typora-theme="pixyll"] .livemd-editor h4,
+html[data-typora-theme="pixyll"] .h4,
+html[data-typora-theme="pixyll"] .livemd-editor h5,
+html[data-typora-theme="pixyll"] .h5,
+html[data-typora-theme="pixyll"] .livemd-editor h6,
+html[data-typora-theme="pixyll"] .h6 {
+	font-family: "Lato", 'Helvetica Neue', Helvetica, sans-serif;
+	font-weight: bold;
+	line-height: 1.2;
+	margin: 1em 0 0.5em;
+}
+@media screen and (min-width: 48em) {
+	html[data-typora-theme="pixyll"] .h1,
+html[data-typora-theme="pixyll"] .livemd-editor h1 {
+		font-size: 3.250rem;
+	}
+	html[data-typora-theme="pixyll"] .h2,
+html[data-typora-theme="pixyll"] .livemd-editor h2 {
+		font-size: 2.298rem;
+	}
+	html[data-typora-theme="pixyll"] .h3,
+html[data-typora-theme="pixyll"] .livemd-editor h3 {
+		font-size: 1.625rem;
+	}
+	html[data-typora-theme="pixyll"] .h4,
+html[data-typora-theme="pixyll"] .livemd-editor h4 {
+		font-size: 1.3rem;
+	}
+	html[data-typora-theme="pixyll"] .editor-zoom-surface>h4.livemd-focus-current:before,
+html[data-typora-theme="pixyll"] .editor-zoom-surface>h5.livemd-focus-current:before,
+html[data-typora-theme="pixyll"] .editor-zoom-surface>h6.livemd-focus-current:before{
+		top: 1px;
+	}
+	html[data-typora-theme="pixyll"] .p,
+html[data-typora-theme="pixyll"] .livemd-editor p,
+html[data-typora-theme="pixyll"] .livemd-editor li {
+		font-size: 1.25rem;
+		line-height: 1.8;
+	}
+	html[data-typora-theme="pixyll"] .livemd-editor table {
+		font-size: 1.25rem;
+	}
+}
+@media (max-width: 48em) {
+	html[data-typora-theme="pixyll"] .livemd-editor blockquote {
+		margin-left: 1rem;
+		margin-right: 0;
+		padding: 0.5em;
+	}
+	html[data-typora-theme="pixyll"] .h1,
+html[data-typora-theme="pixyll"] .livemd-editor h1 {
+		font-size: 2.827rem;
+	}
+	html[data-typora-theme="pixyll"] .h2,
+html[data-typora-theme="pixyll"] .livemd-editor h2 {
+		font-size: 1.999rem;
+	}
+	html[data-typora-theme="pixyll"] .h3,
+html[data-typora-theme="pixyll"] .livemd-editor h3 {
+		font-size: 1.413rem;
+	}
+	html[data-typora-theme="pixyll"] .h4,
+html[data-typora-theme="pixyll"] .livemd-editor h4 {
+		font-size: 1.3rem;
+	}
+}
+@media screen and (min-width: 64em) {
+	html[data-typora-theme="pixyll"] .h1,
+html[data-typora-theme="pixyll"] .livemd-editor h1 {
+		font-size: 4.498rem;
+	}
+	html[data-typora-theme="pixyll"] .h2,
+html[data-typora-theme="pixyll"] .livemd-editor h2 {
+		font-size: 2.29rem;
+	}
+	html[data-typora-theme="pixyll"] .h3,
+html[data-typora-theme="pixyll"] .livemd-editor h3 {
+		font-size: 1.9rem;
+	}
+	html[data-typora-theme="pixyll"] .h4,
+html[data-typora-theme="pixyll"] .livemd-editor h4 {
+		font-size: 1.591rem;
+	}
+	html[data-typora-theme="pixyll"] .editor-zoom-surface>h4.livemd-focus-current:before{
+		top:4px;
+	}
+}
+html[data-typora-theme="pixyll"] .livemd-editor a {
+	color: #463F5C;
+	text-decoration: underline;
+}
+
+html[data-typora-theme="pixyll"] .editor-zoom-surface {
+	padding-top: 2rem;
+}
+
+html[data-typora-theme="pixyll"] .editor-zoom-surface pre.md-meta-block {
+	min-height: 35px;
+	padding: 0.5em 1em;
+	white-space: pre;
+	border: 0px;
+
+	border-left: 30px #f8f8f8 solid;
+	border-right: 30px #f8f8f8 solid;
+	width: 100vw;
+	max-width: calc(100% + 60px);
+
+	margin-left: -30px;
+	margin-bottom: 2em;
+	margin-top: -2010px;
+	padding-top: 2000px;
+	padding-bottom: 10px;
+	line-height: 1.5em;
+	color: #7a7a7a;
+	background-color: #fafafa;
+	font-family: 'Lato', 'Helvetica Neue', Helvetica, sans-serif;
+	font-weight: 300;
+	clear: both;
+	padding-left: 0;
+	font-size:1.125rem;
+}
+html[data-typora-theme="pixyll"] .livemd-image-block>.md-meta {
+	color: #463F5C
+}
+html[data-typora-theme="pixyll"] .footnotes {
+	font-size:1.1rem;
+}
+html[data-typora-theme="pixyll"] .md-tag {
+	font-family: 'Lato', 'Helvetica Neue', Helvetica, sans-serif;
+}
+html[data-typora-theme="pixyll"] .code-tooltip {
+	background: white;
+}
+html[data-typora-theme="pixyll"] .code-tooltip-content {
+	font-size: 1.1rem;
+}
+
+html[data-typora-theme="pixyll"] .task-list{
+	padding-left: 0;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item {
+	padding-left:34px;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input{
+	width: 1.25rem;
+	height: 1.25rem;
+	display: block;
+	-webkit-appearance: initial;
+	top: -0.2rem;
+	margin-left: -1.6em;
+	margin-top: calc(1rem - 7px);
+	border: none;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input:focus{
+	outline: none;
+	box-shadow: none;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input:before{
+	border: 1px solid #555;
+	border-radius: 1.5rem;
+	width: 1.5rem;
+	height: 1.5rem;
+	background: #fff;
+	content: ' ';
+	transition: background-color 200ms ease-in-out;
+	display: block;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input:checked:before,
+html[data-typora-theme="pixyll"] .md-task-list-item > input[checked]:before{
+	background: #333;
+	border-width: 2px;
+	display:inline-block;
+	transition: background-color 200ms ease-in-out;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input:checked:after,
+html[data-typora-theme="pixyll"] .md-task-list-item > input[checked]:after {
+	opacity: 1;
+}
+
+html[data-typora-theme="pixyll"] .md-task-list-item > input:after {
+	opacity: 1;
+	-webkit-transition: opacity 0.05s ease-in-out;
+	-moz-transition: opacity 0.05s ease-in-out;
+	transition: opacity 0.05s ease-in-out;
+	-webkit-transform: rotate(-45deg);
+	-moz-transform: rotate(-45deg);
+	transform: rotate(-45deg);
+	position: absolute;
+	top: 0.4375rem;
+	left: 0.28125rem;
+	width: 0.9375rem;
+	height: 0.5rem;
+	border: 3px solid #fff;
+	border-top: 0;
+	border-right: 0;
+	content: ' ';
+	opacity: 0;
+}
+
+html[data-typora-theme="pixyll"] .md-tag {
+	color:inherit;
+}
+
+html[data-typora-theme="pixyll"] .md-toc:focus .md-toc-content{
+	margin-top: 19px;
+}
+
+html[data-typora-theme="pixyll"] #typora-sidebar {
+	font-size:1rem !important;
+}
+
+html[data-typora-theme="pixyll"] .html-for-mac #typora-sidebar {
+	background-color:white;
+}
+
+html[data-typora-theme="pixyll"] .outline-content li,
+html[data-typora-theme="pixyll"] .outline-content ul {
+	font-size:1rem !important;
+}
+
+html[data-typora-theme="pixyll"] .outline-title {
+	line-height: inherit;
+	margin-top: 10px;
+}
+
+html[data-typora-theme="pixyll"] .outline-expander {
+	width: 18px;
+}
+
+html[data-typora-theme="pixyll"] .outline-expander:before {
+ 	content: "+";
+	font-family: inherit;
+	color: rgb(108, 108, 108); 
+  font-size: 1.5rem;
+ 	top: -0.1rem;
+}
+
+html[data-typora-theme="pixyll"] .outline-expander:hover:before {
+	content: "+";
+}
+
+html[data-typora-theme="pixyll"] .outline-item-open>.outline-item>.outline-expander:before{
+	content: "-";
+}
+
+/** source code mode */
+html[data-typora-theme="pixyll"] #typora-source {
+	font-family: Courier, monospace;
+    color: #6A6A6A;
+}
+
+html[data-typora-theme="pixyll"] .os-windows #typora-source {
+	font-family: inherit;
+}
+
+html[data-typora-theme="pixyll"] .cm-s-typora-default .cm-header,
+html[data-typora-theme="pixyll"] .cm-s-typora-default .cm-property,
+html[data-typora-theme="pixyll"] .cm-editor.cm-s-typora-default div.cm-cursor {
+	color: #428bca;
+}
+
+html[data-typora-theme="pixyll"] .cm-s-typora-default .cm-atom,
+html[data-typora-theme="pixyll"] .cm-s-typora-default .cm-number {
+	color: #777777;
+}
+
+html[data-typora-theme="pixyll"] .md-diagram-panel {
+	margin-top: 24px;
+	margin-left: -1.2em;
+}
+
+html[data-typora-theme="pixyll"] .md-mathjax-midline {
+	background: #fafafa;
+}
+
+html[data-typora-theme="pixyll"] .enable-diagrams pre.livemd-code-block[lang="sequence"] .code-tooltip,
+html[data-typora-theme="pixyll"] .enable-diagrams pre.livemd-code-block[lang="flow"] .code-tooltip,
+html[data-typora-theme="pixyll"] .enable-diagrams pre.livemd-code-block[lang="mermaid"] .code-tooltip {
+    bottom: -3.4em;
+}
+
+html[data-typora-theme="pixyll"] .dropdown-menu .divider {
+	border-color: #e5e5e5;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor li {
+	margin: 0.5rem 0;
+}
+
+html[data-typora-theme="pixyll"] .livemd-editor li > *:last-child {
+	margin-bottom: 0;
+}
+html[data-typora-theme="pixyll"] {
+  --primary-color: #463F5C;
+  --secondary-color: #463F5C;
+  --background-color: #ffffff;
+  --background-color-1: #f3f4f6;
+  --background-color-2: #f3f4f6;
+  --background-color-3: #f3f4f6;
+  --text-color: rgba(0, 0, 0, 0.75);
+  --text-color-1: rgba(0, 0, 0, 0.75);
+  --text-color-2: #667085;
+  --text-color-3: #667085;
+  --placeholder-color: #667085;
+  --border-color: #e0e0e0;
+  --border-color-1: #e0e0e0;
+  --border-color-2: #e0e0e0;
+  --hover-color: color-mix(in srgb, #463F5C, transparent 80%);
+  --hover-background-color: color-mix(in srgb, #463F5C, transparent 80%);
+  --active-color: color-mix(in srgb, #463F5C, transparent 80%);
+  --active-line-color: color-mix(in srgb, #463F5C, transparent 80%);
+  --selected-color: rgba(0, 0, 0, 0.75);
+  --selected-background-color: color-mix(in srgb, #463F5C, transparent 80%);
+  --primary-color-transparent: color-mix(in srgb, #463F5C, transparent 80%);
+  --crepe-color-background: #ffffff;
+  --crepe-color-on-background: rgba(0, 0, 0, 0.75);
+  --crepe-color-surface: #f3f4f6;
+  --crepe-color-surface-low: #f3f4f6;
+  --crepe-color-on-surface: rgba(0, 0, 0, 0.75);
+  --crepe-color-on-surface-variant: #667085;
+  --crepe-color-outline: #e0e0e0;
+  --crepe-color-primary: #463F5C;
+  --crepe-color-secondary: #f3f4f6;
+  --crepe-color-on-secondary: rgba(0, 0, 0, 0.75);
+  --crepe-color-inverse: rgba(0, 0, 0, 0.75);
+  --crepe-color-on-inverse: #ffffff;
+  --crepe-color-inline-code: #463F5C;
+  --crepe-color-error: #cf222e;
+  --crepe-color-hover: #f3f4f6;
+  --crepe-color-selected: color-mix(in srgb, #463F5C, transparent 80%);
+  --crepe-color-inline-area: #f3f4f6;
+  color-scheme: light;
+}

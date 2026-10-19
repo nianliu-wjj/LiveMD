@@ -1,0 +1,459 @@
+html[data-typora-theme="github"] {
+    --side-bar-bg-color: #fafafa;
+    --control-text-color: #777;
+}
+
+/* open-sans-regular - latin-ext_latin */
+@font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: normal;
+    src: local('Open Sans Regular'), local('OpenSans-Regular'), url('./github/open-sans-v17-latin-ext_latin-regular.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  /* open-sans-italic - latin-ext_latin */
+  @font-face {
+    font-family: 'Open Sans';
+    font-style: italic;
+    font-weight: normal;
+    src: local('Open Sans Italic'), local('OpenSans-Italic'), url('./github/open-sans-v17-latin-ext_latin-italic.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  /* open-sans-700 - latin-ext_latin */
+  @font-face {
+    font-family: 'Open Sans';
+    font-style: normal;
+    font-weight: bold;
+    src: local('Open Sans Bold'), local('OpenSans-Bold'), url('./github/open-sans-v17-latin-ext_latin-700.woff2') format('woff2'); 
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+  /* open-sans-700italic - latin-ext_latin */
+  @font-face {
+    font-family: 'Open Sans';
+    font-style: italic;
+    font-weight: bold;
+    src: local('Open Sans Bold Italic'), local('OpenSans-BoldItalic'), url('./github/open-sans-v17-latin-ext_latin-700italic.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD, U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+  }
+
+html[data-typora-theme="github"] {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+html[data-typora-theme="github"] {
+    font-family: "Open Sans","Clear Sans", "Helvetica Neue", Helvetica, Arial, 'Segoe UI Emoji', 'SF Pro', sans-serif;
+    color: rgb(51, 51, 51);
+    line-height: 1.6;
+}
+
+html[data-typora-theme="github"] .editor-zoom-surface {
+    max-width: 860px;
+  	margin: 0 auto;
+  	padding: 30px;
+    padding-bottom: 100px;
+}
+
+@media only screen and (min-width: 1400px) {
+	html[data-typora-theme="github"] .editor-zoom-surface {
+		max-width: 1024px;
+	}
+}
+
+@media only screen and (min-width: 1800px) {
+	html[data-typora-theme="github"] .editor-zoom-surface {
+		max-width: 1200px;
+	}
+}
+
+html[data-typora-theme="github"] .editor-zoom-surface > ul:first-child,
+html[data-typora-theme="github"] .editor-zoom-surface > ol:first-child{
+    margin-top: 30px;
+}
+
+html[data-typora-theme="github"] .livemd-editor a {
+    color: #4183C4;
+}
+html[data-typora-theme="github"] .livemd-editor h1,
+html[data-typora-theme="github"] .livemd-editor h2,
+html[data-typora-theme="github"] .livemd-editor h3,
+html[data-typora-theme="github"] .livemd-editor h4,
+html[data-typora-theme="github"] .livemd-editor h5,
+html[data-typora-theme="github"] .livemd-editor h6 {
+    position: relative;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-weight: bold;
+    line-height: 1.4;
+    cursor: text;
+}
+html[data-typora-theme="github"] h1:hover a.anchor,
+html[data-typora-theme="github"] h2:hover a.anchor,
+html[data-typora-theme="github"] h3:hover a.anchor,
+html[data-typora-theme="github"] h4:hover a.anchor,
+html[data-typora-theme="github"] h5:hover a.anchor,
+html[data-typora-theme="github"] h6:hover a.anchor {
+    text-decoration: none;
+}
+html[data-typora-theme="github"] .livemd-editor h1 tt,
+html[data-typora-theme="github"] .livemd-editor h1 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h2 tt,
+html[data-typora-theme="github"] .livemd-editor h2 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h3 tt,
+html[data-typora-theme="github"] .livemd-editor h3 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h4 tt,
+html[data-typora-theme="github"] .livemd-editor h4 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h5 tt,
+html[data-typora-theme="github"] .livemd-editor h5 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h6 tt,
+html[data-typora-theme="github"] .livemd-editor h6 code {
+    font-size: inherit;
+}
+html[data-typora-theme="github"] .livemd-editor h1 {
+    font-size: 2.25em;
+    line-height: 1.2;
+    border-bottom: 1px solid #eee;
+}
+html[data-typora-theme="github"] .livemd-editor h2 {
+    font-size: 1.75em;
+    line-height: 1.225;
+    border-bottom: 1px solid #eee;
+}
+
+/*@media print {
+    .typora-export h1,
+    .typora-export h2 {
+        border-bottom: none;
+        padding-bottom: initial;
+    }
+
+    .typora-export h1::after,
+    .typora-export h2::after {
+        content: "";
+        display: block;
+        height: 100px;
+        margin-top: -96px;
+        border-top: 1px solid #eee;
+    }
+}*/
+
+html[data-typora-theme="github"] .livemd-editor h3 {
+    font-size: 1.5em;
+    line-height: 1.43;
+}
+html[data-typora-theme="github"] .livemd-editor h4 {
+    font-size: 1.25em;
+}
+html[data-typora-theme="github"] .livemd-editor h5 {
+    font-size: 1em;
+}
+html[data-typora-theme="github"] .livemd-editor h6 {
+   font-size: 1em;
+    color: #777;
+}
+html[data-typora-theme="github"] .livemd-editor p,
+html[data-typora-theme="github"] .livemd-editor blockquote,
+html[data-typora-theme="github"] .livemd-editor ul,
+html[data-typora-theme="github"] .livemd-editor ol,
+html[data-typora-theme="github"] .livemd-editor dl,
+html[data-typora-theme="github"] .livemd-editor table{
+    margin: 0.8em 0;
+}
+html[data-typora-theme="github"] .livemd-editor li>ol,
+html[data-typora-theme="github"] .livemd-editor li>ul {
+    margin: 0 0;
+}
+html[data-typora-theme="github"] .livemd-editor hr {
+    height: 2px;
+    padding: 0;
+    margin: 16px 0;
+    background-color: #e7e7e7;
+    border: 0 none;
+    overflow: hidden;
+    box-sizing: content-box;
+}
+
+html[data-typora-theme="github"] li p.first {
+    display: inline-block;
+}
+html[data-typora-theme="github"] .livemd-editor ul,
+html[data-typora-theme="github"] .livemd-editor ol {
+    padding-left: 30px;
+}
+html[data-typora-theme="github"] .livemd-editor ul:first-child,
+html[data-typora-theme="github"] .livemd-editor ol:first-child {
+    margin-top: 0;
+}
+html[data-typora-theme="github"] .livemd-editor ul:last-child,
+html[data-typora-theme="github"] .livemd-editor ol:last-child {
+    margin-bottom: 0;
+}
+html[data-typora-theme="github"] .livemd-editor blockquote {
+    border-left: 4px solid #dfe2e5;
+    padding: 0 15px;
+    color: #777777;
+}
+html[data-typora-theme="github"] .livemd-editor blockquote blockquote {
+    padding-right: 0;
+}
+html[data-typora-theme="github"] .livemd-editor table {
+    padding: 0;
+    word-break: initial;
+}
+html[data-typora-theme="github"] .livemd-editor table tr {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 0;
+}
+html[data-typora-theme="github"] .livemd-editor table tr:nth-child(2n),
+html[data-typora-theme="github"] .livemd-editor thead {
+    background-color: #f8f8f8;
+}
+html[data-typora-theme="github"] .livemd-editor table th {
+    font-weight: bold;
+    border: 1px solid #dfe2e5;
+    border-bottom: 0;
+    margin: 0;
+    padding: 6px 13px;
+}
+html[data-typora-theme="github"] .livemd-editor table td {
+    border: 1px solid #dfe2e5;
+    margin: 0;
+    padding: 6px 13px;
+}
+html[data-typora-theme="github"] .livemd-editor table th:first-child,
+html[data-typora-theme="github"] .livemd-editor table td:first-child {
+    margin-top: 0;
+}
+html[data-typora-theme="github"] .livemd-editor table th:last-child,
+html[data-typora-theme="github"] .livemd-editor table td:last-child {
+    margin-bottom: 0;
+}
+
+html[data-typora-theme="github"] .cm-content {
+    padding-left: 4px;
+}
+
+html[data-typora-theme="github"] .code-tooltip {
+    box-shadow: 0 1px 1px 0 rgba(0,28,36,.3);
+    border-top: 1px solid #eef2f2;
+}
+
+html[data-typora-theme="github"] .livemd-code-block,
+html[data-typora-theme="github"] .livemd-editor code,
+html[data-typora-theme="github"] .livemd-editor tt {
+    border: 1px solid #e7eaed;
+    background-color: #f8f8f8;
+    border-radius: 3px;
+    padding: 0;
+    padding: 2px 4px 0px 4px;
+    font-size: 0.9em;
+}
+
+html[data-typora-theme="github"] .livemd-editor code {
+    background-color: #f3f4f4;
+    padding: 0 2px 0 2px;
+}
+
+html[data-typora-theme="github"] .livemd-code-block {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    padding-top: 8px;
+    padding-bottom: 6px;
+}
+
+
+html[data-typora-theme="github"] .md-task-list-item > input {
+  margin-left: -1.3em;
+}
+
+@media print {
+    html[data-typora-theme="github"] {
+        font-size: 13px;
+    }
+    html[data-typora-theme="github"] .livemd-editor pre {
+        page-break-inside: avoid;
+        word-wrap: break-word;
+    }
+}
+
+html[data-typora-theme="github"] .livemd-code-block {
+	background-color: #f8f8f8;
+}
+html[data-typora-theme="github"] .editor-zoom-surface pre.md-meta-block {
+	padding: 1rem;
+    font-size: 85%;
+    line-height: 1.45;
+    background-color: #f7f7f7;
+    border: 0;
+    border-radius: 3px;
+    color: #777777;
+    margin-top: 0 !important;
+}
+
+html[data-typora-theme="github"] .mathjax-block>.code-tooltip {
+	bottom: .375rem;
+}
+
+html[data-typora-theme="github"] .md-mathjax-midline {
+    background: #fafafa;
+}
+
+html[data-typora-theme="github"] .editor-zoom-surface>h3.livemd-focus-current:before{
+	left: -1.5625rem;
+	top: .375rem;
+}
+html[data-typora-theme="github"] .editor-zoom-surface>h4.livemd-focus-current:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+html[data-typora-theme="github"] .editor-zoom-surface>h5.livemd-focus-current:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+html[data-typora-theme="github"] .editor-zoom-surface>h6.livemd-focus-current:before{
+	left: -1.5625rem;
+	top: .285714286rem;
+}
+html[data-typora-theme="github"] .livemd-image-block>.md-meta {
+    /*border: 1px solid #ddd;*/
+    border-radius: 3px;
+    padding: 2px 0px 0px 4px;
+    font-size: 0.9em;
+    color: inherit;
+}
+
+html[data-typora-theme="github"] .md-tag {
+    color: #a7a7a7;
+    opacity: 1;
+}
+
+html[data-typora-theme="github"] .md-toc { 
+    margin-top:20px;
+    padding-bottom:20px;
+}
+
+html[data-typora-theme="github"] .sidebar-tabs {
+    border-bottom: none;
+}
+
+html[data-typora-theme="github"] #typora-quick-open {
+    border: 1px solid #ddd;
+    background-color: #f8f8f8;
+}
+
+html[data-typora-theme="github"] #typora-quick-open-item {
+    background-color: #FAFAFA;
+    border-color: #FEFEFE #e5e5e5 #e5e5e5 #eee;
+    border-style: solid;
+    border-width: 1px;
+}
+
+/** focus mode */
+html[data-typora-theme="github"] .on-focus-mode blockquote {
+    border-left-color: rgba(85, 85, 85, 0.12);
+}
+
+html[data-typora-theme="github"] .livemd-editor header,
+html[data-typora-theme="github"] .context-menu,
+html[data-typora-theme="github"] .megamenu-content,
+html[data-typora-theme="github"] .livemd-editor footer{
+    font-family: "Segoe UI", "Arial", sans-serif;
+}
+
+html[data-typora-theme="github"] .file-node-content:hover .file-node-icon,
+html[data-typora-theme="github"] .file-node-content:hover .file-node-open-state{
+    visibility: visible;
+}
+
+html[data-typora-theme="github"] .mac-seamless-mode #typora-sidebar {
+    background-color: #fafafa;
+    background-color: var(--side-bar-bg-color);
+}
+
+html[data-typora-theme="github"] .mac-os .editor-zoom-surface{
+    caret-color: AccentColor;
+}
+
+html[data-typora-theme="github"] .md-lang {
+    color: #b4654d;
+}
+
+/*.html-for-mac {
+    --item-hover-bg-color: #E6F0FE;
+}*/
+
+html[data-typora-theme="github"] #md-notification .btn {
+    border: 0;
+}
+
+html[data-typora-theme="github"] .dropdown-menu .divider {
+    border-color: #e5e5e5;
+    opacity: 0.4;
+}
+
+html[data-typora-theme="github"] .ty-preferences .window-content {
+    background-color: #fafafa;
+}
+
+html[data-typora-theme="github"] .ty-preferences .nav-group-item.active {
+    color: white;
+    background: #999;
+}
+
+html[data-typora-theme="github"] .menu-item-container a.menu-style-btn {
+    background-color: #f5f8fa;
+    background-image: linear-gradient( 180deg , hsla(0, 0%, 100%, 0.8), hsla(0, 0%, 100%, 0)); 
+}
+
+html[data-typora-theme="github"] {
+  --primary-color: #4183C4;
+  --secondary-color: #4183C4;
+  --background-color: #ffffff;
+  --background-color-1: #fafafa;
+  --background-color-2: #fafafa;
+  --background-color-3: #fafafa;
+  --text-color: rgb(51, 51, 51);
+  --text-color-1: rgb(51, 51, 51);
+  --text-color-2: #667085;
+  --text-color-3: #667085;
+  --placeholder-color: #667085;
+  --border-color: #e0e0e0;
+  --border-color-1: #e0e0e0;
+  --border-color-2: #e0e0e0;
+  --hover-color: color-mix(in srgb, #4183C4, transparent 80%);
+  --hover-background-color: color-mix(in srgb, #4183C4, transparent 80%);
+  --active-color: color-mix(in srgb, #4183C4, transparent 80%);
+  --active-line-color: color-mix(in srgb, #4183C4, transparent 80%);
+  --selected-color: rgb(51, 51, 51);
+  --selected-background-color: color-mix(in srgb, #4183C4, transparent 80%);
+  --primary-color-transparent: color-mix(in srgb, #4183C4, transparent 80%);
+  --crepe-color-background: #ffffff;
+  --crepe-color-on-background: rgb(51, 51, 51);
+  --crepe-color-surface: #fafafa;
+  --crepe-color-surface-low: #fafafa;
+  --crepe-color-on-surface: rgb(51, 51, 51);
+  --crepe-color-on-surface-variant: #667085;
+  --crepe-color-outline: #e0e0e0;
+  --crepe-color-primary: #4183C4;
+  --crepe-color-secondary: #fafafa;
+  --crepe-color-on-secondary: rgb(51, 51, 51);
+  --crepe-color-inverse: rgb(51, 51, 51);
+  --crepe-color-on-inverse: #ffffff;
+  --crepe-color-inline-code: #4183C4;
+  --crepe-color-error: #cf222e;
+  --crepe-color-hover: #fafafa;
+  --crepe-color-selected: color-mix(in srgb, #4183C4, transparent 80%);
+  --crepe-color-inline-area: #fafafa;
+  color-scheme: light;
+}

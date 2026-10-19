@@ -1,0 +1,22 @@
+<svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<clipPath id="fileClip">
+<path d="M10 7C10 5.895 10.895 5 12 5H23L29 11V31C29 32.105 28.105 33 27 33H12C10.895 33 10 32.105 10 31V7Z"/>
+</clipPath>
+<linearGradient id="fileMark" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#5E7F55"/>
+<stop offset="1" stop-color="#3E5A38"/>
+</linearGradient>
+</defs>
+<!-- 文件主体 -->
+<path d="M10 7C10 5.895 10.895 5 12 5H23L29 11V31C29 32.105 28.105 33 27 33H12C10.895 33 10 32.105 10 31V7Z" fill="white" stroke="#475167"/>
+<!-- 折角 -->
+<path d="M23 5V9C23 10.105 23.895 11 25 11H29L23 5Z" fill="#E2E5EC" stroke="#475167" stroke-linejoin="round"/>
+<!-- 底部色带 -->
+<rect x="10" y="24" width="19" height="9" fill="#475167" clip-path="url(#fileClip)"/>
+<!-- "md" 文字 -->
+<text x="19.5" y="31" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="bold">md</text>
+<!-- LiveMD 品牌角标：渐变绿圆角方块 + 纸色字母 L（与应用图标同款） -->
+<rect x="14.5" y="12.5" width="10" height="10" rx="2.6" fill="url(#fileMark)"/>
+<path d="M17.4 14.9 L17.4 20.1 L21.6 20.1" fill="none" stroke="#FCF9F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

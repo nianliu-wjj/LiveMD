@@ -1,0 +1,175 @@
+/**
+ * 右缘三栏（大纲/批注/书签）公共样式
+ *
+ * - .right-edge-tab：贴边收起态的竖排便签，统一使用主题色（--primary-color），
+ *   槽位自上而下由 --edge-tab-slot 控制（大纲 0 / 批注 76px / 书签 152px，§5）；
+ * - .right-edge-bar：展开态悬浮栏骨架（容器/左缘把手/头部/折叠把手/列表/空态），
+ *   组件内只保留各自差异部分（条目、卡片、右键菜单等）。
+ */
+
+.right-edge-tab {
+  position: fixed;
+  top: calc(var(--titlebar-height, 40px) + 20px + var(--edge-tab-slot, 0px));
+  // 有栏展开时让位到展开面板左侧，避免便签被面板遮挡（变量由 rightEdgeBars 工具同步）
+  right: var(--right-edge-open-width, 0px);
+  z-index: 40;
+  padding: 12px 5px;
+  border: none;
+  border-radius: 8px 0 0 8px;
+  background: var(--primary-color, #4a9eff); // 统一主题色（不再区分各栏颜色）
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 2px;
+  writing-mode: vertical-rl;
+  cursor: pointer;
+  box-shadow: -2px 0 8px rgba(0, 0, 0, 0.12);
+  transition:
+    padding 0.15s ease,
+    opacity 0.15s ease;
+
+  &:hover {
+    padding-right: 8px;
+    opacity: 0.92;
+  }
+}
+
+// 槽位：大纲 = 默认（0），批注 = 第 2 槽，书签 = 第 3 槽
+.right-edge-tab--slot-2 {
+  --edge-tab-slot: 76px;
+}
+
+.right-edge-tab--slot-3 {
+  --edge-tab-slot: 152px;
+}
+
+.right-edge-bar {
+  position: fixed;
+  top: var(--titlebar-height, 40px);
+  bottom: var(--statusbar-height, 28px);
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  background: var(--background-color-2, #f8f9fa);
+  border-left: 1px solid var(--border-color-1, #e7eaed);
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.08);
+  user-select: none;
+
+  // 左缘 6px 拖拽把手（宽度 240–480，见 useBarResize）
+  &__resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -3px;
+    width: 6px;
+    cursor: ew-resize;
+    touch-action: none;
+    z-index: 2;
+  }
+
+  &__header {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border-color-1, #e7eaed);
+  }
+
+  &__title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color-1, #333);
+  }
+
+  &__header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    button {
+      border: none;
+      border-radius: 4px;
+      padding: 2px 6px;
+      background: transparent;
+      color: var(--text-color-3, #999);
+      font-size: 11px;
+      cursor: pointer;
+
+      &:hover {
+        background: var(--hover-color, rgba(0, 0, 0, 0.06));
+        color: var(--text-color-1, #333);
+      }
+    }
+  }
+
+  // 折叠把手：吸附左边框垂直中点（半出栏外）
+  &__fold {
+    position: absolute;
+    left: -12px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--border-color-1, #e7eaed);
+    border-right: none;
+    border-radius: 6px 0 0 6px;
+    background: var(--background-color-2, #f8f9fa);
+    color: var(--text-color-3, #999);
+    cursor: pointer;
+    font-size: 10px;
+    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
+
+    &:hover {
+      color: var(--text-color-1, #333);
+      background: var(--hover-color, rgba(0, 0, 0, 0.06));
+    }
+  }
+
+  // 列表骨架：条目过多时不随 flex 容器压缩（否则行高被压扁导致文字叠压），改为容器滚动
+  &__list {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 8px 4px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    user-select: text;
+  }
+
+  &__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 20px;
+    text-align: center;
+  }
+
+  &__empty-icon {
+    font-size: 28px;
+    color: var(--text-color-3, #999);
+    opacity: 0.5;
+  }
+
+  &__empty-text {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-color-3, #999);
+  }
+
+  &__empty-hint {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-color-3, #999);
+    opacity: 0.8;
+  }
+}

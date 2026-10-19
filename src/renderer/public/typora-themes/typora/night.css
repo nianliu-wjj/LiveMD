@@ -1,0 +1,1081 @@
+@import "night/mermaid.dark.css";
+@import "night/codeblock.dark.css";
+@import "night/sourcemode.dark.css";
+
+html[data-typora-theme="night"] {
+    --bg-color:  #363B40;
+    --side-bar-bg-color: #2E3033;
+    --text-color: #b8bfc6;
+
+    --select-text-bg-color:#4a89dc;
+
+    --item-hover-bg-color: #0a0d16;
+    --control-text-color: #b7b7b7;
+    --control-text-hover-color: #eee;
+    --window-border: 1px solid #555;
+
+    --active-file-bg-color: rgb(34, 34, 34);
+    --active-file-border-color: #8d8df0;
+
+    --primary-color: #a3d5fe;
+
+    --active-file-text-color: white;
+    --item-hover-bg-color: #70717d;
+    --item-hover-text-color: white;
+    --primary-color: #6dc1e7;
+
+    --rawblock-edit-panel-bd: #333;
+
+    --search-select-bg-color: #428bca;
+}
+
+html[data-typora-theme="night"] {
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+html[data-typora-theme="night"] {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    background: #363B40;
+    background: var(--bg-color);
+    fill: currentColor;
+    line-height: 1.625rem;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface {
+    max-width: 914px;
+}
+
+
+@media only screen and (min-width: 1400px) {
+	html[data-typora-theme="night"] .editor-zoom-surface {
+		max-width: 1024px;
+	}
+}
+
+@media only screen and (min-width: 1800px) {
+	html[data-typora-theme="night"] .editor-zoom-surface {
+		max-width: 1200px;
+	}
+}
+
+html[data-typora-theme="night"],
+html[data-typora-theme="night"] .livemd-editor button,
+html[data-typora-theme="night"] .livemd-editor input,
+html[data-typora-theme="night"] .livemd-editor select,
+html[data-typora-theme="night"] .livemd-editor textarea,
+html[data-typora-theme="night"] div.code-tooltip-content {
+    color: #b8bfc6;
+    border-color: transparent;
+}
+
+html[data-typora-theme="night"] div.code-tooltip,
+html[data-typora-theme="night"] .md-hover-tip .md-arrow:after {
+    background: #333;
+}
+
+html[data-typora-theme="night"] .native-window #md-notification {
+    border: 1px solid #70717d;
+}
+
+html[data-typora-theme="night"] .popover.bottom > .arrow:after {
+    border-bottom-color: #333;
+}
+
+html[data-typora-theme="night"],
+html[data-typora-theme="night"] .livemd-editor button,
+html[data-typora-theme="night"] .livemd-editor input,
+html[data-typora-theme="night"] .livemd-editor select,
+html[data-typora-theme="night"] .livemd-editor textarea {
+    font-family: "Helvetica Neue", Helvetica, Arial, 'Segoe UI Emoji', 'SF Pro',  sans-serif;
+}
+
+html[data-typora-theme="night"] .livemd-editor hr {
+    height: 2px;
+    border: 0;
+    margin: 24px 0 !important;
+}
+
+html[data-typora-theme="night"] .livemd-editor h1,
+html[data-typora-theme="night"] .livemd-editor h2,
+html[data-typora-theme="night"] .livemd-editor h3,
+html[data-typora-theme="night"] .livemd-editor h4,
+html[data-typora-theme="night"] .livemd-editor h5,
+html[data-typora-theme="night"] .livemd-editor h6 {
+    font-family: "Lucida Grande", "Corbel", sans-serif;
+    font-weight: normal;
+    clear: both;
+    -ms-word-wrap: break-word;
+    word-wrap: break-word;
+    margin: 0;
+    padding: 0;
+    color: #DEDEDE
+}
+
+html[data-typora-theme="night"] .livemd-editor h1 {
+    font-size: 2.5rem;
+    /* 36px */
+    line-height: 2.75rem;
+    /* 40px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    letter-spacing: -1.5px;
+}
+
+html[data-typora-theme="night"] .livemd-editor h2 {
+    font-size: 1.63rem;
+    /* 24px */
+    line-height: 1.875rem;
+    /* 30px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    letter-spacing: -1px;
+    font-weight: bold;
+}
+
+html[data-typora-theme="night"] .livemd-editor h3 {
+    font-size: 1.17rem;
+    /* 18px */
+    line-height: 1.5rem;
+    /* 24px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    letter-spacing: -1px;
+    font-weight: bold;
+}
+
+html[data-typora-theme="night"] .livemd-editor h4 {
+    font-size: 1.12rem;
+    /* 16px */
+    line-height: 1.375rem;
+    /* 22px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    color: white;
+}
+
+html[data-typora-theme="night"] .livemd-editor h5 {
+    font-size: 0.97rem;
+    /* 16px */
+    line-height: 1.25rem;
+    /* 22px */
+    margin-bottom: 1.5rem;
+    /* 24px */
+    font-weight: bold;
+}
+
+html[data-typora-theme="night"] .livemd-editor h6 {
+    font-size: 0.93rem;
+    /* 16px */
+    line-height: 1rem;
+    /* 16px */
+    margin-bottom: 0.75rem;
+    color: white;
+}
+
+@media (min-width: 980px) {
+    html[data-typora-theme="night"] h3.livemd-focus-current:before,
+html[data-typora-theme="night"] h4.livemd-focus-current:before,
+html[data-typora-theme="night"] h5.livemd-focus-current:before,
+html[data-typora-theme="night"] h6.livemd-focus-current:before {
+        color: #ddd;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        position: absolute;
+        left: -1.642857143rem;
+        top: .357142857rem;
+        float: left;
+        font-size: 9px;
+        padding-left: 2px;
+        padding-right: 2px;
+        vertical-align: bottom;
+        font-weight: normal;
+        line-height: normal;
+    }
+
+    html[data-typora-theme="night"] h3.livemd-focus-current:before {
+        content: 'h3';
+    }
+
+    html[data-typora-theme="night"] h4.livemd-focus-current:before {
+        content: 'h4';
+    }
+
+    html[data-typora-theme="night"] h5.livemd-focus-current:before {
+        content: 'h5';
+        top: 0px;
+    }
+
+    html[data-typora-theme="night"] h6.livemd-focus-current:before {
+        content: 'h6';
+        top: 0px;
+    }
+}
+
+html[data-typora-theme="night"] .livemd-editor a {
+    text-decoration: none;
+    outline: 0;
+}
+
+html[data-typora-theme="night"] .livemd-editor a:hover {
+    outline: 0;
+}
+
+html[data-typora-theme="night"] .livemd-editor a:focus {
+    outline: thin dotted;
+}
+
+html[data-typora-theme="night"] sup.md-footnote {
+    background-color: #555;
+    color: #ddd;
+}
+
+html[data-typora-theme="night"] .livemd-editor p {
+    -ms-word-wrap: break-word;
+    word-wrap: break-word;
+}
+
+html[data-typora-theme="night"] .livemd-editor p,
+html[data-typora-theme="night"] .livemd-editor ul,
+html[data-typora-theme="night"] .livemd-editor dd,
+html[data-typora-theme="night"] .livemd-editor ol,
+html[data-typora-theme="night"] .livemd-editor hr,
+html[data-typora-theme="night"] .livemd-editor address,
+html[data-typora-theme="night"] .livemd-editor pre,
+html[data-typora-theme="night"] .livemd-editor table,
+html[data-typora-theme="night"] .livemd-editor iframe,
+html[data-typora-theme="night"] .wp-caption,
+html[data-typora-theme="night"] .wp-audio-shortcode,
+html[data-typora-theme="night"] .wp-video-shortcode {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    /* 24px */
+}
+
+html[data-typora-theme="night"] audio:not([controls]) {
+    display: none;
+}
+
+html[data-typora-theme="night"] [hidden] {
+    display: none;
+}
+
+html[data-typora-theme="night"] ::-moz-selection {
+    background: #4a89dc;
+    color: #fff;
+    text-shadow: none;
+}
+
+html[data-typora-theme="night"] *.in-text-selection,
+html[data-typora-theme="night"] ::selection {
+    background: #4a89dc;
+    color: #fff;
+    text-shadow: none;
+}
+
+html[data-typora-theme="night"] .livemd-editor ul,
+html[data-typora-theme="night"] .livemd-editor ol {
+    padding: 0 0 0 1.875rem;
+    /* 30px */
+}
+
+html[data-typora-theme="night"] .livemd-editor ol {
+    list-style: decimal;
+}
+
+html[data-typora-theme="night"] .livemd-editor ul ul,
+html[data-typora-theme="night"] .livemd-editor ol ol,
+html[data-typora-theme="night"] .livemd-editor ul ol,
+html[data-typora-theme="night"] .livemd-editor ol ul {
+    margin: 0;
+}
+
+html[data-typora-theme="night"] .livemd-editor b,
+html[data-typora-theme="night"] .livemd-editor th,
+html[data-typora-theme="night"] .livemd-editor dt,
+html[data-typora-theme="night"] .livemd-editor strong {
+    font-weight: bold;
+}
+
+html[data-typora-theme="night"] .livemd-editor i,
+html[data-typora-theme="night"] .livemd-editor em,
+html[data-typora-theme="night"] .livemd-editor dfn,
+html[data-typora-theme="night"] .livemd-editor cite {
+    font-style: italic;
+}
+
+html[data-typora-theme="night"] .livemd-editor blockquote {
+    padding-left: 1.875rem;
+    margin: 0 0 1.875rem 1.875rem;
+    border-left: solid 2px #474d54;
+    padding-left: 30px;
+    margin-top: 35px;
+}
+
+html[data-typora-theme="night"] .livemd-editor pre,
+html[data-typora-theme="night"] .livemd-editor code,
+html[data-typora-theme="night"] .livemd-editor kbd,
+html[data-typora-theme="night"] .livemd-editor tt,
+html[data-typora-theme="night"] .livemd-editor var {
+    font-size: 0.875em;
+    font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+}
+
+html[data-typora-theme="night"] .livemd-editor code,
+html[data-typora-theme="night"] .livemd-editor tt,
+html[data-typora-theme="night"] .livemd-editor var {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+html[data-typora-theme="night"] .livemd-editor kbd {
+    padding: 2px 4px;
+    font-size: 90%;
+    color: #fff;
+    background-color: #333;
+    border-radius: 3px;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.25);
+}
+
+html[data-typora-theme="night"] pre.livemd-code-block {
+    padding: 10px 10px 10px 30px;
+    margin-bottom: 20px;
+    background: #333;
+}
+
+html[data-typora-theme="night"] .cm-gutters {
+    background: #333;
+    border-right: 1px solid transparent;
+}
+
+html[data-typora-theme="night"] .enable-diagrams pre.livemd-code-block[lang="sequence"] .code-tooltip,
+html[data-typora-theme="night"] .enable-diagrams pre.livemd-code-block[lang="flow"] .code-tooltip,
+html[data-typora-theme="night"] .enable-diagrams pre.livemd-code-block[lang="mermaid"] .code-tooltip {
+    bottom: -2.2em;
+    right: 4px;
+}
+
+html[data-typora-theme="night"] .livemd-editor code,
+html[data-typora-theme="night"] .livemd-editor kbd,
+html[data-typora-theme="night"] .livemd-editor tt,
+html[data-typora-theme="night"] .livemd-editor var {
+    padding: 2px 5px;
+}
+
+html[data-typora-theme="night"] .livemd-editor table {
+    max-width: 100%;
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+html[data-typora-theme="night"] .livemd-editor th,
+html[data-typora-theme="night"] .livemd-editor td {
+    padding: 5px 10px;
+    vertical-align: top;
+}
+
+html[data-typora-theme="night"] .livemd-editor a {
+    -webkit-transition: all .2s ease-in-out;
+    transition: all .2s ease-in-out;
+}
+
+html[data-typora-theme="night"] .livemd-editor hr {
+    background: #474d54;
+    /* variable */
+}
+
+html[data-typora-theme="night"] .livemd-editor h1 {
+    margin-top: 2em;
+}
+
+html[data-typora-theme="night"] .livemd-editor a {
+    color: #e0e0e0;
+    text-decoration: underline;
+}
+
+html[data-typora-theme="night"] .livemd-editor a:hover {
+    color: #fff;
+}
+
+html[data-typora-theme="night"] .md-inline-math script {
+    color: #81b1db;
+}
+
+html[data-typora-theme="night"] .livemd-editor b,
+html[data-typora-theme="night"] .livemd-editor th,
+html[data-typora-theme="night"] .livemd-editor dt,
+html[data-typora-theme="night"] .livemd-editor strong {
+    color: #DEDEDE;
+    /* variable */
+}
+
+html[data-typora-theme="night"] .livemd-editor mark {
+    background: #D3D40E;
+}
+
+html[data-typora-theme="night"] .livemd-editor blockquote {
+    color: #9DA2A6;
+}
+
+html[data-typora-theme="night"] .livemd-editor table a {
+    color: #DEDEDE;
+    /* variable */
+}
+
+html[data-typora-theme="night"] .livemd-editor th,
+html[data-typora-theme="night"] .livemd-editor td {
+    border: solid 1px #474d54;
+    /* variable */
+}
+
+html[data-typora-theme="night"] .task-list {
+    padding-left: 0;
+}
+
+html[data-typora-theme="night"] .md-task-list-item {
+    padding-left: 1.25rem;
+}
+
+html[data-typora-theme="night"] .md-task-list-item > input {
+    top: auto;
+}
+
+html[data-typora-theme="night"] .md-task-list-item > input:before {
+    content: "";
+    display: inline-block;
+    width: 0.875rem;
+    height: 0.875rem;
+    vertical-align: middle;
+    text-align: center;
+    border: 1px solid #b8bfc6;
+    background-color: #363B40;
+    margin-top: -0.4rem;
+}
+
+html[data-typora-theme="night"] .md-task-list-item > input:checked:before,
+html[data-typora-theme="night"] .md-task-list-item > input[checked]:before {
+    content: '\221A';
+    /*◘*/
+    font-size: 0.625rem;
+    line-height: 0.625rem;
+    color: #DEDEDE;
+}
+
+/** quick open **/
+html[data-typora-theme="night"] .auto-suggest-container {
+    border: 0px;
+    background-color: #525C65;
+}
+
+html[data-typora-theme="night"] #typora-quick-open {
+    background-color: #525C65;
+}
+
+html[data-typora-theme="night"] #typora-quick-open input{
+    background-color: #525C65;
+    border: 0;
+    border-bottom: 1px solid grey;
+}
+
+html[data-typora-theme="night"] .typora-quick-open-item {
+    background-color: inherit;
+    color: inherit;
+}
+
+html[data-typora-theme="night"] .typora-quick-open-item.active,
+html[data-typora-theme="night"] .typora-quick-open-item:hover {
+    background-color: #4D8BDB;
+    color: white;
+}
+
+html[data-typora-theme="night"] .typora-quick-open-item:hover {
+    background-color: rgba(77, 139, 219, 0.8);
+}
+
+html[data-typora-theme="night"] .typora-search-spinner > div {
+  background-color: #fff;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface pre.md-meta-block {
+    border-bottom: 1px dashed #ccc;
+    background: transparent;
+    padding-bottom: 0.6em;
+    line-height: 1.6em;
+}
+
+html[data-typora-theme="night"] .btn,
+html[data-typora-theme="night"] .btn .btn-default {
+    background: transparent;
+    color: #b8bfc6;
+}
+
+html[data-typora-theme="night"] .ty-table-edit {
+    border-top: 1px solid gray;
+    background-color: #363B40;
+}
+
+html[data-typora-theme="night"] .popover-title {
+    background: transparent;
+}
+
+html[data-typora-theme="night"] .livemd-image-block>.md-meta {
+    color: #BBBBBB;
+    background: transparent;
+}
+
+html[data-typora-theme="night"] .md-expand.livemd-image-block>.md-meta {
+    color: #DDD;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface>h3:before,
+html[data-typora-theme="night"] .editor-zoom-surface>h4:before,
+html[data-typora-theme="night"] .editor-zoom-surface>h5:before,
+html[data-typora-theme="night"] .editor-zoom-surface>h6:before {
+    border: none;
+    border-radius: 0px;
+    color: #888;
+    text-decoration: underline;
+    left: -1.4rem;
+    top: 0.2rem;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface>h3.livemd-focus-current:before {
+    top: 2px;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface>h4.livemd-focus-current:before {
+    top: 2px;
+}
+
+html[data-typora-theme="night"] .md-toc-item {
+    color: #A8C2DC;
+}
+
+html[data-typora-theme="night"] .editor-zoom-surface div.md-toc-tooltip {
+    background-color: #363B40;
+}
+
+html[data-typora-theme="night"] .dropdown-menu .btn:hover,
+html[data-typora-theme="night"] .dropdown-menu .btn:focus,
+html[data-typora-theme="night"] .md-toc .btn:hover,
+html[data-typora-theme="night"] .md-toc .btn:focus {
+    color: white;
+    background: black;
+}
+
+html[data-typora-theme="night"] #toc-dropmenu {
+    background: rgba(50, 54, 59, 0.93);
+    border: 1px solid rgba(253, 253, 253, 0.15);
+}
+
+html[data-typora-theme="night"] #toc-dropmenu .divider {
+    background-color: #9b9b9b;
+}
+
+html[data-typora-theme="night"] .outline-expander:before {
+    top: 2px;
+}
+
+html[data-typora-theme="night"] #typora-sidebar {
+    box-shadow: none;
+    border-right: 1px dashed;
+    border-right: none;
+}
+
+html[data-typora-theme="night"] .sidebar-tabs {
+    border-bottom:0;
+}
+
+html[data-typora-theme="night"] #typora-sidebar:hover .outline-title-wrapper {
+    border-left: 1px dashed;
+}
+
+html[data-typora-theme="night"] .outline-title-wrapper .btn {
+    color: inherit;
+}
+
+html[data-typora-theme="night"] .outline-item:hover {
+    border-color: #363B40;
+    background-color: #363B40;
+    color: white;
+}
+
+html[data-typora-theme="night"] h1.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] h2.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] h3.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] h4.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] h5.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] h6.livemd-focus-current .md-attr,
+html[data-typora-theme="night"] .md-header-span .md-attr {
+    color: #8C8E92;
+    display: inline;
+}
+
+html[data-typora-theme="night"] .md-comment {
+    color: #5a95e3;
+    opacity: 0.8;
+}
+
+html[data-typora-theme="night"] .md-inline-math svg {
+    color: #b8bfc6;
+}
+
+html[data-typora-theme="night"] #math-inline-preview .md-arrow:after {
+    background: black;
+}
+
+html[data-typora-theme="night"] .modal-content {
+    background: var(--bg-color);
+    border: 0;
+}
+
+html[data-typora-theme="night"] .modal-title {
+    font-size: 1.5em;
+}
+
+html[data-typora-theme="night"] .modal-content input {
+    background-color: rgba(26, 21, 21, 0.51);
+    color: white;
+}
+
+html[data-typora-theme="night"] .modal-content .input-group-addon {
+    color: white;
+}
+
+html[data-typora-theme="night"] .modal-backdrop {
+    background-color: rgba(174, 174, 174, 0.7);
+}
+
+html[data-typora-theme="night"] .modal-content .btn-primary {
+    border-color: var(--primary-color);
+}
+
+html[data-typora-theme="night"] .md-table-resize-popover {
+    background-color: #333;
+}
+
+html[data-typora-theme="night"] .form-inline .input-group .input-group-addon {
+    color: white;
+}
+
+html[data-typora-theme="night"] #md-searchpanel {
+    border-bottom: 1px dashed grey;
+}
+
+/** UI for electron */
+
+html[data-typora-theme="night"] .context-menu,
+html[data-typora-theme="night"] #spell-check-panel,
+html[data-typora-theme="night"] #footer-word-count-info {
+    background-color: #42464A;
+}
+
+html[data-typora-theme="night"] .context-menu.dropdown-menu .divider,
+html[data-typora-theme="night"] .dropdown-menu .divider {
+    background-color: #777777;
+    opacity: 1;
+}
+
+html[data-typora-theme="night"] .livemd-editor footer {
+    color: inherit;
+}
+
+@media (max-width: 1000px) {
+    html[data-typora-theme="night"] .livemd-editor footer {
+        border-top: none;
+    }
+    html[data-typora-theme="night"] .livemd-editor footer:hover {
+        color: inherit;
+    }
+}
+
+html[data-typora-theme="night"] #file-info-file-path .file-info-field-value:hover {
+    background-color: #555;
+    color: #dedede;
+}
+
+html[data-typora-theme="night"] .megamenu-content,
+html[data-typora-theme="night"] .megamenu-opened header {
+    background: var(--bg-color);
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel h2,
+html[data-typora-theme="night"] .megamenu-menu-panel h1,
+html[data-typora-theme="night"] .long-btn {
+    color: inherit;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel input[type='text'] {
+    background: inherit;
+    border: 0;
+    border-bottom: 1px solid;
+}
+
+html[data-typora-theme="night"] #recent-file-panel-action-btn {
+    background: inherit;
+    border: 1px grey solid;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel .dropdown-menu > li > a {
+    color: inherit;
+    background-color: #2F353A;
+    text-decoration: none;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel table td:nth-child(1) {
+    color: inherit;
+    font-weight: bold;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel tbody tr:hover td:nth-child(1) {
+    color: white;
+}
+
+html[data-typora-theme="night"] .modal-footer .btn-default,
+html[data-typora-theme="night"] .modal-footer .btn-primary,
+html[data-typora-theme="night"] .modal-footer .btn-default:not(:hover) {
+    border: 1px solid;
+    border-color: transparent;
+}
+
+html[data-typora-theme="night"] .btn-primary {
+    color: white;
+}
+
+html[data-typora-theme="night"] .btn-default:hover,
+html[data-typora-theme="night"] .btn-default:focus,
+html[data-typora-theme="night"] .btn-default.focus,
+html[data-typora-theme="night"] .btn-default:active,
+html[data-typora-theme="night"] .btn-default.active,
+html[data-typora-theme="night"] .open > .dropdown-toggle.btn-default {
+    color: white;
+    border: 1px solid #ddd;
+    background-color: inherit;
+}
+
+html[data-typora-theme="night"] .modal-header {
+    border-bottom: 0;
+}
+
+html[data-typora-theme="night"] .modal-footer {
+    border-top: 0;
+}
+
+html[data-typora-theme="night"] #recent-file-panel tbody tr:nth-child(2n-1) {
+    background-color: transparent !important;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel tbody tr:hover td:nth-child(2) {
+    color: inherit;
+}
+
+html[data-typora-theme="night"] .megamenu-menu-panel .btn {
+    border: 1px solid #eee;
+    background: transparent;
+}
+
+html[data-typora-theme="night"] .mouse-hover .toolbar-icon.btn:hover,
+html[data-typora-theme="night"] #w-full.mouse-hover,
+html[data-typora-theme="night"] #w-pin.mouse-hover {
+    background-color: inherit;
+}
+
+html[data-typora-theme="night"] .typora-node::-webkit-scrollbar {
+    width: 5px;
+}
+
+html[data-typora-theme="night"] .typora-node::-webkit-scrollbar-thumb:vertical {
+    background: rgba(250, 250, 250, 0.3);
+}
+
+html[data-typora-theme="night"] .typora-node::-webkit-scrollbar-thumb:vertical:active {
+    background: rgba(250, 250, 250, 0.5);
+}
+
+html[data-typora-theme="night"] #w-unpin {
+    background-color: #4182c4;
+}
+
+html[data-typora-theme="night"] #top-titlebar,
+html[data-typora-theme="night"] #top-titlebar * {
+    color: var(--item-hover-text-color);
+}
+
+html[data-typora-theme="night"] .typora-sourceview-on #toggle-sourceview-btn,
+html[data-typora-theme="night"] #footer-word-count:hover,
+html[data-typora-theme="night"] .ty-show-word-count #footer-word-count {
+    background: #333333;
+}
+
+html[data-typora-theme="night"] #toggle-sourceview-btn:hover {
+    color: #eee;
+    background: #333333;
+}
+
+/** focus mode */
+html[data-typora-theme="night"] .on-focus-mode .md-end-block:not(.livemd-focus-current):not(.md-focus-container) * {
+    color: #686868 !important;
+}
+
+html[data-typora-theme="night"] .on-focus-mode .md-end-block:not(.livemd-focus-current) img,
+html[data-typora-theme="night"] .on-focus-mode .md-task-list-item:not(.md-focus-container)>input {
+    opacity: #686868 !important;
+}
+
+html[data-typora-theme="night"] .on-focus-mode li[cid]:not(.md-focus-container){
+    color: #686868;
+}
+
+html[data-typora-theme="night"] .on-focus-mode .livemd-code-block.livemd-focus-current .cm-content>*:not(.CodeMirror-activeline) *,
+html[data-typora-theme="night"] .on-focus-mode .cm-editor.cm-editor:not(.CodeMirror-focused) * {
+    color: #686868 !important;
+}
+
+html[data-typora-theme="night"] .on-focus-mode .livemd-focus-current,
+html[data-typora-theme="night"] .on-focus-mode .md-focus-container {
+    color: #fff;
+}
+
+html[data-typora-theme="night"] .on-focus-mode #typora-source .cm-content>*:not(.CodeMirror-activeline) * {
+    color: #686868 !important;
+}
+
+
+/*diagrams*/
+html[data-typora-theme="night"] .editor-zoom-surface .livemd-focus-current .md-diagram-panel {
+    border: 1px solid #ddd;
+    margin-left: -1px;
+    width: calc(100% + 2px);
+}
+
+/*diagrams*/
+html[data-typora-theme="night"] .editor-zoom-surface .livemd-focus-current.md-fences-with-lineno .md-diagram-panel {
+    margin-left: auto;
+}
+
+html[data-typora-theme="night"] .md-diagram-panel-error {
+    color: #f1908e;
+}
+
+html[data-typora-theme="night"] .active-tab-files #info-panel-tab-file,
+html[data-typora-theme="night"] .active-tab-files #info-panel-tab-file:hover,
+html[data-typora-theme="night"] .active-tab-outline #info-panel-tab-outline,
+html[data-typora-theme="night"] .active-tab-outline #info-panel-tab-outline:hover {
+    color: #eee;
+}
+
+html[data-typora-theme="night"] .sidebar-footer-item:hover,
+html[data-typora-theme="night"] .footer-item:hover {
+    background: inherit;
+    color: white;
+}
+
+html[data-typora-theme="night"] .ty-side-sort-btn.active,
+html[data-typora-theme="night"] .ty-side-sort-btn:hover,
+html[data-typora-theme="night"] .selected-folder-menu-item a:after {
+    color: white;
+}
+
+html[data-typora-theme="night"] #sidebar-files-menu {
+    border:solid 1px;
+    box-shadow: 4px 4px 20px rgba(0, 0, 0, 0.79);
+    background-color: var(--bg-color);
+}
+
+html[data-typora-theme="night"] .file-list-item {
+    border-bottom:none;
+}
+
+html[data-typora-theme="night"] .file-list-item-summary {
+    opacity: 1;
+}
+
+html[data-typora-theme="night"] .file-list-item.active:first-child {
+    border-top: none;
+}
+
+html[data-typora-theme="night"] .file-node-background {
+    height: 32px;
+}
+
+html[data-typora-theme="night"] .file-library-node.active>.file-node-content,
+html[data-typora-theme="night"] .file-list-item.active {
+    color: white;
+    color: var(--active-file-text-color);
+}
+
+html[data-typora-theme="night"] .file-library-node.active>.file-node-background{
+    background-color: rgb(34, 34, 34);
+    background-color: var(--active-file-bg-color);
+}
+html[data-typora-theme="night"] .file-list-item.active {
+    background-color: rgb(34, 34, 34);
+    background-color: var(--active-file-bg-color);
+}
+
+html[data-typora-theme="night"] #ty-tooltip {
+    background-color: black;
+    color: #eee;
+}
+
+html[data-typora-theme="night"] .md-task-list-item>input {
+    margin-left: -1.3em;
+    margin-top: 0.3rem;
+    -webkit-appearance: none;
+}
+
+html[data-typora-theme="night"] .md-mathjax-midline {
+    background-color: #57616b;
+    border-bottom: none;
+}
+
+html[data-typora-theme="night"] footer.ty-footer {
+    border-color: #656565;
+}
+
+html[data-typora-theme="night"] .ty-preferences .btn-default {
+    background: transparent;
+}
+html[data-typora-theme="night"] .ty-preferences .btn-default:hover {
+    background: #57616b;
+}
+
+html[data-typora-theme="night"] .ty-preferences select {
+    border: 1px solid #989698;
+    height: 21px;
+}
+
+html[data-typora-theme="night"] .ty-preferences .nav-group-item.active,
+html[data-typora-theme="night"] .export-item.active,
+html[data-typora-theme="night"] .export-items-list-control,
+html[data-typora-theme="night"] .export-detail {
+    background: var(--item-hover-bg-color);
+}
+
+html[data-typora-theme="night"] .ty-preferences input[type="search"] {
+    border-color: #333;
+    background: #333;
+    line-height: 22px;
+    border-radius: 6px;
+    color: white;
+}
+
+html[data-typora-theme="night"] .ty-preferences input[type="search"]:focus {
+    box-shadow: none;
+}
+
+html[data-typora-theme="night"] [data-is-directory="true"] .file-node-content {
+    margin-bottom: 0;
+}
+
+html[data-typora-theme="night"] .file-node-title {
+    line-height: 22px;
+}
+
+html[data-typora-theme="night"] .html-for-mac .file-node-open-state,
+html[data-typora-theme="night"] .html-for-mac .file-node-icon {
+    line-height: 26px;
+}
+
+html[data-typora-theme="night"] ::-webkit-scrollbar-thumb {
+    background: rgba(230, 230, 230, 0.30);
+}
+
+html[data-typora-theme="night"] ::-webkit-scrollbar-thumb:active {
+    background: rgba(230, 230, 230, 0.50);
+}
+
+html[data-typora-theme="night"] #typora-sidebar:hover div.sidebar-content-content::-webkit-scrollbar-thumb:horizontal {
+    background: rgba(230, 230, 230, 0.30);
+}
+
+html[data-typora-theme="night"] .nav-group-item:active {
+    background-color: #474d54 !important;
+}
+
+html[data-typora-theme="night"] .md-search-hit {
+    background: rgba(199, 140, 60, 0.81);
+    color: #eee;
+}
+
+html[data-typora-theme="night"] .md-search-hit * {
+    color: #eee;
+}
+
+html[data-typora-theme="night"] #md-searchpanel input {
+    color: white;
+}
+
+html[data-typora-theme="night"] .modal-backdrop.in {
+    opacity: 1;
+    backdrop-filter: blur(1px);
+}
+
+html[data-typora-theme="night"] .clear-btn-icon {
+    top: 8px;
+}
+
+html[data-typora-theme="night"] .ty-editor-toolbar {
+    background: #2d3033;
+    border: 1px solid rgb(127 127 127 / 50%);
+    filter: drop-shadow(0 1px 2px rgb(0 0 0 / 30%));
+    --text-color: #e8f2fb;
+}
+
+/* try fix https://github.com/typora/typora-issues/issues/5253 */
+html[data-typora-theme="night"] .file-node-expanded>.file-node-children {
+    display: grid;
+  }
+
+html[data-typora-theme="night"] .md-alert-text-note {
+    color: rgb(47, 129, 247);
+}
+html[data-typora-theme="night"] .md-alert-text-important {
+    color: rgb(163, 113, 247);
+}
+html[data-typora-theme="night"] .md-alert-text-warning {
+    color:  rgb(210, 153, 34);
+}
+
+html[data-typora-theme="night"] {
+  --primary-color: #6dc1e7;
+  --secondary-color: #6dc1e7;
+  --background-color: #363B40;
+  --background-color-1: #2E3033;
+  --background-color-2: #2E3033;
+  --background-color-3: #2E3033;
+  --text-color: #b8bfc6;
+  --text-color-1: #b8bfc6;
+  --text-color-2: #9ea0a8;
+  --text-color-3: #9ea0a8;
+  --placeholder-color: #9ea0a8;
+  --border-color: #42454a;
+  --border-color-1: #42454a;
+  --border-color-2: #42454a;
+  --hover-color: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --hover-background-color: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --active-color: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --active-line-color: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --selected-color: #b8bfc6;
+  --selected-background-color: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --primary-color-transparent: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --crepe-color-background: #363B40;
+  --crepe-color-on-background: #b8bfc6;
+  --crepe-color-surface: #2E3033;
+  --crepe-color-surface-low: #2E3033;
+  --crepe-color-on-surface: #b8bfc6;
+  --crepe-color-on-surface-variant: #9ea0a8;
+  --crepe-color-outline: #42454a;
+  --crepe-color-primary: #6dc1e7;
+  --crepe-color-secondary: #2E3033;
+  --crepe-color-on-secondary: #b8bfc6;
+  --crepe-color-inverse: #b8bfc6;
+  --crepe-color-on-inverse: #363B40;
+  --crepe-color-inline-code: #6dc1e7;
+  --crepe-color-error: #e5534b;
+  --crepe-color-hover: #2E3033;
+  --crepe-color-selected: color-mix(in srgb, #6dc1e7, transparent 80%);
+  --crepe-color-inline-area: #2E3033;
+  color-scheme: dark;
+}

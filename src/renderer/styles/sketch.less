@@ -1,0 +1,854 @@
+/**
+ * 默认主题（html.theme-normal）手绘纸感视觉层
+ *
+ * 为什么单独成文件：主题契约只允许声明 CSS 变量，而「手绘稿」的观感来自几何特征
+ * ——可见线稿、四角不等圆角、偏移硬阴影（无模糊）、纸纹、手写体——必须落到样式规则里。
+ * 本文件所有规则都以 html.theme-normal 起头，因此只影响默认亮色主题；
+ * 其它主题（含 Typora 家族与自定义主题）不定义 --sketch-* 令牌，规则也不会命中。
+ *
+ * 两条实现约定：
+ * 1) 优先级：组件样式都在 scoped <style> 中（形如 .a .b[data-v-x]），这里统一以
+ *    html.theme-normal 起头并复刻组件内的嵌套层级，保证同属性胜出；
+ * 2) 不改变布局：尺寸自适应（无固定宽高）的元素一律用 inset 环形阴影画描边，
+ *    而非 border —— 后者会撑大盒子；固定尺寸元素（标签页/标题栏/状态栏）用 border。
+ */
+
+/* ============ 可复用片段 ============ */
+
+/* 图标按钮：平时无框，悬停补一条墨线 + 偏移阴影，按下时「压进纸面」 */
+.sketch-icon-btn() {
+  border-radius: var(--sketch-radius-xs);
+  color: var(--text-color-2);
+  background: transparent;
+  border: none;
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    box-shadow 0.12s ease,
+    transform 0.12s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--background-color-1);
+    color: var(--primary-color);
+    box-shadow:
+      inset 0 0 0 var(--sketch-stroke) var(--border-color-1),
+      var(--sketch-shadow);
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+  }
+}
+
+/* 纸片容器：浮层/卡片统一「墨线 + 不等圆角 + 偏移硬阴影」，再补一层极淡环境阴影与底纸分离 */
+.sketch-paper-card() {
+  border: var(--sketch-stroke) solid var(--border-color-1);
+  border-radius: var(--sketch-radius-wobble-md);
+  background: var(--background-color-1);
+  box-shadow:
+    var(--sketch-shadow-lg),
+    0 14px 30px -18px rgba(51, 48, 42, 0.45);
+}
+
+/* 手绘胶囊按钮（描边态） */
+.sketch-pill() {
+  border: var(--sketch-stroke) solid var(--border-color-1);
+  border-radius: var(--sketch-radius-pill);
+  background: var(--background-color-1);
+  color: var(--text-color-1);
+  box-shadow: var(--sketch-shadow);
+  transition:
+    background-color 0.14s ease,
+    color 0.14s ease,
+    transform 0.14s ease,
+    box-shadow 0.14s ease;
+
+  &:hover:not(:disabled) {
+    background: var(--hover-color);
+    color: var(--primary-color);
+  }
+
+  &:active:not(:disabled) {
+    transform: translate(1px, 1px);
+    box-shadow: none;
+  }
+}
+
+/* 键位签：虚线边框的小纸片 */
+.sketch-key-chip() {
+  border: 1px dashed var(--border-color-2);
+  border-radius: var(--sketch-radius-xs);
+  background: var(--background-color-2);
+  color: var(--text-color-2);
+  box-shadow: none;
+  font-family: var(--sketch-font-ui);
+}
+
+html.theme-normal {
+  /* ============ 0. 全局：纸面、字体、滚动条 ============ */
+
+  #app {
+    font-family: var(--sketch-font-ui);
+  }
+
+  /* 图标线条略加粗并圆角化：铅笔描边的手感 */
+  svg.lucide {
+    stroke-width: 1.95;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--border-color-2) 62%, transparent);
+    border: 2px solid transparent;
+    border-radius: var(--sketch-radius-pill);
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--text-color-3) 55%, transparent);
+    background-clip: content-box;
+  }
+
+  ::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  /* ============ 1. 标题栏 / 标签栏 ============ */
+
+  .TitleBarBox {
+    background: var(--sketch-paper-texture), var(--background-color-2);
+    border-bottom: var(--sketch-stroke) solid var(--border-color-1);
+
+    .window-controls .window-control-btn {
+      border-radius: var(--sketch-radius-sm);
+      margin: 0 1px;
+      color: var(--text-color-2);
+
+      .win-control-glyph {
+        font-size: 11px;
+      }
+
+      &:hover {
+        background: var(--hover-color);
+        color: var(--text-color);
+      }
+
+      &:active {
+        transform: translate(1px, 1px);
+      }
+
+      &.close-btn:hover {
+        /* 关闭键保留危险色语义，但用调色板内的砖红而非系统红 */
+        background: #b5432b;
+        color: #fdf7ef;
+      }
+    }
+  }
+
+  .tabBarContarner {
+    .tabBar {
+      .tabItem {
+        border-radius: var(--sketch-radius-sm) var(--sketch-radius-sm) 0 0;
+        transition:
+          background-color 0.16s ease,
+          color 0.16s ease;
+
+        &.active {
+          box-shadow: none;
+          border-top: var(--sketch-stroke) solid var(--border-color-1);
+          border-left: var(--sketch-stroke) solid var(--border-color-1);
+          border-right: var(--sketch-stroke) solid var(--border-color-1);
+          border-bottom: none;
+        }
+
+        &.merge-preview {
+          border: 2px dashed var(--border-color-2);
+        }
+
+        .closeIcon span::before {
+          border-radius: var(--sketch-radius-pill);
+        }
+
+        .closeIcon:hover span::before {
+          background: var(--hover-color);
+          box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+        }
+      }
+    }
+  }
+
+  /* ============ 2. 状态栏 ============ */
+
+  .StatusBarBox {
+    background: var(--sketch-paper-texture), var(--background-color-2);
+    border-top: var(--sketch-stroke) solid var(--border-color-1);
+
+    .status-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 20px;
+      padding: 0;
+      margin-right: 2px;
+      cursor: pointer;
+      .sketch-icon-btn();
+    }
+
+    .zoomControls button {
+      .sketch-icon-btn();
+
+      color: inherit;
+    }
+
+    .save-status {
+      padding: 2px 8px;
+      border-radius: var(--sketch-radius-xs);
+
+      /* 手绘稿里的状态点：略扁的墨点，不用正圆 */
+      &__dot {
+        border-radius: 40% 55% 45% 50%;
+      }
+    }
+
+    .stats-popup {
+      .sketch-paper-card();
+    }
+
+    .stats-mode-btn {
+      .sketch-icon-btn();
+
+      &.active {
+        box-shadow: inset 0 0 0 var(--sketch-stroke) var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+      }
+    }
+  }
+
+  /* ============ 3. 左侧边栏（文件树） ============ */
+
+  .OutlineBox {
+    background: var(--sketch-paper-texture), var(--background-color-2);
+    border-right: var(--sketch-stroke) solid var(--border-color-1);
+  }
+
+  .OutlineBox .WorkSpace {
+    .workspace-toolbar {
+      border-bottom: 1px dashed var(--border-color-1);
+
+      .search-input {
+        border-radius: var(--sketch-radius-xs);
+        background: var(--background-color-1);
+      }
+
+      .toolbar-btn {
+        .sketch-icon-btn();
+      }
+    }
+
+    .change-folder-bar {
+      border-top: 1px dashed var(--border-color-1);
+    }
+
+    .change-folder-btn {
+      .sketch-pill();
+
+      color: var(--text-color-2);
+      font-family: var(--sketch-font-ui);
+    }
+
+    .empty-state {
+      .open-folder-btn {
+        .sketch-pill();
+
+        color: var(--text-color-2);
+        font-size: 12px;
+      }
+
+      .empty-icon {
+        color: var(--text-color-3);
+        opacity: 0.65;
+      }
+    }
+  }
+
+  /* 文件树条目（ui/tree 与 workspace/tree 两套实现共用类名） */
+  .node-item {
+    border-radius: var(--sketch-radius-xs);
+
+    &:hover {
+      background: color-mix(in srgb, var(--text-color) 6%, transparent);
+    }
+
+    &.selected {
+      background: var(--active-color);
+      box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+    }
+  }
+
+  .node-edit-input {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  /* ============ 4. 右缘三栏（大纲 / 批注 / 书签） ============ */
+
+  .right-edge-tab {
+    background: var(--background-color-1);
+    color: var(--text-color-2);
+    border-radius: var(--sketch-radius-sm) 0 0 var(--sketch-radius-sm);
+    box-shadow:
+      inset 0 0 0 var(--sketch-stroke) var(--border-color-1),
+      var(--sketch-shadow);
+    font-family: var(--sketch-font-hand);
+    letter-spacing: 1px;
+
+    &:hover {
+      opacity: 1;
+      background: var(--hover-color);
+      color: var(--primary-color);
+    }
+  }
+
+  .right-edge-bar {
+    background: var(--sketch-paper-texture), var(--background-color-2);
+    border-left: var(--sketch-stroke) solid var(--border-color-1);
+    box-shadow: var(--sketch-shadow-lg);
+
+    &__header {
+      border-bottom: 1px dashed var(--border-color-1);
+    }
+
+    &__title {
+      font-family: var(--sketch-font-hand);
+      letter-spacing: 0.4px;
+    }
+
+    &__header-actions button {
+      .sketch-icon-btn();
+
+      font-family: var(--sketch-font-ui);
+    }
+
+    &__fold {
+      border: var(--sketch-stroke) solid var(--border-color-1);
+      border-right: none;
+      border-radius: var(--sketch-radius-sm) 0 0 var(--sketch-radius-sm);
+      background: var(--background-color-1);
+      color: var(--text-color-2);
+      box-shadow: var(--sketch-shadow);
+
+      &:hover {
+        background: var(--hover-color);
+        color: var(--primary-color);
+      }
+    }
+
+    &__resize-handle:hover {
+      background: color-mix(in srgb, var(--primary-color) 18%, transparent);
+    }
+  }
+
+  .outline-bar__item {
+    border-radius: var(--sketch-radius-xs);
+
+    &:hover {
+      background: var(--background-color-1);
+    }
+
+    &.active {
+      box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+    }
+  }
+
+  .outline-bar__toggle,
+  .collapse-icon {
+    .sketch-icon-btn();
+  }
+
+  .annotation-card {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    border-radius: var(--sketch-radius-wobble-sm);
+    background: var(--background-color-1);
+    box-shadow: var(--sketch-shadow);
+  }
+
+  .annotation-card__toggle,
+  .annotation-card__actions button {
+    .sketch-icon-btn();
+  }
+
+  .bookmarkItem {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  .bookmarkItem-dot {
+    border-radius: 45% 55% 40% 60%;
+  }
+
+  .bookmarkItem-delete {
+    .sketch-icon-btn();
+
+    &:hover:not(:disabled) {
+      color: var(--error-color);
+      background: color-mix(in srgb, var(--error-color) 12%, transparent);
+    }
+  }
+
+  /* ============ 5. 浮层：菜单 / 命令面板 / 搜索 / 右键菜单 / 对话框 ============ */
+
+  .project-menu {
+    .sketch-paper-card();
+
+    font-family: var(--sketch-font-ui);
+  }
+
+  .project-menu__submenu {
+    .sketch-paper-card();
+
+    border-radius: var(--sketch-radius-wobble-sm);
+  }
+
+  .project-menu__item {
+    border-radius: var(--sketch-radius-xs);
+
+    &:hover {
+      background: var(--hover-color);
+    }
+  }
+
+  /* 设置面板遮罩：暖墨色而非冷蓝黑 */
+  .menu-overlay {
+    background: rgba(51, 48, 42, 0.24);
+  }
+
+  .menu-close-button {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    background: var(--background-color-1);
+    box-shadow: var(--sketch-shadow);
+
+    &:hover {
+      transform: translate(1px, 1px);
+    }
+  }
+
+  .dropdown-content {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    border-radius: var(--sketch-radius-md) var(--sketch-radius-md) 0 0;
+    background: var(--background-color-1);
+    box-shadow: var(--sketch-shadow-lg);
+  }
+
+  .dropdown-header {
+    border-radius: var(--sketch-radius-sm);
+  }
+
+  .MenubarBox .optionsContainer {
+    background: var(--sketch-paper-texture), var(--background-color-2);
+    border-right: var(--sketch-stroke) solid var(--border-color-1);
+
+    .menu-option {
+      border-radius: var(--sketch-radius-xs);
+      font-family: var(--sketch-font-ui);
+
+      &.active {
+        box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+        font-weight: 600;
+      }
+    }
+  }
+
+  .palette-panel,
+  .ws-search-panel {
+    .sketch-paper-card();
+
+    font-family: var(--sketch-font-ui);
+  }
+
+  .palette-item,
+  .ws-result {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  .palette-modes button,
+  .ws-option-btn {
+    .sketch-icon-btn();
+
+    font-family: var(--sketch-font-ui);
+  }
+
+  .ws-close-btn {
+    .sketch-icon-btn();
+  }
+
+  .item-shortcut,
+  kbd {
+    .sketch-key-chip();
+  }
+
+  .item-category {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  .tab-context-menu,
+  .context-menu,
+  .outline-context-menu,
+  .outline-submenu {
+    .sketch-paper-card();
+
+    border-radius: var(--sketch-radius-wobble-sm);
+    font-family: var(--sketch-font-ui);
+  }
+
+  .tab-context-menu button,
+  .context-menu-item,
+  .outline-ctx-item {
+    border-radius: var(--sketch-radius-xs);
+
+    &:hover {
+      background: var(--hover-color);
+    }
+  }
+
+  .context-menu-item.danger,
+  .btn-danger,
+  .btn-overwrite {
+    color: var(--error-color);
+  }
+
+  .dialog-content,
+  .link-dialog,
+  .annotation-editor-dialog,
+  .global-loading-card,
+  .editor-loading-card {
+    .sketch-paper-card();
+
+    font-family: var(--sketch-font-ui);
+  }
+
+  .dialog-header h3,
+  .link-dialog-header h3 {
+    font-family: var(--sketch-font-hand);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .btn {
+    .sketch-pill();
+
+    padding: 7px 16px;
+    font-family: var(--sketch-font-ui);
+  }
+
+  .btn-primary,
+  .btn-save,
+  .btn-ignore {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--background-color-1);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--primary-color) 84%, #000);
+      color: var(--background-color-1);
+    }
+  }
+
+  .btn-danger,
+  .btn-overwrite {
+    background: var(--background-color-1);
+    border-color: var(--error-color);
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--error-color) 12%, transparent);
+      color: var(--error-color);
+    }
+  }
+
+  .btn-secondary {
+    color: var(--text-color-2);
+  }
+
+  /* ============ 6. 表单控件：开关 / 滑块 / 输入框 / 下拉 ============ */
+
+  .switch-track {
+    border-radius: var(--sketch-radius-pill);
+    box-shadow: inset 1px 1px 0 rgba(51, 48, 42, 0.08);
+  }
+
+  .switch-thumb {
+    border-radius: 45% 55% 48% 52%;
+    background: var(--background-color-1);
+    box-shadow: 1px 1px 0 rgba(51, 48, 42, 0.25);
+  }
+
+  .slider-track {
+    border-radius: var(--sketch-radius-pill);
+  }
+
+  .slider-thumb {
+    border-radius: 45% 55% 48% 52%;
+    background: var(--background-color-1);
+    box-shadow: var(--sketch-shadow);
+  }
+
+  .Input,
+  .selector-container,
+  .path-input,
+  .virtual-select__input,
+  .virtual-select__search-input,
+  .link-field input,
+  .search-input {
+    border-radius: var(--sketch-radius-sm);
+    background: var(--background-color-1);
+  }
+
+  .selector-container:focus-within,
+  .virtual-select__input:focus-within,
+  .path-input:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: inset 0 0 0 var(--sketch-stroke) var(--primary-color-transparent);
+  }
+
+  .selector-items,
+  .virtual-select__dropdown {
+    .sketch-paper-card();
+
+    border-radius: var(--sketch-radius-wobble-sm);
+  }
+
+  .virtual-select__option.is-selected {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  .action-btn,
+  .path-picker-btn,
+  .file-name-folder-btn,
+  .reset-all-btn,
+  .test-btn,
+  .refresh-btn {
+    .sketch-pill();
+
+    color: var(--text-color-1);
+    font-family: var(--sketch-font-ui);
+  }
+
+  /* ============ 7. 设置页卡片 ============ */
+
+  .collapsible-section,
+  .category-section,
+  .language-setting,
+  .auto-save-setting,
+  .config-section,
+  .font-section,
+  .font-size-item,
+  .theme-card {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    border-radius: var(--sketch-radius-wobble-sm);
+    background: var(--background-color-1);
+  }
+
+  .section-header,
+  .shortcut-item {
+    border-color: color-mix(in srgb, var(--border-color-1) 80%, transparent);
+  }
+
+  .titleBadge,
+  .title-badge,
+  .title-icon {
+    border-radius: var(--sketch-radius-wobble-sm);
+    box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+  }
+
+  .SettingBaseBox .title {
+    font-family: var(--sketch-font-hand);
+    letter-spacing: 0.3px;
+  }
+
+  .theme-select-item {
+    border-color: var(--border-color-1);
+
+    &.active {
+      border-color: var(--primary-color);
+      box-shadow: var(--sketch-shadow);
+    }
+  }
+
+  .add-theme-card,
+  .add-custom-theme {
+    border: 2px dashed var(--border-color-2);
+    border-radius: var(--sketch-radius-wobble-sm);
+  }
+
+  .theme-select-item .theme-action-icon,
+  .theme-action-icon {
+    .sketch-icon-btn();
+  }
+
+  .key-badge {
+    .sketch-key-chip();
+
+    border-radius: var(--sketch-radius-sm);
+    background: var(--background-color-1);
+  }
+
+  /* ============ 8. 文档纸面（编辑器内容） ============ */
+
+  .livemd-editor {
+    background: var(--background-color);
+
+    /* 内联代码：更深一层的纸色 + 墨线轮廓，像换了一支笔 */
+    code {
+      border: 1px solid var(--border-color-1);
+      border-radius: var(--sketch-radius-xs);
+      background: var(--background-color-3);
+      color: var(--crepe-color-inline-code, #96462c);
+    }
+
+    /* 一/二级标题：常规下框线改为手绘波浪线 */
+    h1,
+    h2 {
+      border-bottom: none;
+      padding-bottom: 6px;
+      background-image: var(--sketch-wave-line);
+      background-repeat: repeat-x;
+      background-position: left bottom;
+      background-size: 24px 6px;
+    }
+
+    /* 分隔线：整条换成波浪墨线（高度由 2px 提到 6px 以容纳波形） */
+    hr {
+      height: 6px;
+      background: var(--sketch-wave-line) repeat-x left center;
+      background-size: 24px 6px;
+      border: none;
+    }
+
+    blockquote {
+      border-left: 3px solid var(--border-color-2);
+    }
+
+    /* 代码块：纸片卡片（墨线 + 不等圆角 + 偏移阴影） */
+    .livemd-code-block {
+      border: var(--sketch-stroke) solid var(--border-color-1);
+      border-radius: var(--sketch-radius-wobble-sm);
+      background: var(--background-color-1);
+      box-shadow: var(--sketch-shadow);
+    }
+
+    /* 表格：加重到线稿级描边 */
+    table th,
+    table td {
+      border: var(--sketch-stroke) solid var(--border-color-1);
+    }
+
+    table th {
+      background: var(--background-color-2);
+    }
+
+    /* 图片：纸片式外框 */
+    .livemd-image-block img {
+      border: var(--sketch-stroke) solid var(--border-color-1);
+      border-radius: var(--sketch-radius-wobble-sm);
+      box-shadow: var(--sketch-shadow);
+    }
+
+    /* 高亮：淡墨绿马克笔 */
+    .livemd-highlight {
+      border-radius: var(--sketch-radius-xs);
+    }
+  }
+
+  /* 源码模式（CodeMirror） */
+  .cm-content {
+    background: var(--background-color);
+  }
+
+  .cm-activeLine,
+  .cm-activeLineGutter {
+    box-shadow: inset 2px 0 0 var(--primary-color-transparent);
+  }
+
+  .cm-search.cm-panel {
+    input,
+    button {
+      border: 1px solid var(--border-color-1) !important;
+      border-radius: var(--sketch-radius-xs) !important;
+      background: var(--background-color-1) !important;
+    }
+  }
+
+  /* ============ 9. 侧栏拖拽把手 ============ */
+
+  .sidebar-resize-handle::after {
+    width: 2px;
+    border-radius: var(--sketch-radius-pill);
+  }
+
+  /* ============ 10. 空标签页首页 ============ */
+
+  .home-page {
+    font-family: var(--sketch-font-ui);
+  }
+}
+
+/* ============ 表格工具栏：默认主题下的纸片质感 ============ */
+
+html.theme-normal {
+  .livemd-table-toolbar,
+  .livemd-table-grid-picker,
+  .livemd-table-more-menu {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    border-radius: var(--sketch-radius-wobble-sm);
+    background: var(--background-color-1);
+    box-shadow: var(--sketch-shadow-lg);
+  }
+
+  .livemd-table-tool-btn {
+    border-radius: var(--sketch-radius-xs);
+    color: var(--text-color-2);
+
+    &:hover {
+      background: var(--hover-color);
+      color: var(--primary-color);
+      box-shadow: inset 0 0 0 var(--sketch-stroke) var(--border-color-1);
+    }
+
+    &.active {
+      color: var(--primary-color);
+      background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+      box-shadow: inset 0 0 0 var(--sketch-stroke) var(--primary-color);
+    }
+  }
+
+  .livemd-table-grid-cell {
+    border-radius: 2px 4px 3px 4px;
+    border-color: var(--border-color-1);
+  }
+
+  .livemd-table-grid-cell.active {
+    border-color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 20%, transparent);
+  }
+
+  .livemd-table-more-item {
+    border-radius: var(--sketch-radius-xs);
+  }
+
+  /* 表格本体：线稿级描边 + 纸片错位阴影 */
+  .livemd-table-block .livemd-table-scroll table {
+    border: var(--sketch-stroke) solid var(--border-color-1);
+    border-radius: var(--sketch-radius-wobble-sm);
+    box-shadow: var(--sketch-shadow);
+    background: var(--background-color-1);
+  }
+
+  .livemd-table-scroll::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-color-3) 45%, transparent);
+  }
+}
