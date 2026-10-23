@@ -1,0 +1,107 @@
+/* 默认亮色主题 Normal Light
+ *
+ * 视觉基调：手绘纸感（参考草图稿）——米色纸张 + 铅笔墨色线稿 + 墨绿点色。
+ * 变量仍是双层契约（App 层 21 个界面变量 / 编辑器层 17 个 --crepe-*）。
+ * 末尾的 --sketch-* 为「手绘视觉令牌」：仅本主题定义，由 styles/sketch.less 消费；
+ * 其它主题不定义这些令牌时，sketch.less 的规则因选择器限定在 html.theme-normal 内而不生效。
+ */
+html.theme-normal {
+  /* ── 纸面层次：-1 最亮（编辑面/面板），-2 稍暗（标题栏/状态栏/侧栏） ── */
+  --background-color: #f8f3e7;
+  --background-color-1: #fcf9f1;
+  --background-color-2: #ebe3d2;
+  --background-color-3: #ded3bd;
+
+  /* ── 墨色文字：由深到浅 ── */
+  --text-color: #33302a;
+  --text-color-1: #3e3a32;
+  --text-color-2: #5a5449;
+  --text-color-3: #7a7261;
+  --placeholder-color: #9c9382;
+
+  /* ── 线稿描边：比常规主题更明显（手绘稿依赖可见轮廓线） ── */
+  --border-color: #d3c8b1;
+  --border-color-1: #c4b79c;
+  --border-color-2: #a99c82;
+
+  /* ── 强调色：参考图中唯一的彩色（墨绿），用于链接/选中/激活 ── */
+  --primary-color: #4f6b47;
+  --secondary-color: #6e7f8d;
+  --primary-color-transparent: rgba(79, 107, 71, 0.28);
+  /* 供 ui/slider 的 rgba(var(--primary-color-rgb), a) 使用 */
+  --primary-color-rgb: 79, 107, 71;
+
+  /* ── 交互态：淡墨绿浸染与淡墨灰浸染 ── */
+  --hover-color: rgba(79, 107, 71, 0.1);
+  --hover-background-color: rgba(51, 48, 42, 0.05);
+  --active-color: rgba(79, 107, 71, 0.18);
+  --active-line-color: rgba(79, 107, 71, 0.12);
+
+  /* ── 选中态：淡墨绿底 + 深墨字（保证亮底可读性） ── */
+  --selected-color: #2f2c26;
+  --selected-background-color: rgba(79, 107, 71, 0.22);
+
+  /* ── 状态色（非契约变量，组件侧均有 fallback） ── */
+  --success-color: #4f6b47;
+  --warn-color: #b07b2e;
+  --error-color: #a8442a;
+
+  /* ── 手绘视觉令牌：线宽 / 有机圆角 / 偏移硬阴影 / 纸纹 / 手写体 ── */
+  --sketch-stroke: 1.5px;
+  --sketch-stroke-strong: 2px;
+  --sketch-radius-xs: 6px;
+  --sketch-radius-sm: 10px;
+  --sketch-radius-md: 14px;
+  --sketch-radius-lg: 18px;
+  /* 四角不等半径 = 手绘线条的「不规整」观感 */
+  --sketch-radius-wobble-sm: 10px 12px 9px 13px;
+  --sketch-radius-wobble-md: 14px 16px 13px 17px;
+  --sketch-radius-pill: 999px;
+  /* 偏移硬阴影（无模糊）= 线稿的「双描边」错位感 */
+  --sketch-shadow: 1.5px 2px 0 -0.5px rgba(51, 48, 42, 0.22);
+  --sketch-shadow-lg: 3px 4px 0 -1px rgba(51, 48, 42, 0.18);
+  --sketch-shadow-inset: inset 1px 1px 0 rgba(51, 48, 42, 0.06);
+  /* 纸纹：极淡横纹（只铺在面板/外框，不压在正文上） */
+  --sketch-paper-texture: repeating-linear-gradient(
+    0deg,
+    rgba(51, 48, 42, 0.016) 0 1px,
+    transparent 1px 5px
+  );
+  /* 手写/楷体字族：拉丁走 Segoe Print / Bradley Hand，中文走楷体，缺字自动回退 */
+  --sketch-font-hand:
+    "Segoe Print", "Bradley Hand", "Ink Free", "Chalkboard SE", KaiTi, STKaiti, "Kaiti SC",
+    "Comic Sans MS", cursive;
+  /* 界面正文字族（文件树/状态栏等密集文本保持可读性） */
+  --sketch-font-ui:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  /* 手绘波浪线（分隔线 / 标题下划线）：内联 SVG，随主题描边色固定为墨灰 */
+  --sketch-wave-line: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='6' viewBox='0 0 24 6'><path d='M0 4.2 Q3 1.6 6 4.2 T12 4.2 T18 4.2 T24 4.2' fill='none' stroke='%23a99c82' stroke-width='1.4' stroke-linecap='round'/></svg>");
+
+  .milkdown {
+    --crepe-color-background: #f8f3e7;
+    --crepe-color-on-background: #33302a;
+    --crepe-color-surface: #f2ebdb;
+    --crepe-color-surface-low: #ebe3d2;
+    --crepe-color-on-surface: #33302a;
+    --crepe-color-on-surface-variant: #5a5449;
+    --crepe-color-outline: #c4b79c;
+    --crepe-color-primary: #4f6b47;
+    --crepe-color-secondary: #ebe3d2;
+    --crepe-color-on-secondary: #33302a;
+    --crepe-color-inverse: #33302a;
+    --crepe-color-on-inverse: #fcf9f1;
+    --crepe-color-inline-code: #96462c;
+    --crepe-color-error: #a8442a;
+    --crepe-color-hover: #f2ebdb;
+    --crepe-color-selected: #e6dcc6;
+    --crepe-color-inline-area: #ebe3d2;
+
+    /* Crepe 自带浮层（斜杠菜单/提示）标题字体：手写感 */
+    --crepe-font-title: var(--sketch-font-hand);
+
+    /* 阴影改为偏移硬阴影：与线稿描边的错位感一致 */
+    --crepe-shadow-1: 2px 2px 0 -0.5px rgba(51, 48, 42, 0.2);
+    --crepe-shadow-2: 3px 4px 0 -1px rgba(51, 48, 42, 0.2);
+  }
+}
