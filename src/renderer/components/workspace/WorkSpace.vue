@@ -407,16 +407,18 @@ function getSortLabel() {
       </button>
     </div>
 
-    <Tree
-      v-if="workSpace"
-      :nodes="workSpace"
-      :current-node="currentImagePath || (currentTab ? currentTab.filePath : null)"
-      :editing-path="editingNode?.path ?? null"
-      @node-click="handleNodeClick"
-      @node-context-menu="handleContextMenu"
-      @edit-confirm="handleEditConfirm"
-      @edit-cancel="handleEditCancel"
-    />
+    <!-- 文件树独立滚动：工具栏固定在顶部、「更换文件夹」固定在底部，不随滚动条滑动 -->
+    <div v-if="workSpace" class="workspace-tree-scroll">
+      <Tree
+        :nodes="workSpace"
+        :current-node="currentImagePath || (currentTab ? currentTab.filePath : null)"
+        :editing-path="editingNode?.path ?? null"
+        @node-click="handleNodeClick"
+        @node-context-menu="handleContextMenu"
+        @edit-confirm="handleEditConfirm"
+        @edit-cancel="handleEditCancel"
+      />
+    </div>
     <div v-if="workSpace" class="change-folder-bar">
       <button class="change-folder-btn" @click="openFolder">
         <AppIcon name="folder-opened" />
@@ -538,18 +540,44 @@ function getSortLabel() {
 
 <style lang="less" scoped>
 .WorkSpace {
+  flex: 1;
+  min-height: 0;
   height: 100%;
-  overflow: auto;
+  // 外层不滚动：滚动只发生在中间的文件树区域，顶部工具栏与底部「更换文件夹」保持固定
+  overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
 
-  // 隐藏滚动条但保持滚动功能
-  scrollbar-width: none; // Firefox
-  -ms-overflow-style: none; // IE/Edge
+  .workspace-tree-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
 
-  &::-webkit-scrollbar {
-    display: none; // Chrome/Safari/Opera
+    // 细滚动条：仅在文件树区域出现
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-color-3) 34%, transparent) transparent;
+
+    &::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: color-mix(in srgb, var(--text-color-3) 28%, transparent);
+      border: 2px solid transparent;
+      border-radius: 999px;
+      background-clip: content-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--text-color-3) 45%, transparent);
+      background-clip: content-box;
+    }
   }
 
   .workspace-toolbar {

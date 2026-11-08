@@ -73,32 +73,13 @@ onUnmounted(() => {
     z-index: 999;
   }
 
+  // 不在此层滚动：滚动交给 WorkSpace 内部的文件树区域，保证底部「更换文件夹」固定可见
   .content-container {
     flex: 1;
-    overflow-y: auto;
-    overflow-x: hidden;
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--text-color-3) 34%, transparent) transparent;
-
-    &::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    &::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    &::-webkit-scrollbar-thumb {
-      background: color-mix(in srgb, var(--text-color-3) 28%, transparent);
-      border: 2px solid transparent;
-      border-radius: 999px;
-      background-clip: content-box;
-    }
-
-    &::-webkit-scrollbar-thumb:hover {
-      background: color-mix(in srgb, var(--text-color-3) 45%, transparent);
-      background-clip: content-box;
-    }
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 }
 </style>
