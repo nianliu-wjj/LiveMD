@@ -44,6 +44,7 @@ import {
 } from "./plugins/fold";
 import { createSyntaxFixerPlugin } from "./plugins/syntax-fixer";
 import { extractPlainText, markdownToPlainText } from "./utils/plain-text";
+import { MINDMAP_TEMPLATE } from "./utils/mindmap-markdown";
 import { createSyntaxDetectorPlugin } from "./plugins/syntax-detector";
 import { createHeadingSyncPlugin } from "./plugins/heading-sync";
 import {
@@ -2142,6 +2143,14 @@ export class LivemdEditor implements ILivemdEditor {
       );
     }
 
+    // 插入思维导图：```mindmap 代码块 + 模板内容（中心主题 + 分支），插入后可点「编辑思维导图」图形化编辑
+    container.appendChild(
+      this.createContextMenuItem("思维导图", false, () => {
+        this.hideContextMenu();
+        this.insertMindmapBlock();
+      })
+    );
+
     // 插入图片（通过文件选择器）
     container.appendChild(
       this.createContextMenuItem("图片", false, () => {
@@ -2532,6 +2541,18 @@ export class LivemdEditor implements ILivemdEditor {
         console.warn("无法访问剪贴板");
       }
     }
+  }
+
+  /**
+   * 在当前选区插入思维导图代码块（模板内容），只读时事务会被 dispatchTransaction 拦截
+   */
+  insertMindmapBlock(): void {
+    const codeBlockType = this.schema.nodes.code_block;
+    if (!codeBlockType) return;
+    const node = codeBlockType.create({ language: "mindmap" }, this.schema.text(MINDMAP_TEMPLATE));
+    console.info("[LivemdEditor] 插入思维导图代码块");
+    this.view.focus();
+    this.view.dispatch(this.view.state.tr.replaceSelectionWith(node).scrollIntoView());
   }
 
   /**

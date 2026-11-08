@@ -46,6 +46,7 @@ import {
 import { canFoldCodeBlock, getCodeBlockFoldHeight } from "./code-block-fold";
 import { formatCode, getFormatSupport } from "../utils/code-formatter";
 import { describeIndentRule, getIndentRule, reindentCode } from "../utils/code-indent";
+import { renderMindMapSvg } from "./mindmap";
 import { openMermaidFullscreen, normalizeRenderedMermaidViewport } from "./mermaid-fullscreen";
 import { FULLSCREEN_ICONS, type FullscreenViewerHandle } from "../viewers/fullscreenViewer";
 
@@ -519,7 +520,21 @@ const supportedLanguages = [
   { value: "octave", label: "Octave" },
   { value: "r", label: "R" },
   { value: "mermaid", label: "Mermaid" },
+  { value: "mindmap", label: "思维导图" },
 ];
+
+/** 思维导图编辑请求事件：代码块 NodeView（core 层）通过 window 事件桥接到渲染层的编辑弹窗 */
+export const MINDMAP_EDIT_EVENT = "livemd:mindmap-edit";
+
+/** 思维导图编辑请求事件的 detail */
+export interface MindmapEditEventDetail {
+  /** 代码块节点在文档中的位置（getPos 结果） */
+  pos: number;
+  /** 当前缩进层级源码 */
+  source: string;
+  /** 发起请求的编辑器根节点，渲染层据此找到对应的编辑器实例（多标签页并存时区分） */
+  editorDom: HTMLElement;
+}
 
 /** Mermaid 显示模式选项 */
 const mermaidDisplayModes = [
@@ -579,6 +594,10 @@ export class CodeBlockView implements NodeView {
   searchHighlightCompartment: Compartment;
   /** 缩进规则（随语言切换 reconfigure） */
   indentCompartment: Compartment;
+  /** 思维导图预览容器（language 为 mindmap 时存在） */
+  private mindmapPreview: HTMLElement | null = null;
+  /** 思维导图块是否同时显示源码编辑器（默认只显示图，空块默认显示源码便于输入） */
+  private mindmapShowSource = false;
   mermaidPreview: HTMLElement | null = null;
   mermaidDisplayMode: MermaidDisplayMode = globalMermaidDefaultMode;
   headerElement: HTMLElement | null = null;
@@ -676,6 +695,10 @@ export class CodeBlockView implements NodeView {
     if (normalizedLang === "mermaid") {
       this.createMermaidPreview(node.textContent);
     }
+
+    // 思维导图预览（自研同步渲染，无需懒加载第三方库）
+    this.mindmapShowSource = !node.textContent;
+    this.syncMindmapPreview();
 
     // 如果代码块是空的，自动聚焦（空块必须立即创建编辑器，否则用户无法输入）
     if (!node.textContent) {
@@ -987,6 +1010,11 @@ export class CodeBlockView implements NodeView {
         this.mermaidPreview.style.display = "none";
       }
 
+      // 隐藏思维导图预览
+      if (this.mindmapPreview) {
+        this.mindmapPreview.style.display = "none";
+      }
+
       // 隐藏 CodeMirror
       if (this.editorContainer) {
         this.editorContainer.style.display = "none";
@@ -1082,6 +1110,9 @@ export class CodeBlockView implements NodeView {
       if (this.mermaidPreview && this.node.attrs.language === "mermaid") {
         this.updateMermaidDisplay();
       }
+
+      // 恢复思维导图预览
+      this.syncMindmapPreview();
     }
   }
 
@@ -2063,6 +2094,10 @@ export class CodeBlockView implements NodeView {
       }
     }
 
+    // 切换到 / 离开思维导图
+    this.mindmapShowSource = !this.node.textContent;
+    this.syncMindmapPreview();
+
     this.updateFoldAvailability();
   }
 
@@ -2099,6 +2134,130 @@ export class CodeBlockView implements NodeView {
   /**
    * 更新 Mermaid 显示
    */
+  /** 当前代码块是否为思维导图 */
+  private isMindmap(): boolean {
+    return normalizeLanguage(this.node.attrs.language || "") === "mindmap";
+  }
+
+  /**
+   * 同步思维导图预览：语言为 mindmap 时创建 / 刷新预览，否则移除预览并恢复源码编辑器。
+   * 预览为自研同步渲染（解析 + tidy-tree 布局 + SVG 字符串），无需懒加载。
+   */
+  private syncMindmapPreview(): void {
+    if (!this.isMindmap()) {
+      if (this.mindmapPreview) {
+        this.mindmapPreview.remove();
+        this.mindmapPreview = null;
+        this.dom.classList.remove("mindmap-diagram-only");
+        if (this.editorContainer && !this.sourceViewMode) this.editorContainer.style.display = "";
+      }
+      return;
+    }
+
+    if (!this.mindmapPreview) {
+      this.mindmapPreview = this.createMindmapPreviewElement();
+      this.dom.appendChild(this.mindmapPreview);
+    }
+
+    const canvas = this.mindmapPreview.querySelector<HTMLElement>(".livemd-mindmap-canvas");
+    if (canvas) {
+      const source = this.node.textContent;
+      try {
+        if (source.trim()) {
+          canvas.innerHTML = renderMindMapSvg(source);
+        } else {
+          canvas.innerHTML = "";
+          const placeholder = document.createElement("div");
+          placeholder.className = "livemd-mindmap-placeholder";
+          placeholder.textContent = "输入缩进层级文本（每级 2 个空格），或点击「编辑思维导图」";
+          canvas.appendChild(placeholder);
+        }
+      } catch (error) {
+        console.error("[CodeBlock] 思维导图渲染失败:", error);
+        canvas.textContent = `思维导图渲染失败：${String(error)}`;
+      }
+    }
+
+    // 源码模式下整个块由源码文本接管
+    if (this.sourceViewMode) {
+      this.mindmapPreview.style.display = "none";
+      return;
+    }
+    this.mindmapPreview.style.display = "";
+    this.dom.classList.toggle("mindmap-diagram-only", !this.mindmapShowSource);
+    if (this.editorContainer) {
+      this.editorContainer.style.display = this.mindmapShowSource ? "" : "none";
+    }
+    const toggle = this.mindmapPreview.querySelector<HTMLButtonElement>(
+      ".livemd-mindmap-toggle-source"
+    );
+    if (toggle) toggle.textContent = this.mindmapShowSource ? "隐藏源码" : "显示源码";
+  }
+
+  /** 创建思维导图预览 DOM：工具栏（编辑 / 源码开关）+ 画布 */
+  private createMindmapPreviewElement(): HTMLElement {
+    const preview = document.createElement("div");
+    preview.className = "livemd-mindmap-preview";
+    preview.contentEditable = "false";
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "livemd-mindmap-toolbar";
+
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "livemd-mindmap-btn livemd-mindmap-edit";
+    editButton.textContent = "编辑思维导图";
+    editButton.title = "在独立弹窗中图形化编辑（双击图也可打开）";
+    editButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.requestMindmapEdit();
+    });
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.className = "livemd-mindmap-btn livemd-mindmap-toggle-source";
+    toggleButton.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.mindmapShowSource = !this.mindmapShowSource;
+      this.syncMindmapPreview();
+      if (this.mindmapShowSource) this.ensureCodeMirror().focus();
+    });
+
+    toolbar.append(editButton, toggleButton);
+
+    const canvas = document.createElement("div");
+    canvas.className = "livemd-mindmap-canvas";
+    canvas.addEventListener("dblclick", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.requestMindmapEdit();
+    });
+    // 阻止 mousedown 冒泡给 ProseMirror，避免点击图时选中整个节点 / 移动光标
+    canvas.addEventListener("mousedown", (event) => event.stopPropagation());
+
+    preview.append(toolbar, canvas);
+    return preview;
+  }
+
+  /** 通过 window 事件请求渲染层打开思维导图编辑弹窗 */
+  private requestMindmapEdit(): void {
+    if (this.isReadOnly()) {
+      console.info("[CodeBlock] 只读模式下不打开思维导图编辑弹窗");
+      return;
+    }
+    const pos = this.getPos();
+    if (pos === undefined) return;
+    const detail: MindmapEditEventDetail = {
+      pos,
+      source: this.node.textContent,
+      editorDom: this.view.dom as HTMLElement,
+    };
+    console.info("[CodeBlock] 请求编辑思维导图，位置:", pos);
+    window.dispatchEvent(new CustomEvent(MINDMAP_EDIT_EVENT, { detail }));
+  }
+
   private updateMermaidDisplay(): void {
     if (!this.editorContainer || !this.mermaidPreview) return;
 
@@ -2288,6 +2447,9 @@ export class CodeBlockView implements NodeView {
       if (this.node.attrs.language === "mermaid") {
         this.createMermaidPreview(newText);
       }
+
+      // 更新思维导图预览
+      if (this.isMindmap()) this.syncMindmapPreview();
     }
   }
 
@@ -2571,6 +2733,11 @@ export class CodeBlockView implements NodeView {
       }
     }
 
+    // 思维导图：内容或语言变化时同步预览（语言离开 mindmap 时会移除预览并恢复编辑器）
+    if (newText !== prevText || node.attrs.language !== prevLanguage) {
+      this.syncMindmapPreview();
+    }
+
     // 更新搜索高亮
     this.updateSearchHighlights();
 
@@ -2641,6 +2808,8 @@ export class CodeBlockView implements NodeView {
     if (this.mermaidPreview) {
       this.mermaidPreview.remove();
     }
+    this.mindmapPreview?.remove();
+    this.mindmapPreview = null;
     this.themeUnsubscribe?.();
     this.themeUnsubscribe = null;
     this.closeOpenSelects();

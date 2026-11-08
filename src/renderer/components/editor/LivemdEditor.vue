@@ -37,6 +37,7 @@ import emitter from "@/renderer/events";
 import autodialog from "autodialog.js";
 import autotoast from "autotoast.js";
 import "@/core/styles/livemd.css";
+import { MINDMAP_EDIT_EVENT, type MindmapEditEventDetail } from "@/core/nodeviews/code-block";
 import { normalizeMarkdownForDirtyCheck } from "@/renderer/utils/markdown";
 import { getFoldForDoc, migrateFoldDocKey, setFoldForDoc } from "@/renderer/utils/foldStates";
 import useAppCommands from "@/renderer/hooks/useAppCommands";
@@ -481,6 +482,55 @@ function handleInsertLinkRequest() {
   void handleInsertLink();
 }
 
+/**
+ * 思维导图代码块请求编辑：动态加载弹窗（首屏不加载该 chunk），保存时把序列化文本写回代码块
+ * 多个标签页的编辑器同时存活，事件经 window 广播，需按 editorDom 过滤出自己的实例
+ */
+async function handleMindmapEditRequest(event: Event) {
+  const detail = (event as CustomEvent<MindmapEditEventDetail>).detail;
+  if (!editor || !detail || detail.editorDom !== editor.view.dom) return;
+  if (effectiveReadOnly.value) {
+    autotoast.show("只读模式下无法编辑思维导图");
+    return;
+  }
+
+  let dialog: typeof import("@/renderer/components/dialogs/MindMapEditDialog.vue");
+  try {
+    dialog = await import("@/renderer/components/dialogs/MindMapEditDialog.vue");
+  } catch (error) {
+    console.error("[LivemdEditor] 思维导图编辑弹窗加载失败:", error);
+    autotoast.show("思维导图编辑器加载失败", "error");
+    return;
+  }
+
+  const result = (await autodialog.show(dialog.default, {
+    props: { source: detail.source },
+  })) as string | null | undefined;
+  if (typeof result !== "string" || !editor) return;
+
+  // 弹窗打开期间文档可能被外部改动（文件监听写回等）：节点已不匹配时放弃写回，避免覆盖到错误位置
+  const { view } = editor;
+  const node = view.state.doc.nodeAt(detail.pos);
+  if (
+    !node ||
+    node.type.name !== "code_block" ||
+    node.attrs.language !== "mindmap" ||
+    node.textContent !== detail.source
+  ) {
+    console.warn("[LivemdEditor] 思维导图节点已变化，放弃写回，位置:", detail.pos);
+    autotoast.show("文档已发生变化，思维导图未保存，请重新打开编辑", "error");
+    return;
+  }
+  if (result === detail.source) return;
+
+  const start = detail.pos + 1;
+  view.dispatch(
+    view.state.tr.replaceWith(start, start + node.content.size, view.state.schema.text(result))
+  );
+  console.info("[LivemdEditor] 思维导图已写回，位置:", detail.pos);
+  autotoast.show("思维导图已更新", "success");
+}
+
 /** 将应用的视图模式配置同步到编辑器实例 */
 function syncViewModesToEditor() {
   if (!editor) return;
@@ -920,6 +970,7 @@ onUnmounted(() => {
   emitter.off("editor:annotation-remove", handleAnnotationRemove);
   emitter.off("editor:annotation-reveal", handleAnnotationReveal);
   window.removeEventListener("livemd:insert-link", handleInsertLinkRequest);
+  window.removeEventListener(MINDMAP_EDIT_EVENT, handleMindmapEditRequest);
   window.electronAPI.removeListener?.("editor:undo", handleMenuUndo);
   window.electronAPI.removeListener?.("editor:redo", handleMenuRedo);
 });
@@ -1016,6 +1067,7 @@ emitter.on("editor:annotation-cancel", handleAnnotationCancel);
 emitter.on("editor:annotation-remove", handleAnnotationRemove);
 emitter.on("editor:annotation-reveal", handleAnnotationReveal);
 window.addEventListener("livemd:insert-link", handleInsertLinkRequest);
+window.addEventListener(MINDMAP_EDIT_EVENT, handleMindmapEditRequest);
 
 // 处理编辑器重载事件（仅活跃编辑器响应）
 async function handleEditorReload() {
