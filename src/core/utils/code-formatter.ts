@@ -18,6 +18,7 @@ import postcssPlugin from "prettier/plugins/postcss";
 import typescriptPlugin from "prettier/plugins/typescript";
 import yamlPlugin from "prettier/plugins/yaml";
 import { format as formatSql } from "sql-formatter";
+import { getIndentRule } from "./code-indent.ts";
 
 /** prettier 各语言解析器 / 插件映射：language → [parser, plugins] */
 const PRETTIER_TARGETS: Record<string, { parser: string; plugins: unknown[] }> = {
@@ -74,7 +75,7 @@ export interface FormatFailure {
 
 export type FormatResult = FormatSuccess | FormatFailure;
 
-/** prettier 输出统一配置 */
+/** prettier 输出统一配置（tabWidth / useTabs 在 formatCode 中按语言覆盖） */
 const PRETTIER_OPTIONS = {
   printWidth: 80,
   tabWidth: 2,
@@ -104,12 +105,19 @@ export async function formatCode(code: string, language: string): Promise<Format
   if (!code.trim()) return { ok: false, reason: "内容为空，无需格式化" };
 
   const normalized = normalizeFormatterLanguage(language);
+  // 缩进宽度 / 是否用制表符按语言惯例取值（与代码块编辑时的缩进规则一致）
+  const indent = getIndentRule(normalized);
 
   if (normalized === "sql") {
     try {
       return {
         ok: true,
-        code: await formatSql(code, { language: "sql", tabWidth: 2, keywordCase: "upper" }),
+        code: await formatSql(code, {
+          language: "sql",
+          tabWidth: indent.tabSize,
+          useTabs: indent.useTab,
+          keywordCase: "upper",
+        }),
       };
     } catch (error) {
       return { ok: false, reason: toReason(error) };
@@ -122,6 +130,8 @@ export async function formatCode(code: string, language: string): Promise<Format
   try {
     const formatted = await prettier.format(code, {
       ...PRETTIER_OPTIONS,
+      tabWidth: indent.tabSize,
+      useTabs: indent.useTab,
       parser: target.parser,
       plugins: target.plugins as never[],
     });

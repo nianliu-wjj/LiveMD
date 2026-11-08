@@ -17,8 +17,14 @@ import {
   Decoration as CMDecoration,
 } from "@codemirror/view";
 import { EditorState as CMEditorState, Compartment, Extension } from "@codemirror/state";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { syntaxHighlighting, defaultHighlightStyle, HighlightStyle } from "@codemirror/language";
+import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirror/commands";
+import {
+  syntaxHighlighting,
+  defaultHighlightStyle,
+  HighlightStyle,
+  indentOnInput,
+  indentUnit,
+} from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import {
   CODE_BLOCK_LAZY,
@@ -39,6 +45,7 @@ import {
 } from "../clipboard";
 import { canFoldCodeBlock, getCodeBlockFoldHeight } from "./code-block-fold";
 import { formatCode, getFormatSupport } from "../utils/code-formatter";
+import { describeIndentRule, getIndentRule, reindentCode } from "../utils/code-indent";
 import { openMermaidFullscreen, normalizeRenderedMermaidViewport } from "./mermaid-fullscreen";
 import { FULLSCREEN_ICONS, type FullscreenViewerHandle } from "../viewers/fullscreenViewer";
 
@@ -546,6 +553,16 @@ function getLanguageExtension(language: string): Extension {
 }
 
 /**
+ * 按语言构建缩进扩展：indentUnit 决定 Enter 自动缩进与 Tab / Shift-Tab 每级插入的内容，
+ * tabSize 决定制表符显示宽度；indentOnInput 让输入 `}` `]` 等字符时按语法自动回退缩进。
+ * 各语言包（如 Python）的缩进服务会读取 indentUnit，因此配置 4 空格即满足 PEP 8。
+ */
+function buildIndentExtension(language: string): Extension {
+  const rule = getIndentRule(language);
+  return [indentUnit.of(rule.unit), CMEditorState.tabSize.of(rule.tabSize), indentOnInput()];
+}
+
+/**
  * 代码块 NodeView 类
  */
 export class CodeBlockView implements NodeView {
@@ -560,6 +577,8 @@ export class CodeBlockView implements NodeView {
   themeCompartment: Compartment;
   lineNumbersCompartment: Compartment;
   searchHighlightCompartment: Compartment;
+  /** 缩进规则（随语言切换 reconfigure） */
+  indentCompartment: Compartment;
   mermaidPreview: HTMLElement | null = null;
   mermaidDisplayMode: MermaidDisplayMode = globalMermaidDefaultMode;
   headerElement: HTMLElement | null = null;
@@ -609,6 +628,7 @@ export class CodeBlockView implements NodeView {
     this.themeCompartment = new Compartment();
     this.lineNumbersCompartment = new Compartment();
     this.searchHighlightCompartment = new Compartment();
+    this.indentCompartment = new Compartment();
 
     // 规范化语言名称仅用于本地渲染（头部 / 高亮 / Mermaid 识别）。
     // 不在构造阶段回写文档：大文档中数百个代码块会因此触发数百次事务与全量语法扫描。
@@ -745,6 +765,12 @@ export class CodeBlockView implements NodeView {
    * reconfigure（期间语言又变或实例已销毁则丢弃结果）
    */
   private applyLanguageExtension(language: string): void {
+    // 缩进规则同步切换（与语言包是否已加载无关，立即生效）
+    this.cm?.dispatch({
+      effects: this.indentCompartment.reconfigure(
+        buildIndentExtension(normalizeLanguage(language))
+      ),
+    });
     const token = ++this.languageLoadToken;
     const loaded = getLoadedLanguageExtension(language);
     if (loaded) {
@@ -873,9 +899,12 @@ export class CodeBlockView implements NodeView {
               return true;
             },
           },
+          // Tab / Shift-Tab 按当前语言的缩进单位增减缩进（未命中上方自定义按键时生效）
+          indentWithTab,
           ...defaultKeymap,
           ...historyKeymap,
         ]),
+        this.indentCompartment.of(buildIndentExtension(normalizedLang)),
         this.themeCompartment.of(createThemeExtension(isDark)),
         this.languageCompartment.of(getLanguageExtension(normalizedLang)),
         this.lineNumbersCompartment.of(lineNumbers()),
@@ -1220,8 +1249,8 @@ export class CodeBlockView implements NodeView {
     // 允许基本的编辑操作
     if (e.key === "Tab") {
       e.preventDefault();
-      // 插入两个空格
-      document.execCommand("insertText", false, "  ");
+      // 按代码块语言插入一级缩进（Python 4 空格、Go 制表符、前端 2 空格……）
+      document.execCommand("insertText", false, getIndentRule(this.node.attrs.language).unit);
     }
   }
 
@@ -1457,6 +1486,36 @@ export class CodeBlockView implements NodeView {
     tr.replaceWith(start, end, result.code ? this.view.state.schema.text(result.code) : []);
     this.view.dispatch(tr);
     return { ok: true };
+  }
+
+  /**
+   * 按当前语言的缩进规则重排整段代码的行首缩进（层级结构保持不变），单条事务可一步撤销
+   */
+  private reindentCodeBlock(): void {
+    if (this.isReadOnly()) return;
+    const code = this.cm ? this.cm.state.doc.toString() : this.node.textContent;
+    const rule = getIndentRule(this.node.attrs.language);
+    const next = reindentCode(code, rule);
+    if (next === code) {
+      console.debug("[CodeBlock] 缩进已符合规则，无需调整:", describeIndentRule(rule));
+      return;
+    }
+
+    const pos = this.getPos();
+    if (pos === undefined) return;
+    console.debug(
+      "[CodeBlock] 调整缩进为",
+      describeIndentRule(rule),
+      "语言:",
+      this.node.attrs.language
+    );
+    const { tr } = this.view.state;
+    tr.replaceWith(
+      pos + 1,
+      pos + 1 + this.node.content.size,
+      next ? this.view.state.schema.text(next) : []
+    );
+    this.view.dispatch(tr);
   }
 
   /**
@@ -1800,6 +1859,18 @@ export class CodeBlockView implements NodeView {
       this.hideContextMenu();
     });
     menu.appendChild(copyBlockItem);
+
+    // 调整缩进：把整段代码的行首缩进统一为当前语言的惯例缩进
+    const indentRule = getIndentRule(this.node.attrs.language);
+    const reindentItem = this.createContextMenuItem(
+      `调整缩进（${describeIndentRule(indentRule)}）`,
+      this.isReadOnly(),
+      () => {
+        this.reindentCodeBlock();
+        this.hideContextMenu();
+      }
+    );
+    menu.appendChild(reindentItem);
 
     if (this.isFoldable()) {
       const foldItem = this.createContextMenuItem(
