@@ -1604,43 +1604,71 @@
   list-style: none;
 }
 
-/* 无序列表：圆点，嵌套层级依次 • → ◦ → ▪ */
+/* 无序列表：用 CSS 图形绘制标记（不依赖字体里的圆点字形，各平台大小 / 基线一致）
+ * - 一级：主题色实心圆点；
+ * - 二级：空心圆圈；
+ * - 三级及以下：主题色实心小方块。
+ * 标记垂直居中于首行：首行中线 = 0.5 × 行高（编辑器 line-height 1.6 → 0.8em）。
+ */
 .livemd-bullet-list:not(.source-view) > .livemd-list-item {
-  padding-left: 1.4em;
+  --livemd-bullet-size: 0.42em;
+  padding-left: 1.6em;
 }
 
 .livemd-bullet-list:not(.source-view) > .livemd-list-item::before {
-  content: "2";
+  content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  width: 1.4em;
-  text-align: center;
-  color: var(--text-color-2, #555);
+  left: calc(0.8em - var(--livemd-bullet-size) / 2);
+  top: calc(0.8em - var(--livemd-bullet-size) / 2);
+  box-sizing: border-box;
+  width: var(--livemd-bullet-size);
+  height: var(--livemd-bullet-size);
+  border-radius: 50%;
+  background: var(--primary-color, #2f6f3a);
   pointer-events: none;
 }
 
+/* 二级：空心圆 */
+.livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  > .livemd-list-item {
+  --livemd-bullet-size: 0.5em;
+}
+
 .livemd-bullet-list:not(.source-view)
   .livemd-bullet-list:not(.source-view)
   > .livemd-list-item::before {
-  content: "E6";
+  background: transparent;
+  border: 1.5px solid var(--text-color-2, #555);
+}
+
+/* 三级及以下：实心小方块 */
+.livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  > .livemd-list-item {
+  --livemd-bullet-size: 0.36em;
 }
 
 .livemd-bullet-list:not(.source-view)
   .livemd-bullet-list:not(.source-view)
   .livemd-bullet-list:not(.source-view)
   > .livemd-list-item::before {
-  content: "AA";
+  border: none;
+  border-radius: 1px;
+  background: var(--primary-color, #2f6f3a);
 }
 
-/* 有序列表：CSS counter 编号（每个 ol 独立计数，嵌套互不影响） */
+/* 有序列表：CSS counter 编号（每个 ol 独立计数，嵌套互不影响）
+ * 编号使用衬线斜体（与 Typora 默认主题观感一致），右对齐到固定宽度，多位数时正文不错位。
+ */
 .livemd-ordered-list:not(.source-view) {
   counter-reset: livemd-ol-counter var(--ol-start, 0);
   padding-left: 0.2em;
 }
 
 .livemd-ordered-list:not(.source-view) > .livemd-list-item {
-  padding-left: 2em;
+  padding-left: 2.4em;
   counter-increment: livemd-ol-counter;
 }
 
@@ -1649,8 +1677,10 @@
   position: absolute;
   left: 0;
   top: 0;
-  width: 1.6em;
+  width: 1.7em;
   text-align: right;
+  font-family: "Times New Roman", Georgia, "Songti SC", SimSun, serif;
+  font-style: italic;
   color: var(--text-color-2, #555);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
