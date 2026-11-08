@@ -92,17 +92,18 @@ onUnmounted(() => {
         <span class="right-edge-bar__title">书签</span>
         <span v-if="totalCount > 0" class="bookmark-bar__count">{{ totalCount }}</span>
       </span>
+      <div class="right-edge-bar__header-actions">
+        <!-- 收起按钮：固定在头部最右，复用头部图标按钮样式 -->
+        <button
+          type="button"
+          class="right-edge-bar__collapse"
+          title="收起书签栏"
+          @click="setBarVisible(false)"
+        >
+          <AppIcon name="arrow-right" />
+        </button>
+      </div>
     </div>
-
-    <!-- 折叠把手：吸附左边框垂直中点 -->
-    <button
-      type="button"
-      class="right-edge-bar__fold"
-      title="收起书签栏"
-      @click="setBarVisible(false)"
-    >
-      <AppIcon name="arrow-right" />
-    </button>
 
     <div class="right-edge-bar__list">
       <BookmarkList />

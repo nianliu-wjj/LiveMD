@@ -341,18 +341,17 @@ onUnmounted(() => {
         >
           <AppIcon :name="isAllExpanded ? 'chevrons-down-up' : 'chevrons-up-down'" />
         </button>
+        <!-- 收起按钮：固定在头部最右，复用头部图标按钮样式 -->
+        <button
+          type="button"
+          class="right-edge-bar__collapse"
+          title="收起大纲栏"
+          @click="setBarVisible(false)"
+        >
+          <AppIcon name="arrow-right" />
+        </button>
       </div>
     </div>
-
-    <!-- 折叠把手：吸附左边框垂直中点 -->
-    <button
-      type="button"
-      class="right-edge-bar__fold"
-      title="收起大纲栏"
-      @click="setBarVisible(false)"
-    >
-      <AppIcon name="arrow-right" />
-    </button>
 
     <div class="right-edge-bar__list">
       <template v-if="outline.length > 0">

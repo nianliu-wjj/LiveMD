@@ -79,17 +79,19 @@ onUnmounted(() => {
     <div class="right-edge-bar__resize-handle" @pointerdown="startResize" />
     <div class="right-edge-bar__header">
       <span class="right-edge-bar__title">批注</span>
+      <div class="right-edge-bar__header-actions">
+        <!-- 收起按钮：固定在头部最右，复用头部图标按钮样式 -->
+        <button
+          type="button"
+          class="right-edge-bar__collapse"
+          title="收起批注栏"
+          @click="setBarVisible(false)"
+        >
+          <AppIcon name="arrow-right" />
+        </button>
+      </div>
     </div>
 
-    <!-- 折叠把手：吸附左边框垂直中点 -->
-    <button
-      type="button"
-      class="right-edge-bar__fold"
-      title="收起批注栏"
-      @click="setBarVisible(false)"
-    >
-      <AppIcon name="arrow-right" />
-    </button>
     <div class="right-edge-bar__list annotation-bar__list">
       <template v-if="doneEntries.length > 0">
         <div v-for="entry in doneEntries" :key="entry.id" class="annotation-bar__item">

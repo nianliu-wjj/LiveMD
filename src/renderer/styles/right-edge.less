@@ -3,7 +3,7 @@
  *
  * - .right-edge-tab：贴边收起态的竖排便签，统一使用主题色（--primary-color），
  *   槽位自上而下由 --edge-tab-slot 控制（大纲 0 / 批注 76px / 书签 152px，§5）；
- * - .right-edge-bar：展开态悬浮栏骨架（容器/左缘把手/头部/折叠把手/列表/空态），
+ * - .right-edge-bar：展开态悬浮栏骨架（容器/左缘把手/头部及收起按钮/列表/空态），
  *   组件内只保留各自差异部分（条目、卡片、右键菜单等）。
  */
 
@@ -87,46 +87,25 @@
     align-items: center;
     gap: 4px;
 
+    // 头部图标按钮（全部折叠/收起栏等）统一尺寸：无边框、无阴影，hover 浅底，与标题栏图标按钮观感一致
     button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
       border: none;
       border-radius: 4px;
-      padding: 2px 6px;
+      padding: 0;
       background: transparent;
       color: var(--text-color-3, #999);
-      font-size: 11px;
+      font-size: 15px;
       cursor: pointer;
 
       &:hover {
         background: var(--hover-color, rgba(0, 0, 0, 0.06));
         color: var(--text-color-1, #333);
       }
-    }
-  }
-
-  // 折叠把手：吸附左边框垂直中点（半出栏外）
-  &__fold {
-    position: absolute;
-    left: -12px;
-    top: 50%;
-    transform: translateY(-50%);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 12px;
-    height: 44px;
-    padding: 0;
-    border: 1px solid var(--border-color-1, #e7eaed);
-    border-right: none;
-    border-radius: 6px 0 0 6px;
-    background: var(--background-color-2, #f8f9fa);
-    color: var(--text-color-3, #999);
-    cursor: pointer;
-    font-size: 10px;
-    box-shadow: -2px 0 6px rgba(0, 0, 0, 0.06);
-
-    &:hover {
-      color: var(--text-color-1, #333);
-      background: var(--hover-color, rgba(0, 0, 0, 0.06));
     }
   }
 
