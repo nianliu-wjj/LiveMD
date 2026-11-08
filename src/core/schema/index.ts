@@ -219,6 +219,8 @@ const blockquote: NodeSpec = {
 const code_block: NodeSpec = {
   attrs: {
     language: { default: "" },
+    /** Mermaid 节点手动拖动的位移表（JSON 字符串），见 utils/diagram-meta.ts */
+    mermaidLayout: { default: null },
   },
   content: "text*",
   marks: "",

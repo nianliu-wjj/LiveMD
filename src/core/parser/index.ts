@@ -19,6 +19,7 @@ import { livemdSchema } from "../schema/index.ts";
 import type { SyntaxMarker } from "../types";
 import { splitTableCells } from "../utils/table.ts";
 import { findHtmlEntityMatches, HTML_ENTITY_SYNTAX_TYPE } from "../utils/html-entities.ts";
+import { extractMermaidPositions, stringifyPositionsAttr } from "../utils/diagram-meta.ts";
 
 /** 解析结果 */
 export interface ParseResult {
@@ -822,11 +823,20 @@ export class MarkdownParser {
     }
 
     // 代码块节点只包含纯文本内容，不包含语法标记
-    const content = contentLines.join("\n");
+    let content = contentLines.join("\n");
+
+    // Mermaid 的手动布局注释转入节点属性，不出现在代码文本里
+    let mermaidLayout: string | null = null;
+    if (language.toLowerCase() === "mermaid") {
+      const [positions, stripped] = extractMermaidPositions(content);
+      mermaidLayout = stringifyPositionsAttr(positions);
+      content = stripped;
+    }
+
     const textNode = content ? this.schema.text(content) : null;
 
     return {
-      node: this.schema.node("code_block", { language }, textNode ? [textNode] : []),
+      node: this.schema.node("code_block", { language, mermaidLayout }, textNode ? [textNode] : []),
       endIndex,
     };
   }

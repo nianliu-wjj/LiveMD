@@ -765,6 +765,31 @@
   white-space: nowrap;
 }
 
+/* Mermaid 流程图交互：节点可拖动，双击原位编辑文字 */
+.livemd-mermaid-draggable g.node {
+  cursor: move;
+  touch-action: none;
+}
+
+.livemd-mermaid-draggable g.node.is-dragging {
+  opacity: 0.85;
+}
+
+.livemd-mermaid-node-input {
+  position: fixed;
+  z-index: 10000;
+  height: 32px;
+  padding: 0 8px;
+  font-size: 14px;
+  text-align: center;
+  color: var(--text-color, #333);
+  background: var(--background-color-1, #fff);
+  border: 1.5px solid var(--primary-color, #0366d6);
+  border-radius: 4px;
+  outline: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+
 /* ============ 思维导图（```mindmap 代码块，自研渲染） ============ */
 .livemd-mindmap-preview {
   position: relative;

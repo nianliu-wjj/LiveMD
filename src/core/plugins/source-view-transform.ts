@@ -11,6 +11,12 @@ import { ReplaceStep } from "prosemirror-transform";
 import { decorationPluginKey } from "../decorations";
 import { parseMarkdown } from "../parser";
 import { MarkdownSerializer } from "../serializer";
+import {
+  extractMermaidPositions,
+  parsePositionsAttr,
+  serializeMermaidPositions,
+  stringifyPositionsAttr,
+} from "../utils/diagram-meta";
 
 /** 插件 Key */
 export const sourceViewTransformPluginKey = new PluginKey("livemd-source-view-transform");
@@ -79,6 +85,12 @@ function transformCodeBlockToParagraphs(
   // 但保留内容中间的空行
   content = content.replace(/\n+$/, "");
 
+  // Mermaid 手动布局在源码模式下以注释行显示（与保存到文件的格式一致），切回时再还原为属性
+  if (language.toLowerCase() === "mermaid") {
+    const layoutLine = serializeMermaidPositions(parsePositionsAttr(codeBlock.attrs.mermaidLayout));
+    if (layoutLine) content = content ? `${content}\n${layoutLine}` : layoutLine;
+  }
+
   // 构建完整的 Markdown 代码块文本
   const fullMarkdown = `\`\`\`${language}\n${content}\n\`\`\``;
   const lines = fullMarkdown.split("\n");
@@ -128,11 +140,20 @@ function transformParagraphsToCodeBlock(
     return null;
   }
 
-  const [, lang, content] = fenceMatch;
+  const [, lang] = fenceMatch;
+  let content = fenceMatch[2];
+
+  // Mermaid 布局注释还原为节点属性（与 Markdown 解析器的处理保持一致）
+  let mermaidLayout: string | null = null;
+  if ((lang || "").toLowerCase() === "mermaid") {
+    const [positions, stripped] = extractMermaidPositions(content);
+    mermaidLayout = stringifyPositionsAttr(positions);
+    content = stripped;
+  }
 
   // 创建代码块节点
   const codeBlock = schema.nodes.code_block.create(
-    { language: lang || "" },
+    { language: lang || "", mermaidLayout },
     content ? schema.text(content) : null
   );
 

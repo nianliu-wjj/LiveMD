@@ -47,6 +47,13 @@ import { canFoldCodeBlock, getCodeBlockFoldHeight } from "./code-block-fold";
 import { formatCode, getFormatSupport } from "../utils/code-formatter";
 import { describeIndentRule, getIndentRule, reindentCode } from "../utils/code-indent";
 import { renderMindMapSvg } from "./mindmap";
+import { attachMermaidInteractions } from "./mermaid-interactions";
+import {
+  parsePositionsAttr,
+  renameFlowchartNode,
+  stringifyPositionsAttr,
+  type MermaidPositions,
+} from "../utils/diagram-meta";
 import { openMermaidFullscreen, normalizeRenderedMermaidViewport } from "./mermaid-fullscreen";
 import { FULLSCREEN_ICONS, type FullscreenViewerHandle } from "../viewers/fullscreenViewer";
 
@@ -594,6 +601,14 @@ export class CodeBlockView implements NodeView {
   searchHighlightCompartment: Compartment;
   /** 缩进规则（随语言切换 reconfigure） */
   indentCompartment: Compartment;
+  /** 清理当前 Mermaid SVG 上的拖动 / 双击交互 */
+  private mermaidInteractionsCleanup: (() => void) | null = null;
+  /** 当前 SVG 已应用的布局：撤销等外部改动与它不一致时需要重新应用 */
+  private appliedMermaidLayout: string | null = null;
+  /** 正在把 CodeMirror 的修改写回文档：此时预览由 onCMUpdate 负责刷新 */
+  private applyingCodeMirrorChange = false;
+  /** 关闭正在进行的节点文字行内编辑 */
+  private closeMermaidNodeEditor: (() => void) | null = null;
   /** 思维导图预览容器（language 为 mindmap 时存在） */
   private mindmapPreview: HTMLElement | null = null;
   /** 思维导图块是否同时显示源码编辑器（默认只显示图，空块默认显示源码便于输入） */
@@ -2381,6 +2396,7 @@ export class CodeBlockView implements NodeView {
 
   /** 渲染完成后的统一收尾：补齐边距、修正空白边界与文字对比度、生成 PNG 兜底 */
   private afterMermaidRendered(preview: HTMLElement): void {
+    this.disposeMermaidInteractions();
     padMermaidSvgBounds(preview);
     const renderedSvg = preview.querySelector("svg") as SVGSVGElement | null;
     if (renderedSvg) {
@@ -2388,7 +2404,123 @@ export class CodeBlockView implements NodeView {
       renderedSvg.setAttribute("data-livemd-mermaid", "true");
     }
     fixMermaidTextContrast(preview);
-    if (renderedSvg) requestClipboardPngFallback(renderedSvg);
+    if (renderedSvg) {
+      // 必须在视口规整之后：保存的位置在这里恢复，viewBox 再按移动后的节点扩展
+      this.appliedMermaidLayout = this.node.attrs.mermaidLayout ?? null;
+      this.mermaidInteractionsCleanup = attachMermaidInteractions(
+        renderedSvg,
+        this.node.textContent,
+        parsePositionsAttr(this.node.attrs.mermaidLayout),
+        {
+          isReadOnly: () => this.isReadOnly(),
+          onLayoutChange: (positions) => this.persistMermaidLayout(positions, renderedSvg),
+          onEditNode: (id, label, element) => this.editMermaidNodeLabel(id, label, element),
+          onEditSource: () => this.editMermaidSource(),
+        }
+      );
+      requestClipboardPngFallback(renderedSvg);
+    }
+  }
+
+  /** 关闭行内编辑并卸载 SVG 交互（重新渲染 / 销毁前调用） */
+  private disposeMermaidInteractions(): void {
+    this.closeMermaidNodeEditor?.();
+    this.mermaidInteractionsCleanup?.();
+    this.mermaidInteractionsCleanup = null;
+  }
+
+  /** 把拖动结果写入节点属性（单条事务，可撤销；文本未变，不触发重新渲染） */
+  private persistMermaidLayout(positions: MermaidPositions, svg: SVGSVGElement): void {
+    const pos = this.getPos();
+    if (pos === undefined || this.isReadOnly()) return;
+    const value = stringifyPositionsAttr(positions);
+    if (value === (this.node.attrs.mermaidLayout ?? null)) return;
+    this.appliedMermaidLayout = value;
+    this.view.dispatch(
+      this.view.state.tr.setNodeMarkup(pos, null, { ...this.node.attrs, mermaidLayout: value })
+    );
+    // 复制图表用的 PNG 兜底需要反映新布局
+    svg.removeAttribute("data-clipboard-png");
+    requestClipboardPngFallback(svg);
+  }
+
+  /** 双击节点：在节点上方浮出输入框，直接修改显示文字并写回源码 */
+  private editMermaidNodeLabel(id: string, label: string, element: SVGGElement): void {
+    this.closeMermaidNodeEditor?.();
+    const rect = element.getBoundingClientRect();
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "livemd-mermaid-node-input";
+    input.value = label;
+    input.spellcheck = false;
+    const width = Math.max(rect.width, 120);
+    input.style.left = `${Math.max(8, rect.left + rect.width / 2 - width / 2)}px`;
+    input.style.top = `${rect.top + rect.height / 2 - 16}px`;
+    input.style.width = `${width}px`;
+
+    let closed = false;
+    const close = (commit: boolean) => {
+      if (closed) return;
+      closed = true;
+      this.closeMermaidNodeEditor = null;
+      window.removeEventListener("scroll", onScroll, true);
+      const next = input.value.trim();
+      input.remove();
+      if (commit && next && next !== label) this.commitMermaidNodeLabel(id, next);
+    };
+    const onScroll = (event: Event) => {
+      // 输入框自身内容滚动不算；页面滚动后浮层已错位，按提交收场
+      if (event.target !== input) close(true);
+    };
+
+    input.addEventListener("keydown", (event) => {
+      event.stopPropagation();
+      if (event.isComposing) return;
+      if (event.key === "Enter") {
+        event.preventDefault();
+        close(true);
+      } else if (event.key === "Escape") {
+        event.preventDefault();
+        close(false);
+      }
+    });
+    input.addEventListener("blur", () => close(true));
+    window.addEventListener("scroll", onScroll, true);
+
+    this.closeMermaidNodeEditor = () => close(false);
+    document.body.appendChild(input);
+    input.focus();
+    input.select();
+  }
+
+  /** 把节点新文字写回 Mermaid 源码；定位不到定义时退回源码编辑 */
+  private commitMermaidNodeLabel(id: string, label: string): void {
+    const pos = this.getPos();
+    if (pos === undefined || this.isReadOnly()) return;
+    const next = renameFlowchartNode(this.node.textContent, id, label);
+    if (next === null) {
+      console.warn("[CodeBlock] 未在 Mermaid 源码中找到节点定义，转为编辑源码:", id);
+      this.editMermaidSource();
+      return;
+    }
+    console.debug("[CodeBlock] Mermaid 节点改名:", id);
+    this.view.dispatch(
+      this.view.state.tr.replaceWith(
+        pos + 1,
+        pos + 1 + this.node.content.size,
+        this.view.state.schema.text(next)
+      )
+    );
+  }
+
+  /** 切到「混合」模式并聚焦源码（非流程图的双击，或无法定位节点时） */
+  private editMermaidSource(): void {
+    if (this.mermaidDisplayMode === "diagram") {
+      this.mermaidDisplayMode = "mixed";
+      this.updateHeader(normalizeLanguage(this.node.attrs.language || ""));
+      this.updateMermaidDisplay();
+    }
+    this.ensureCodeMirror().focus();
   }
 
   /**
@@ -2441,7 +2573,9 @@ export class CodeBlockView implements NodeView {
 
       tr.replaceWith(start, end, newText ? this.view.state.schema.text(newText) : []);
 
+      this.applyingCodeMirrorChange = true;
       this.view.dispatch(tr);
+      this.applyingCodeMirrorChange = false;
 
       // 更新 Mermaid 预览
       if (this.node.attrs.language === "mermaid") {
@@ -2733,6 +2867,18 @@ export class CodeBlockView implements NodeView {
       }
     }
 
+    // Mermaid：撤销 / 重做、行内改名等不经 CodeMirror 的改动，以及外部布局变化，都要刷新图表
+    if (
+      node.attrs.language === prevLanguage &&
+      normalizeLanguage(prevLanguage || "") === "mermaid"
+    ) {
+      const textChanged = newText !== prevText && !this.applyingCodeMirrorChange;
+      const layoutChanged =
+        (node.attrs.mermaidLayout ?? null) !== this.appliedMermaidLayout &&
+        Boolean(this.mermaidPreview?.querySelector("svg"));
+      if (textChanged || layoutChanged) this.createMermaidPreview(newText);
+    }
+
     // 思维导图：内容或语言变化时同步预览（语言离开 mindmap 时会移除预览并恢复编辑器）
     if (newText !== prevText || node.attrs.language !== prevLanguage) {
       this.syncMindmapPreview();
@@ -2810,6 +2956,7 @@ export class CodeBlockView implements NodeView {
     }
     this.mindmapPreview?.remove();
     this.mindmapPreview = null;
+    this.disposeMermaidInteractions();
     this.themeUnsubscribe?.();
     this.themeUnsubscribe = null;
     this.closeOpenSelects();

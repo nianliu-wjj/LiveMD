@@ -5,7 +5,8 @@
  */
 
 import { Node, Mark, Fragment } from "prosemirror-model";
-import { buildTableDelimiterRow } from "../utils/table";
+import { buildTableDelimiterRow } from "../utils/table.ts";
+import { parsePositionsAttr, serializeMermaidPositions } from "../utils/diagram-meta.ts";
 
 /** 序列化选项 */
 export interface SerializeOptions {
@@ -195,6 +196,11 @@ export class MarkdownSerializer {
         for (const line of content.split("\n")) {
           lines.push(indent + line);
         }
+      }
+      // Mermaid 手动布局以注释形式写回，紧贴结束围栏，保证解析 → 序列化往返稳定
+      if (lang.toLowerCase() === "mermaid") {
+        const layoutLine = serializeMermaidPositions(parsePositionsAttr(node.attrs.mermaidLayout));
+        if (layoutLine) lines.push(indent + layoutLine);
       }
       lines.push(indent + fence);
       if (!this.options.compact) lines.push("");
