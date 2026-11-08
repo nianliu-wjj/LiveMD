@@ -109,9 +109,7 @@ export class OrderedListView implements NodeView {
     // 创建容器
     this.dom = document.createElement("ol");
     this.dom.className = "livemd-ordered-list";
-    if (node.attrs.start !== 1) {
-      this.dom.setAttribute("start", String(node.attrs.start));
-    }
+    this.applyStart(node.attrs.start);
     this.contentDOM = this.dom;
 
     // 订阅源码模式状态变化
@@ -134,17 +132,30 @@ export class OrderedListView implements NodeView {
   update(node: ProseMirrorNode): boolean {
     if (node.type.name !== "ordered_list") return false;
     this.node = node;
-    if (node.attrs.start !== 1) {
-      this.dom.setAttribute("start", String(node.attrs.start));
-    } else {
-      this.dom.removeAttribute("start");
-    }
+    this.applyStart(node.attrs.start);
     return true;
   }
 
+  /**
+   * 同步起始编号：既写 start 属性（语义 / 复制 HTML），也写 CSS 变量供即时渲染模式的 counter 使用。
+   * counter-reset 之后首个 counter-increment 会先 +1，故变量取 start - 1，使首项编号恰为 start。
+   */
+  private applyStart(rawStart: unknown): void {
+    const start = Number.isFinite(Number(rawStart)) ? Number(rawStart) : 1;
+    if (start !== 1) {
+      this.dom.setAttribute("start", String(start));
+    } else {
+      this.dom.removeAttribute("start");
+    }
+    this.dom.style.setProperty("--ol-start", String(start - 1));
+  }
+
   ignoreMutation(mutation: ViewMutationRecord): boolean {
-    // 忽略 class 属性变化
-    if (mutation.type === "attributes" && mutation.attributeName === "class") {
+    // 忽略 class / style 属性变化（style 用于写入 --ol-start）
+    if (
+      mutation.type === "attributes" &&
+      (mutation.attributeName === "class" || mutation.attributeName === "style")
+    ) {
       return true;
     }
     return false;

@@ -1565,6 +1565,79 @@
   display: block;
 }
 
+/* ============ 即时渲染模式：显式列表标记 ============
+ * 原先依赖浏览器默认 ::marker（li 为 display:list-item），但 li 的 contentDOM 是 div，
+ * 叠加主题样式后默认标记不稳定 / 不显示。改为 ::before 绝对定位在 li 的缩进区里显式绘制：
+ * - 不占内容流、不拦截点击与文本选区（pointer-events: none，伪元素本身不可选中）；
+ * - 有序列表用 CSS counter 编号，起始值由 OrderedListView 写入 --ol-start（= start - 1）；
+ * - 用 :not(.source-view) 限定作用域，源码模式仍由 NodeView 的 .livemd-list-marker 显示原始 "-" / "1."。
+ */
+.livemd-bullet-list:not(.source-view),
+.livemd-ordered-list:not(.source-view) {
+  list-style: none;
+  padding-left: 0.6em;
+}
+
+.livemd-bullet-list:not(.source-view) > .livemd-list-item,
+.livemd-ordered-list:not(.source-view) > .livemd-list-item {
+  position: relative;
+  display: block;
+  list-style: none;
+}
+
+/* 无序列表：圆点，嵌套层级依次 • → ◦ → ▪ */
+.livemd-bullet-list:not(.source-view) > .livemd-list-item {
+  padding-left: 1.4em;
+}
+
+.livemd-bullet-list:not(.source-view) > .livemd-list-item::before {
+  content: "2";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.4em;
+  text-align: center;
+  color: var(--text-color-2, #555);
+  pointer-events: none;
+}
+
+.livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  > .livemd-list-item::before {
+  content: "E6";
+}
+
+.livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  .livemd-bullet-list:not(.source-view)
+  > .livemd-list-item::before {
+  content: "AA";
+}
+
+/* 有序列表：CSS counter 编号（每个 ol 独立计数，嵌套互不影响） */
+.livemd-ordered-list:not(.source-view) {
+  counter-reset: livemd-ol-counter var(--ol-start, 0);
+  padding-left: 0.2em;
+}
+
+.livemd-ordered-list:not(.source-view) > .livemd-list-item {
+  padding-left: 2em;
+  counter-increment: livemd-ol-counter;
+}
+
+.livemd-ordered-list:not(.source-view) > .livemd-list-item::before {
+  content: counter(livemd-ol-counter) ".";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1.6em;
+  text-align: right;
+  color: var(--text-color-2, #555);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* 任务列表 NodeView */
 .livemd-task-list {
   list-style: none;
