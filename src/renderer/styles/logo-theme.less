@@ -1,0 +1,78 @@
+// 标题栏项目图标（MenuDropDown.vue 内联 SVG）的分主题配色
+//
+// --logo-bg   圆角底板颜色（取各主题主色系，必要时加深/提亮以保证对比度）
+// --logo-mark 中间字母 L 的颜色（与底板对比度均 ≥ 4.5:1）
+//
+// 匹配顺序：
+// 1. :root 浅色缺省 → html[data-theme-mode="dark"] 深色缺省（Typora 导入主题等未单独配色的主题走这里）
+// 2. 内置主题类 html.theme-xxx 精确覆盖；自定义主题会同时挂基底主题类，因此自动继承基底配色
+
+:root {
+  --logo-bg: #4f6b47; // 品牌深绿底
+  --logo-mark: #fcf9f1; // 米白 L
+}
+
+html[data-theme-mode="dark"] {
+  --logo-bg: #8fae84; // 深色界面：提亮底色
+  --logo-mark: #1f2c1b; // 深色界面：加深 L，反向高对比
+}
+
+html.theme-normal {
+  --logo-bg: #4f6b47;
+  --logo-mark: #fcf9f1;
+}
+
+html.theme-normal-dark {
+  --logo-bg: #88c0d0;
+  --logo-mark: #2e3440;
+}
+
+html.theme-crepe {
+  --logo-bg: #0366d6;
+  --logo-mark: #ffffff;
+}
+
+html.theme-crepe-dark {
+  --logo-bg: #58a6ff;
+  --logo-mark: #0d1117;
+}
+
+html.theme-frame {
+  --logo-bg: #3f6b63;
+  --logo-mark: #fbfbf2;
+}
+
+html.theme-frame-dark {
+  --logo-bg: #e3a76f;
+  --logo-mark: #2b2b2b;
+}
+
+html.theme-dracula {
+  --logo-bg: #7d5fd3;
+  --logo-mark: #ffffff;
+}
+
+html.theme-dracula-dark {
+  --logo-bg: #bd93f9;
+  --logo-mark: #282a36;
+}
+
+html.theme-one {
+  --logo-bg: #2f62d8;
+  --logo-mark: #ffffff;
+}
+
+html.theme-one-dark {
+  --logo-bg: #61afef;
+  --logo-mark: #21252b;
+}
+
+html.theme-solarized {
+  --logo-bg: #1a6fa8;
+  --logo-mark: #fdf6e3;
+}
+
+html.theme-solarized-dark {
+  --logo-bg: #2aa198;
+  --logo-mark: #002b36;
+}

@@ -18,5 +18,5 @@
 <text x="19.5" y="31" text-anchor="middle" fill="white" font-family="Arial, Helvetica, sans-serif" font-size="7" font-weight="bold">md</text>
 <!-- LiveMD 品牌角标：渐变绿圆角方块 + 纸色字母 L（与应用图标同款） -->
 <rect x="14.5" y="12.5" width="10" height="10" rx="2.6" fill="url(#fileMark)"/>
-<path d="M17.4 14.9 L17.4 20.1 L21.6 20.1" fill="none" stroke="#FCF9F1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M17.4 14.9 L17.4 20.1 L21.6 20.1" fill="none" stroke="#FCF9F1" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
