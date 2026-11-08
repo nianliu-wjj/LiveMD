@@ -43,6 +43,7 @@ import {
   type FoldMeta,
 } from "./plugins/fold";
 import { createSyntaxFixerPlugin } from "./plugins/syntax-fixer";
+import { extractPlainText, markdownToPlainText } from "./utils/plain-text";
 import { createSyntaxDetectorPlugin } from "./plugins/syntax-detector";
 import { createHeadingSyncPlugin } from "./plugins/heading-sync";
 import {
@@ -1793,6 +1794,15 @@ export class LivemdEditor implements ILivemdEditor {
     });
     menu.appendChild(copyItem);
 
+    // 复制纯文本：只写 text/plain，去掉 Markdown 语法标记（如 "**加粗**" → "加粗"）
+    const copyPlainItem = this.createContextMenuItem("复制纯文本", !hasSelection, async () => {
+      const plainText = this.getSelectionPlainTextForCopy();
+      console.debug("[LivemdEditor] 复制纯文本，长度:", plainText.length);
+      await writeClipboardPayload({ plain: plainText, html: "", richRequired: false });
+      this.hideContextMenu();
+    });
+    menu.appendChild(copyPlainItem);
+
     // 剪切
     const cutItem = this.createContextMenuItem(
       "剪切",
@@ -1823,6 +1833,18 @@ export class LivemdEditor implements ILivemdEditor {
       await this.handlePasteFromClipboard();
     });
     menu.appendChild(pasteItem);
+
+    // 只粘贴文本：只读取剪贴板纯文本，去掉其中的 Markdown 格式，不识别图片
+    const pastePlainItem = this.createContextMenuItem(
+      "只粘贴文本",
+      !this.view.editable,
+      async () => {
+        this.hideContextMenu();
+        this.view.focus();
+        await this.handlePastePlainTextFromClipboard();
+      }
+    );
+    menu.appendChild(pastePlainItem);
 
     // 批注：选区非空且不在代码块 / HTML 块内时可用（源码模式右键走 CodeMirror 菜单，天然无此项）
     const canAnnotate =
@@ -2510,6 +2532,65 @@ export class LivemdEditor implements ILivemdEditor {
         console.warn("无法访问剪贴板");
       }
     }
+  }
+
+  /**
+   * 「复制纯文本」的内容：即时渲染模式直接遍历文档跳过语法标记；
+   * 源码模式下文档即 Markdown 原文，先序列化选区再解析去格式
+   */
+  private getSelectionPlainTextForCopy(): string {
+    const { from, to } = this.view.state.selection;
+    if (this.isSourceViewEnabled()) {
+      return markdownToPlainText(this.serializeSelectionForClipboard(), this.parser);
+    }
+    return extractPlainText(this.view.state.doc, from, to);
+  }
+
+  /**
+   * 「只粘贴文本」：读取剪贴板 text/plain，去掉 Markdown 格式后按纯文本插入
+   */
+  private async handlePastePlainTextFromClipboard(): Promise<void> {
+    let text = "";
+    try {
+      text = await navigator.clipboard.readText();
+    } catch (error) {
+      console.warn("[LivemdEditor] 无法读取剪贴板纯文本:", error);
+      return;
+    }
+    if (!text || this._destroyed || !this.view.editable) return;
+
+    const { $from } = this.view.state.selection;
+    const inCode = Boolean($from.parent.type.spec.code);
+    // 代码块内保持原文；其余位置若含 Markdown 语法则转为纯文本
+    const plainText =
+      !inCode && containsMarkdownSyntax(text)
+        ? markdownToPlainText(text, this.parser)
+        : text.replace(/\r\n?/g, "\n");
+    console.debug("[LivemdEditor] 只粘贴文本，代码块内:", inCode, "长度:", plainText.length);
+    this.insertPlainText(plainText);
+  }
+
+  /**
+   * 按纯文本插入：单行直接 insertText；多行在普通段落中拆成多个段落（首尾与当前段落合并），
+   * 代码块内保留换行原样插入。不经过 Markdown 解析。
+   */
+  private insertPlainText(text: string): void {
+    const { state } = this.view;
+    const { $from } = state.selection;
+    const lines = text.split("\n");
+    const paragraphType = this.schema.nodes.paragraph;
+
+    if (lines.length === 1 || $from.parent.type.spec.code || !paragraphType) {
+      this.view.dispatch(state.tr.insertText(text).scrollIntoView());
+      return;
+    }
+
+    const paragraphs = lines.map((line) =>
+      paragraphType.create(null, line ? this.schema.text(line) : undefined)
+    );
+    // openStart/openEnd = 1：首行并入光标前的段落、末行并入光标后的段落
+    const slice = new Slice(Fragment.from(paragraphs), 1, 1);
+    this.view.dispatch(state.tr.replaceSelection(slice).scrollIntoView());
   }
 
   private insertPastedText(text: string): void {
