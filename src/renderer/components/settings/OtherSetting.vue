@@ -5,7 +5,8 @@ import { Input } from "@/renderer/components/ui/input";
 import useOtherConfig from "@/renderer/hooks/useOtherConfig";
 import { useConfig } from "@/renderer/hooks/useConfig";
 
-const { currentEditorPadding, setEditorPadding } = useOtherConfig();
+const { currentEditorPadding, currentResponsivePadding, setEditorPadding, setResponsivePadding } =
+  useOtherConfig();
 const { config, setConf } = useConfig();
 
 const paddingSettingsExpanded = ref(false);
@@ -35,10 +36,25 @@ function togglePaddingSettings() {
   paddingSettingsExpanded.value = !paddingSettingsExpanded.value;
 }
 
-function handlePaddingChange(value: string) {
-  // 如果提取到数字，自动添加 "px" 单位
+// 边距输入上限：避免误输入超大值把正文挤没
+const MAX_EDITOR_PADDING = 800;
 
-  setEditorPadding(`${value}px`);
+// 常用边距预设（px）
+const paddingPresets = [
+  { value: 40, label: "紧凑" },
+  { value: 120, label: "标准" },
+  { value: 200, label: "宽松" },
+];
+
+function handlePaddingChange(value: string) {
+  const numeric = Number.parseFloat(value);
+  // 空值 / 非法值不写入配置，避免出现 "px" 这类无效 CSS 值导致边距归零
+  if (!Number.isFinite(numeric) || numeric < 0) {
+    console.warn("[OtherSetting] 忽略非法的边距输入:", value);
+    return;
+  }
+  // 自动添加 "px" 单位，并限制在合理区间内
+  setEditorPadding(`${Math.min(numeric, MAX_EDITOR_PADDING)}px`);
 }
 
 function toggleMermaidSettings() {
@@ -90,6 +106,38 @@ function setMermaidMode(mode: string) {
                 placeholder="请输入数字"
                 @update:model-value="handlePaddingChange"
               />
+              <div class="padding-presets">
+                <span
+                  v-for="preset in paddingPresets"
+                  :key="preset.value"
+                  class="mode-option"
+                  :class="{ active: displayPaddingValue === String(preset.value) }"
+                  @click="setEditorPadding(`${preset.value}px`)"
+                >
+                  {{ preset.label }} {{ preset.value }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="setting-item">
+            <label class="setting-label">自适应边距</label>
+            <div class="setting-input-wrapper toggle">
+              <span class="setting-hint">
+                {{
+                  currentResponsivePadding
+                    ? "按屏幕宽度自动缩放（手机/平板收窄、外接大屏放宽），上方数值作为常规屏幕的上限"
+                    : "始终使用上方的固定边距"
+                }}
+              </span>
+              <button
+                type="button"
+                class="switch"
+                :class="{ on: currentResponsivePadding }"
+                :aria-pressed="currentResponsivePadding"
+                @click="setResponsivePadding(!currentResponsivePadding)"
+              >
+                <span class="switch-knob" />
+              </button>
             </div>
           </div>
         </div>
@@ -324,7 +372,23 @@ function setMermaidMode(mode: string) {
           }
         }
 
-        &.mode-select {
+        .padding-presets {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 8px;
+        }
+
+        .setting-hint {
+          flex: 1;
+          margin-right: 12px;
+          font-size: 12px;
+          line-height: 1.5;
+          color: var(--text-color-3);
+        }
+
+        &.mode-select,
+        .padding-presets {
           display: flex;
           gap: 8px;
 
@@ -352,6 +416,7 @@ function setMermaidMode(mode: string) {
 
         &.toggle {
           display: flex;
+          align-items: center;
           justify-content: flex-end;
 
           .switch {

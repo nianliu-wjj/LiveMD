@@ -3063,7 +3063,6 @@
 		"en": "Set the saving and uploading method after pasting the image",
 		"fr": "Définissez la méthode d'enregistrement et de téléchargement après avoir collé l'image"
 	},
-
 	"e524j3": {
 		"zh-cn": "工作区",
 		"ja": "ワークスペース",
@@ -3256,7 +3255,6 @@
 		"en": "Write something...",
 		"fr": "Écrivez quelque chose..."
 	},
-
 	"cuovnz5": {
 		"zh-cn": "+左击访问",
 		"ja": "+左クリックしてアクセスしてください",
@@ -3617,7 +3615,6 @@
 		"en": "Editor operations",
 		"fr": "Opérations de l'éditeur"
 	},
-
 	"hmmkw79": {
 		"zh-cn": "搜索功能名称...",
 		"ja": "関数名を検索...",
@@ -3706,14 +3703,6 @@
 		"en": "Slow (3s)",
 		"fr": "Lent (3s)"
 	},
-
-
-
-
-
-
-
-
 	"jdhqxo4": {
 		"zh-cn": "错误: ",
 		"ja": "エラー:",
@@ -3722,10 +3711,6 @@
 		"en": "Error:",
 		"fr": "Erreur :"
 	},
-
-
-
-
 	"f91vmhh": {
 		"zh-cn": "随机性 (Temperature)",
 		"ja": "温度",
@@ -3750,7 +3735,6 @@
 		"en": "Testing...",
 		"fr": "Test..."
 	},
-
 	"fy1g2": {
 		"zh-cn": "失败",
 		"ja": "失敗しました",
@@ -3799,7 +3783,6 @@
 		"en": "Images will be automatically converted to base64 (may increase file size)",
 		"fr": "Les images seront automatiquement converties en base64 (peut augmenter la taille du fichier)"
 	},
-
 	"3dlqhm4v": {
 		"zh-cn": "\n      <span class=\"LiveMD-image-placeholder-icon\">🖼️</span>\n      <span class=\"LiveMD-image-placeholder-text\">图片加载失败</span>\n      <span class=\"LiveMD-image-placeholder-src\">",
 		"ja": "\n      <span class=\"LiveMD-image-placeholder-icon\">🖼️</span>\n      <span class=\"LiveMD-image-placeholder-text\">画像の読み込みに失敗しました</span>\n      <span class=\"LiveMD-image-placeholder-src\">",
@@ -3824,7 +3807,6 @@
 		"en": "Untitled document",
 		"fr": "Document sans titre"
 	},
-
 	"ogrq8qa": {
 		"zh-cn": "上下文：\n文章标题：",
 		"ja": "コンテキスト:\\n記事タイトル:",
@@ -3857,7 +3839,6 @@
 		"en": "\nPrevious content (please connect closely):",
 		"fr": "\nContenu précédent (veuillez enchaîner étroitement) :"
 	},
-
 	"9kagif1g": {
 		"zh-cn": "<div class=\"LiveMD-mermaid-error\">Mermaid 渲染错误</div>",
 		"ja": "<div class=\"LiveMD-mermaid-error\">Mermaid のレンダリングエラー</div>",
@@ -3866,7 +3847,6 @@
 		"en": "<div class=\"LiveMD-mermaid-error\">Mermaid rendering error</div>",
 		"fr": "<div class=\"LiveMD-mermaid-error\">Erreur de rendu Mermaid</div>"
 	},
-
 	"2r4lzqb": {
 		"zh-cn": "上下文：\n文章标题：",
 		"ja": "コンテキスト：\\n記事タイトル：",
@@ -3955,7 +3935,6 @@
 		"en": "Please return {\"continuation\":\"test\"}",
 		"fr": "Veuillez renvoyer {\"continuation\": \"test\"}"
 	},
-
 	"in2q3": {
 		"zh-cn": "+数字",
 		"ja": "+桁",
@@ -7462,6 +7441,54 @@
 	},
 	"mrefgef": {
 		"zh-cn": "，避免含特殊字符的路径断句。 ",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"lqiy2": {
+		"zh-cn": "紧凑",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"i55r2": {
+		"zh-cn": "标准",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"g6752": {
+		"zh-cn": "宽松",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"tb8wao5": {
+		"zh-cn": "自适应边距",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"m3j7b613": {
+		"zh-cn": "按屏幕宽度自动缩放（手机/平板收窄、外接大屏放宽），上方数值作为常规屏幕的上限",
+		"ja": "",
+		"ko": "",
+		"ru": "",
+		"en": "",
+		"fr": ""
+	},
+	"98nz2lb": {
+		"zh-cn": "始终使用上方的固定边距",
 		"ja": "",
 		"ko": "",
 		"ru": "",

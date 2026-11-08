@@ -28,6 +28,8 @@ interface AppConfig extends Record<string, any> {
   image: ImageInsertConfig;
   other: {
     editorPadding: string;
+    /** 自适应边距：按屏幕宽度缩放编辑区左右边距（editorPadding 作为常规屏幕的上限） */
+    responsivePadding: boolean;
     autoSave: boolean;
   };
   mermaid: {
@@ -56,6 +58,7 @@ const defaultConfig: AppConfig = {
   image: { ...defaultImageInsertConfig },
   other: {
     editorPadding: "120px",
+    responsivePadding: true,
     autoSave: true,
   },
   mermaid: {

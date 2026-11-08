@@ -671,6 +671,34 @@ const handleInstall = async () => {
   }
 }
 
+// 手机竖屏 / 极窄窗口：左侧边栏改为覆盖式抽屉，不再挤压正文（正文宽度保持 100%）
+@media (max-width: 640px) {
+  .editorArea {
+    .outlineBox {
+      width: min(var(--sidebar-width), 85vw);
+      box-shadow: 4px 0 16px rgba(0, 0, 0, 0.16);
+    }
+
+    &.outline-opening .editorBox,
+    &.outline-closing-prep .editorBox {
+      transform: none;
+    }
+
+    &.outline-open {
+      .outlineBox {
+        position: absolute;
+      }
+      .editorBox {
+        width: 100%;
+      }
+    }
+
+    .sidebar-resize-handle {
+      display: none;
+    }
+  }
+}
+
 .global-loading-fade-enter-active,
 .global-loading-fade-leave-active {
   transition: opacity 0.18s ease;
