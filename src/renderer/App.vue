@@ -74,6 +74,7 @@ const {
 } = useTab();
 const {
   currentResult,
+  currentError: currentLintError,
   isLintRunning,
   isLintPanelVisible,
   closeLintPanel,
@@ -400,7 +401,7 @@ watch(
   () => syncSidebarWidth()
 );
 
-// 检查面板打开时：内容变化触发防抖重查（600ms，由 store 内部判断面板可见性）
+// 内容变化触发防抖重查（600ms）：面板关闭时也重查，保持状态栏问题数实时
 watch(
   () => currentTab.value?.content,
   () => scheduleAutoCheck()
@@ -546,6 +547,7 @@ const handleInstall = async () => {
     v-if="isLintPanelVisible"
     class="lint-panel-overlay"
     :result="currentResult"
+    :error="currentLintError"
     :is-running="isLintRunning"
     @close="closeLintPanel()"
     @reveal="handleLintReveal"

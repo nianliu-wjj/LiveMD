@@ -17,6 +17,8 @@ const props = defineProps<{
   result: DocumentLintResult;
   /** 正在检查中（禁用操作并提示） */
   isRunning?: boolean;
+  /** 检查失败原因：非空时展示「检查失败」，不能显示成「没有发现问题」 */
+  error?: string | null;
 }>();
 
 const emit = defineEmits<{
@@ -136,6 +138,10 @@ function handleFix(row: LintRow): void {
 
     <div class="lint-panel__body">
       <div v-if="isRunning" class="lint-panel__hint">正在检查…</div>
+      <div v-if="error && !isRunning" class="lint-panel__error">检查失败：{{ error }}</div>
+      <div v-for="notice in result.notices ?? []" :key="notice" class="lint-panel__notice">
+        {{ notice }}
+      </div>
 
       <template v-if="visibleRows.length > 0">
         <div v-for="row in visibleRows" :key="row.key" class="lint-row">
@@ -168,7 +174,7 @@ function handleFix(row: LintRow): void {
         </div>
       </template>
 
-      <p v-else-if="!isRunning" class="lint-empty">没有发现问题</p>
+      <p v-else-if="!isRunning && !error" class="lint-empty">没有发现问题</p>
     </div>
 
     <div class="lint-panel__footer">共 {{ totalCount }} 项 · 可自动修复 {{ fixableCount }} 项</div>
@@ -176,6 +182,26 @@ function handleFix(row: LintRow): void {
 </template>
 
 <style lang="less" scoped>
+.lint-panel__error,
+.lint-panel__notice {
+  margin: 8px 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.lint-panel__error {
+  color: #c53030;
+  background: rgba(229, 62, 62, 0.1);
+}
+
+.lint-panel__notice {
+  color: var(--text-color-2, #666);
+  background: var(--hover-background-color, rgba(0, 0, 0, 0.05));
+}
+
 .lint-panel {
   display: flex;
   flex-direction: column;

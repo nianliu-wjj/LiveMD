@@ -23,10 +23,60 @@ declare module "markdownlint/promise" {
     fixInfo?: MarkdownlintFixInfo | null;
   }
 
+  /** micromark 解析树节点（自定义规则遍历用；列号 1-based，endColumn 为开区间） */
+  export interface MicromarkToken {
+    type: string;
+    startLine: number;
+    startColumn: number;
+    endLine: number;
+    endColumn: number;
+    text: string;
+    children: MicromarkToken[];
+    parent: MicromarkToken | null;
+  }
+
+  /** 自定义规则上报的修复信息（单行编辑） */
+  export interface RuleOnErrorFixInfo {
+    lineNumber?: number;
+    editColumn?: number;
+    deleteCount?: number;
+    insertText?: string;
+  }
+
+  /** 自定义规则上报的单条问题 */
+  export interface RuleOnErrorInfo {
+    lineNumber: number;
+    detail?: string;
+    context?: string;
+    /** [起始列（1-based）, 长度] */
+    range?: [number, number];
+    fixInfo?: RuleOnErrorFixInfo;
+  }
+
+  /** 自定义规则执行参数（只声明本仓库用到的成员） */
+  export interface RuleParams {
+    name: string;
+    lines: readonly string[];
+    parsers: { micromark: { tokens: MicromarkToken[] } };
+    config: Record<string, unknown>;
+  }
+
+  /** markdownlint 自定义规则（对象字面量形式） */
+  export interface MarkdownlintCustomRule {
+    names: string[];
+    description: string;
+    tags: string[];
+    parser: "micromark" | "none";
+    function: (params: RuleParams, onError: (info: RuleOnErrorInfo) => void) => void;
+  }
+
   export interface MarkdownlintOptions {
     strings: Record<string, string>;
     config?: Record<string, unknown>;
     resultVersion?: number;
+    customRules?: MarkdownlintCustomRule[];
+    /** 为 true 时规则抛异常不会中断整次 lint，而是作为一条问题上报 */
+    handleRuleFailures?: boolean;
   }
 
   /** 键为 strings 传入的文档名（本项目固定为 document） */

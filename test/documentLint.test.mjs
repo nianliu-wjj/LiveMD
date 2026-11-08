@@ -129,3 +129,67 @@ test("runSpellCheck: 超过 200 行的文档仍能完成扫描（分批让出主
   const issues = await runSpellCheck(lines.join("\n"));
   assert.ok(issues.some((issue) => issue.word === "zzqqx"));
 });
+
+// ============ 对齐 Typora：自定义规则 / MD044 / 吞错 ============
+
+/** 只跑格式检查并返回指定规则命中的问题 */
+async function issuesOf(content, code) {
+  const issues = await runFormatCheck(content, {});
+  return issues.filter((issue) => issue.ruleCode === code);
+}
+
+test("MD101: 数学块前后缺空行要报告，且可自动修复", async () => {
+  const content = "# Title\n\ntext\n$$\na=1\n$$\nmore\n";
+  const hits = await issuesOf(content, "MD101");
+  assert.ok(hits.length >= 1, "应报告 MD101");
+  const fixed = applyAllFixes(content, hits);
+  assert.deepEqual(await issuesOf(fixed, "MD101"), []);
+});
+
+test("MD101: 前后已有空行的数学块不报告", async () => {
+  assert.deepEqual(await issuesOf("# Title\n\ntext\n\n$$\na=1\n$$\n\nmore\n", "MD101"), []);
+});
+
+test("MD102: 标题整体加粗要报告，修复后去掉强调", async () => {
+  const content = "# **全粗体标题**\n";
+  const hits = await issuesOf(content, "MD102");
+  assert.equal(hits.length, 1);
+  assert.equal(applyAllFixes(content, hits), "# 全粗体标题\n");
+  assert.deepEqual(await issuesOf("# 部分**粗体**标题\n", "MD102"), []);
+});
+
+test("MD103: 行内使用 $$ 分隔要报告，修复为单个 $", async () => {
+  const content = "# Title\n\n公式 $$b$$ 在行内\n";
+  const hits = await issuesOf(content, "MD103");
+  assert.equal(hits.length, 1);
+  assert.equal(applyAllFixes(content, hits), "# Title\n\n公式 $b$ 在行内\n");
+  assert.deepEqual(await issuesOf("# Title\n\n公式 $a$ 在行内\n", "MD103"), []);
+});
+
+test("MD044: 专有名词大小写错误要报告，代码中的不报告", async () => {
+  const hits = await issuesOf("# Title\n\nwritten in javascript\n", "MD044");
+  assert.equal(hits.length, 1);
+  assert.deepEqual(await issuesOf("# Title\n\nrun `javascript` here\n", "MD044"), []);
+});
+
+test("自定义规则可通过规则配置关闭", async () => {
+  const issues = await runFormatCheck("# **全粗体标题**\n", { MD102: false });
+  assert.ok(!issues.some((issue) => issue.ruleCode === "MD102"));
+});
+
+test("MARKDOWNLINT_RULES: 设置清单包含 MD060 与自定义规则", () => {
+  const codes = new Set(MARKDOWNLINT_RULES.map((rule) => rule.code));
+  for (const code of ["MD060", "MD101", "MD102", "MD103"]) {
+    assert.ok(codes.has(code), `缺少 ${code}`);
+  }
+});
+
+test("runSpellCheck: 句首大写的错词也要报告，项目词典中的词放行", async () => {
+  const issues = await runSpellCheck("Zzqqx is wrong. LiveMD is fine.\n");
+  assert.ok(issues.some((issue) => issue.word === "Zzqqx"));
+  assert.ok(!issues.some((issue) => issue.word === "LiveMD"));
+});
+
+test("runSpellCheck: 数学公式内容不参与拼写检查", async () => {
+  assert.deepEqual(await runSpellCheck("$$\n\\zzqqx\n$$\n\nvalue $zzqqx$ here\n"), []);
+});

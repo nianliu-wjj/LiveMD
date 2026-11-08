@@ -8,7 +8,11 @@
  * 2. **tab 归属**：结果记录归属 tab，切 tab 后旧结果不再展示（currentResult 视为空）；
  * 3. **版本化防竞态**：每次检查带自增 generation，切 tab 或新检查发起时旧结果直接丢弃。
  *
- * 另含面板打开时的「内容变化防抖重查」（600ms），配合修复 1/2 的分批扫描避免卡顿。
+ * 另含「内容变化防抖重查」（600ms）：面板关闭时同样重查，状态栏徽标才能实时反映问题数；
+ * 检查在 Worker 中执行且内容未变走缓存，不会卡主线程。
+ *
+ * 失败语义：Worker 加载失败 / 超时 / 规则异常都记录到 lintError 并展示为「检查失败」，
+ * 不得再显示成「没有发现问题」——这正是过去「Typora 能查出、这里查不出」的原因之一。
  */
 import { computed, ref, watch } from "vue";
 import useSpellCheck from "@/renderer/hooks/useSpellCheck";
@@ -36,6 +40,9 @@ const lintResult = ref<DocumentLintResult>(EMPTY_RESULT);
 
 /** 是否正在检查（按钮禁用与面板提示用） */
 const isLintRunning = ref(false);
+
+/** 最近一次检查的失败原因（null 表示没有失败，归属同 resultTabId） */
+const lintError = ref<string | null>(null);
 
 /** 结果面板是否可见 */
 const isLintPanelVisible = ref(false);
@@ -83,13 +90,16 @@ function isResultForCurrentTab(): boolean {
 
 /**
  * 执行一次检查（读取当前 tab 内容自行发起，带版本化防竞态）
+ *
+ * @returns 本次检查结果；检查失败或被更新的检查抢占时返回 null（失败原因见 lintError）
  */
-async function runCheck(): Promise<void> {
+async function runCheck(): Promise<DocumentLintResult | null> {
   const tab = useTab().currentTab.value;
   if (!tab) {
     lintResult.value = EMPTY_RESULT;
+    lintError.value = null;
     resultTabId.value = null;
-    return;
+    return EMPTY_RESULT;
   }
 
   const generation = ++checkGeneration;
@@ -99,11 +109,12 @@ async function runCheck(): Promise<void> {
   // 内容未变化且已有缓存结果时直接复用（切回 tab / 重复点按钮秒出结果）
   const cached = resultCache.get(tabId);
   if (cached && cached.content === content) {
-    if (generation !== checkGeneration) return;
+    if (generation !== checkGeneration) return null;
     lintResult.value = cached.result;
+    lintError.value = null;
     resultTabId.value = tabId;
     isLintRunning.value = false;
-    return;
+    return cached.result;
   }
 
   isLintRunning.value = true;
@@ -111,15 +122,21 @@ async function runCheck(): Promise<void> {
     // 检查在 Web Worker 中执行（主线程只收发消息）：拼写开关关闭时跳过拼写阶段
     const nextResult = await runLintOffThread(content, ruleConfig.value, isSpellCheckEnabled.value);
     // 期间 tab 已切换或发起了更新的检查时丢弃本次结果
-    if (generation !== checkGeneration) return;
+    if (generation !== checkGeneration) return null;
     lintResult.value = nextResult;
+    lintError.value = null;
     resultTabId.value = tabId;
     cacheResult(tabId, content, nextResult);
-  } catch {
-    if (generation === checkGeneration) {
-      lintResult.value = EMPTY_RESULT;
-      resultTabId.value = tabId;
-    }
+    return nextResult;
+  } catch (error) {
+    // 被新检查抢占（killWorker 拒绝旧任务）时 generation 已变化，不算失败；失败结果不写缓存，下次重试
+    if (generation !== checkGeneration) return null;
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[useDocumentLint] 文档检查失败:", message);
+    lintResult.value = EMPTY_RESULT;
+    lintError.value = message;
+    resultTabId.value = tabId;
+    return null;
   } finally {
     if (generation === checkGeneration) {
       isLintRunning.value = false;
@@ -130,6 +147,11 @@ async function runCheck(): Promise<void> {
 /** 当前 tab 的检查结果（归属不匹配时视为空，避免展示别的文档的问题） */
 const currentResult = computed<DocumentLintResult>(() =>
   isResultForCurrentTab() ? lintResult.value : EMPTY_RESULT
+);
+
+/** 当前 tab 的检查失败原因（归属不匹配时视为无） */
+const currentError = computed<string | null>(() =>
+  isResultForCurrentTab() ? lintError.value : null
 );
 
 /** 当前 tab 的问题总数：状态栏徽标常驻展示，不必打开面板即可感知检查结果（归属不符时为 0） */
@@ -143,6 +165,7 @@ watch(
   () => useTab().currentTab.value?.id,
   (tabId) => {
     resultTabId.value = null;
+    lintError.value = null;
     if (tabId) void runCheck();
   },
   { immediate: true }
@@ -172,12 +195,11 @@ function closeLintPanel(): void {
 }
 
 /**
- * 内容变化时的防抖重查（仅面板打开时生效）
+ * 内容变化时的防抖重查（面板关闭时同样生效，保持状态栏徽标实时）
  *
  * 由渲染层在编辑器 change 事件里调用；600ms 防抖足以吸收连续击键。
  */
 function scheduleAutoCheck(): void {
-  if (!isLintPanelVisible.value) return;
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
@@ -207,6 +229,7 @@ export default function useDocumentLint() {
     ruleConfig,
     lintResult,
     currentResult,
+    currentError,
     totalIssueCount,
     isLintRunning,
     isLintPanelVisible,

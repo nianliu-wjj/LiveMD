@@ -7,11 +7,21 @@
  *   lineNumber / ruleNames / ruleDescription / fixInfo；
  * - 修复：markdownlint `applyFixes` 一次性按行号应用所有 fixInfo，返回修复后文本；
  * - 纯函数 + 无副作用（仅规则配置读写 localStorage），供 useDocumentLint hook 与结果面板消费。
+ *
+ * 对齐 Typora 格式检查插件的补充（Typora 能查出、此前本项目查不出的根因）：
+ * - 自定义规则 MD101/MD102/MD103 经 customRules 传入（见 markdownLintCustomRules.ts）；
+ * - MD044 专有名词默认 names 为空数组 → 规则空转，这里注入常见专有名词；
+ * - 旧内核缺 Intl.Segmenter 时 markdownlint 模块加载即失败，先注入 polyfill；
+ * - 拼写检查接入仓库 cspell.json 的项目词典，并检查句首大写的单词。
  */
+// 必须是第一个 import：markdownlint → MD060 → string-width 在模块顶层就会 new Intl.Segmenter()
+import "./intlSegmenterPolyfill.ts";
 import { applyFixes } from "markdownlint";
 import { lint } from "markdownlint/promise";
 import nspell from "nspell";
 import type { Nspell } from "nspell";
+import cspellConfig from "../../../cspell.json" with { type: "json" };
+import { CUSTOM_LINT_RULE_CODES, CUSTOM_LINT_RULES } from "./markdownLintCustomRules.ts";
 import { MARKDOWNLINT_DOC_URL_BASE, MARKDOWNLINT_RULES } from "./markdownLintRules.ts";
 
 // ============ 类型定义 ============
@@ -55,6 +65,12 @@ export interface FormatIssue {
 export interface DocumentLintResult {
   spellIssues: SpellIssue[];
   formatIssues: FormatIssue[];
+  /**
+   * 非致命提示（如拼写词典加载失败导致拼写阶段被跳过）
+   *
+   * 与「检查失败」区分：格式检查结果仍然可信，只是某一阶段没有执行，需要告知用户而不是静默。
+   */
+  notices?: string[];
 }
 
 /** 规则启用状态表：key 为规则编码，value 为是否启用 */
@@ -103,6 +119,25 @@ export function writeRuleConfig(config: RuleConfig, storage?: RuleConfigStorage)
   }
 }
 
+/**
+ * MD044（proper-names）默认专有名词表
+ *
+ * markdownlint 的 MD044 在 names 为空时直接 return，默认配置下等于没开；
+ * Typora 插件为它配置了常用技术名词，这里对齐。只收录小写形式几乎不会作为普通词出现的名词，
+ * 避免误报（如 HTML/CSS 常以 index.html 这类文件名出现在正文里，故不收录）。
+ */
+export const DEFAULT_PROPER_NAMES: readonly string[] = [
+  "JavaScript",
+  "TypeScript",
+  "GitHub",
+  "GitLab",
+  "Markdown",
+  "Node.js",
+  "Vue",
+  "React",
+  "macOS",
+];
+
 /** 构造 markdownlint 配置：默认全部启用，用户显式关闭的规则置 false */
 export function buildLintConfig(ruleConfig: RuleConfig): Record<string, unknown> {
   const config: Record<string, unknown> = { default: true };
@@ -111,20 +146,40 @@ export function buildLintConfig(ruleConfig: RuleConfig): Record<string, unknown>
       config[rule.code] = false;
     }
   }
+  // MD044 未被关闭时注入专有名词表：code_blocks=false 不检查代码块与行内代码（变量名、包名大小写合法）。
+  // names 每次复制一份：MD044 会对传入数组原地 sort
+  if (config.MD044 !== false) {
+    config.MD044 = { names: [...DEFAULT_PROPER_NAMES], code_blocks: false };
+  }
   return config;
 }
 
 // ============ 格式检查 ============
 
+/** 规则文档链接：官方规则指向 markdownlint 仓库文档，自定义规则没有在线文档 */
+function resolveRuleInfoUrl(code: string | undefined, ruleInformation?: string): string {
+  if (ruleInformation) return ruleInformation;
+  if (code && CUSTOM_LINT_RULE_CODES.has(code)) return "";
+  return `${MARKDOWNLINT_DOC_URL_BASE}/${(code ?? "md001").toLowerCase()}.md`;
+}
+
 export async function runFormatCheck(
   content: string,
   ruleConfig: RuleConfig
 ): Promise<FormatIssue[]> {
+  const startedAt = Date.now();
   const errors = await lint({
     strings: { document: content },
     config: buildLintConfig(ruleConfig),
+    customRules: [...CUSTOM_LINT_RULES],
+    // 单条规则抛异常时不中断整次检查：markdownlint 会把异常作为一条问题上报，
+    // 其他规则的结果照常返回（过去任一规则异常都会让整次检查被吞成「没有发现问题」）
+    handleRuleFailures: true,
   });
   const raw = errors.document ?? [];
+  console.debug(
+    `[documentLint] 格式检查完成：${raw.length} 项问题，耗时 ${Date.now() - startedAt}ms`
+  );
   return raw.map((error) => {
     const [code, alias] = error.ruleNames;
     return {
@@ -132,9 +187,7 @@ export async function runFormatCheck(
       ruleCode: code ?? "MD000",
       ruleAlias: alias ?? "",
       description: error.ruleDescription,
-      infoUrl:
-        error.ruleInformation ??
-        `${MARKDOWNLINT_DOC_URL_BASE}/${(code ?? "md001").toLowerCase()}.md`,
+      infoUrl: resolveRuleInfoUrl(code, error.ruleInformation),
       detail: error.errorDetail ?? null,
       // fixInfo.lineNumber 可缺省（applyFixes 运行时会用外层 lineNumber 补上），这里统一补齐保证自包含
       fixInfo: error.fixInfo
@@ -223,18 +276,57 @@ async function getSpellChecker(baseUrl?: string): Promise<Nspell | null> {
   if (!spellCheckerLoading) {
     spellCheckerLoading = loadDictionary(baseUrl)
       .then((dictionary) => {
-        if (!dictionary) return null;
-        spellChecker = nspell(dictionary);
+        if (!dictionary) {
+          // 词典不可用：清掉加载中的 Promise，下次检查重新尝试（不把一次失败永久缓存）
+          spellCheckerLoading = null;
+          return null;
+        }
+        const checker = nspell(dictionary);
+        // 接入项目词典：cspell.json 的 words + MD044 专有名词，避免项目内合法词被报拼写错误
+        for (const word of PROJECT_DICTIONARY_WORDS) {
+          checker.add(word);
+        }
+        spellChecker = checker;
+        console.info(
+          `[documentLint] 拼写词典加载完成，已追加项目词典 ${PROJECT_DICTIONARY_WORDS.length} 个词`
+        );
         return spellChecker;
       })
-      .catch(() => {
-        // 词典加载失败时拼写检查静默降级为无结果
+      .catch((error) => {
+        console.warn("[documentLint] 拼写词典初始化失败:", error);
         spellCheckerLoading = null;
         return null;
       });
   }
   return spellCheckerLoading;
 }
+
+/** 读取 cspell.json 的项目词表（字段缺失或格式不符时返回空表） */
+function readCspellWords(config: unknown): string[] {
+  const words = (config as { words?: unknown } | null)?.words;
+  if (!Array.isArray(words)) return [];
+  return words.filter((word): word is string => typeof word === "string" && word.length > 0);
+}
+
+/** 拼写检查的项目词典：cspell.json 项目词 + MD044 专有名词（按小写去重） */
+export const PROJECT_DICTIONARY_WORDS: readonly string[] = (() => {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  // 专有名词拆出其中的英文词元（Node.js → Node），与拼写扫描的分词口径保持一致
+  const properNameTokens = DEFAULT_PROPER_NAMES.flatMap((name) => name.match(/[A-Za-z]+/g) ?? []);
+  for (const word of [...readCspellWords(cspellConfig), ...properNameTokens]) {
+    const key = word.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(word);
+  }
+  return result;
+})();
+
+/** 项目词典的小写集合：cspell 词表大小写不敏感，混合大小写（LiveMD）nspell 无法匹配小写词条，故直接放行 */
+const PROJECT_DICTIONARY_KEYS: ReadonlySet<string> = new Set(
+  PROJECT_DICTIONARY_WORDS.map((word) => word.toLowerCase())
+);
 
 /**
  * 逐行屏蔽不应参与拼写检查的区域，返回与原文等长的掩码
@@ -245,10 +337,11 @@ async function getSpellChecker(baseUrl?: string): Promise<Nspell | null> {
 function buildLineMask(lines: string[]): boolean[][] {
   let inFencedCode = false;
   let fenceMarker = "";
+  let inMathBlock = false;
   return lines.map((line) => {
     const mask: boolean[] = Array.from({ length: line.length }, () => false);
     const fenceMatch = line.match(/^\s{0,3}(`{3,}|~{3,})/);
-    if (fenceMatch) {
+    if (fenceMatch && !inMathBlock) {
       if (!inFencedCode) {
         inFencedCode = true;
         fenceMarker = fenceMatch[1][0];
@@ -259,6 +352,18 @@ function buildLineMask(lines: string[]): boolean[][] {
       return mask;
     }
     if (inFencedCode) {
+      mask.fill(true);
+      return mask;
+    }
+    // 数学块（$$ 围栏，可在引用/列表内）整块屏蔽：LaTeX 命令（\frac、\alpha）不是英文单词
+    if (/^[\s>]*\$\$/.test(line)) {
+      // 单行 $$...$$ 不切换状态；只有单独的 $$ 围栏行才开/关数学块
+      const isSingleLine = /^[\s>]*\$\$.*\S.*\$\$\s*$/.test(line);
+      if (!isSingleLine) inMathBlock = !inMathBlock;
+      mask.fill(true);
+      return mask;
+    }
+    if (inMathBlock) {
       mask.fill(true);
       return mask;
     }
@@ -276,6 +381,8 @@ function buildLineMask(lines: string[]): boolean[][] {
     // 行内元素：行内代码 / 图片 / 链接 / 裸 URL / HTML 标签
     const inlinePatterns = [
       /`[^`]*`/g,
+      // 行内数学：$$...$$ 或 $...$（开闭 $ 内侧不能是空白，避免把「$5 and $10」这类金额误当公式）
+      /\$\$[^$]+\$\$|\$[^$\s](?:[^$]*[^$\s])?\$/g,
       /!\[[^\]]*\]\([^)]*\)/g,
       /\[[^\]]*\]\([^)]*\)/g,
       /https?:\/\/\S+/g,
@@ -342,8 +449,10 @@ function scanLines(
       if (word.length < 3) continue;
       // 全大写视为缩写词（API、TODO 等）
       if (word === word.toUpperCase()) continue;
-      // 首字母大写的专有名词放行（Markdown 等）
-      if (/^[A-Z][a-z]*$/.test(word)) continue;
+      // 项目词典命中（大小写不敏感）直接放行
+      if (PROJECT_DICTIONARY_KEYS.has(word.toLowerCase())) continue;
+      // 注意：首字母大写的词不再整体放行——句首的「Teh」「Recieve」也要查（Typora 的拼写检查同样会标出），
+      // nspell 对首字母大写词会同时匹配其小写词条，普通单词在句首不会误报
       // 去重键不含行号：同一错词全文档只 correct/suggest 一次
       const key = word.toLowerCase();
       if (reported.has(key)) continue;
@@ -361,12 +470,21 @@ const SCAN_BATCH = 200;
 /** 单词问题总量上限：超出后不再生成条目（控制面板与内存规模） */
 const MAX_SPELL_ISSUES = 500;
 
+/** 拼写词典不可用（加载失败 / 静态资产缺失）：拼写阶段无法执行，需要告知用户而不是返回空结果 */
+export class SpellDictionaryUnavailableError extends Error {
+  constructor() {
+    super("拼写词典加载失败，本次未执行拼写检查");
+    this.name = "SpellDictionaryUnavailableError";
+  }
+}
+
 export async function runSpellCheck(
   content: string,
   dictionaryBaseUrl?: string
 ): Promise<SpellIssue[]> {
   const checker = await getSpellChecker(dictionaryBaseUrl);
-  if (!checker) return [];
+  // 过去这里返回 []，词典加载失败会被误报成「没有拼写问题」
+  if (!checker) throw new SpellDictionaryUnavailableError();
 
   const lines = content.split("\n");
   const masks = buildLineMask(lines);
@@ -400,10 +518,24 @@ export async function runDocumentLint(
   dictionaryBaseUrl?: string,
   spellEnabled = true
 ): Promise<DocumentLintResult> {
+  const notices: string[] = [];
   // 拼写开关关闭时跳过拼写阶段（省掉词典加载与全文档词元扫描）
-  const spellIssues = spellEnabled ? await runSpellCheck(content, dictionaryBaseUrl) : [];
+  let spellIssues: SpellIssue[] = [];
+  if (spellEnabled) {
+    try {
+      spellIssues = await runSpellCheck(content, dictionaryBaseUrl);
+    } catch (error) {
+      // 拼写阶段失败不拖垮格式检查，但必须作为提示透出（不能静默成「没有拼写问题」）
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn("[documentLint] 拼写检查失败，已跳过:", message);
+      notices.push(message);
+    }
+  }
   // 进入格式检查前让出主线程，保证 UI 在两阶段之间仍可响应
   await new Promise((resolve) => setTimeout(resolve, 0));
+  // 格式检查失败（规则加载失败等）直接向上抛，由调用方展示为「检查失败」
   const formatIssues = await runFormatCheck(content, ruleConfig);
-  return { spellIssues, formatIssues };
+  return notices.length > 0
+    ? { spellIssues, formatIssues, notices }
+    : { spellIssues, formatIssues };
 }

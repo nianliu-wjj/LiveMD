@@ -16,6 +16,8 @@ export interface MarkdownLintRule {
   alias: string;
   /** 中文简述 */
   description: string;
+  /** 是否为本项目自定义规则（非 markdownlint 内置，无官方文档） */
+  custom?: boolean;
 }
 
 /** markdownlint 官方规则文档目录（infoUrl 兜底用） */
@@ -74,4 +76,30 @@ export const MARKDOWNLINT_RULES: readonly MarkdownLintRule[] = [
   { code: "MD056", alias: "table-column-count", description: "表格各行列数需一致" },
   { code: "MD058", alias: "blanks-around-tables", description: "表格上下需空行" },
   { code: "MD059", alias: "descriptive-link-text", description: "链接文字需有描述性" },
+  { code: "MD060", alias: "table-column-style", description: "表格列竖线需对齐、风格统一" },
+  // ---- 自定义规则（对齐 Typora 格式检查插件，实现见 markdownLintCustomRules.ts）----
+  {
+    code: "MD101",
+    alias: "math-surrounded-by-blank-lines",
+    description: "数学公式块上下需空行",
+    custom: true,
+  },
+  {
+    code: "MD102",
+    alias: "no-emphasis-only-heading",
+    description: "标题不应整体加粗或斜体",
+    custom: true,
+  },
+  {
+    code: "MD103",
+    alias: "inline-math-single-dollar",
+    description: "行内公式应使用单个 $ 包裹",
+    custom: true,
+  },
 ];
+
+/** 规则文档链接：官方规则按编码指向 doc/mdXXX.md；自定义规则没有在线文档，返回 null */
+export function getRuleDocUrl(rule: MarkdownLintRule): string | null {
+  if (rule.custom) return null;
+  return `${MARKDOWNLINT_DOC_URL_BASE}/${rule.code.toLowerCase()}.md`;
+}

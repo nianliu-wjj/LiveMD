@@ -60,13 +60,14 @@ function createWorker(): Worker {
     }
   };
 
-  instance.onerror = () => {
+  instance.onerror = (event: ErrorEvent) => {
     // 脚本加载/运行失败：拒绝当前任务并销毁线程，下次任务重建
+    console.error("[lintWorkerClient] worker 加载或运行失败:", event.message);
     const task = pending;
     pending = null;
     if (task) {
       clearTimeout(task.timer);
-      task.reject(new Error("文档检查 worker 加载失败"));
+      task.reject(new Error(event.message || "文档检查 worker 加载失败"));
     }
     instance.terminate();
     if (worker === instance) worker = null;
@@ -75,13 +76,16 @@ function createWorker(): Worker {
   return instance;
 }
 
-/** 销毁当前 worker（新任务抢占时调用），在途任务以取消收场 */
+/**
+ * 抢占在途任务：有任务在跑时销毁线程（残余计算随线程结束），任务以取消收场
+ *
+ * 空闲线程保留：其中已加载的规则与拼写词典可复用，否则每次防抖重查都要重新初始化词典。
+ */
 function killWorker(): void {
-  if (pending) {
-    clearTimeout(pending.timer);
-    pending.reject(new Error("文档检查任务已取消"));
-    pending = null;
-  }
+  if (!pending) return;
+  clearTimeout(pending.timer);
+  pending.reject(new Error("文档检查任务已取消"));
+  pending = null;
   if (worker) {
     worker.terminate();
     worker = null;
@@ -110,6 +114,7 @@ function runInWorker(
       if (pending?.id === id) {
         pending = null;
       }
+      console.error("[lintWorkerClient] 文档检查超时，已终止 worker，任务:", id);
       reject(new Error(`文档检查超时（${Math.round(LINT_TASK_TIMEOUT_MS / 1000)}s）`));
     }, LINT_TASK_TIMEOUT_MS);
 

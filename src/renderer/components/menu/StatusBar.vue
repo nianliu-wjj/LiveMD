@@ -98,6 +98,7 @@ const {
   resultTabId,
   closeLintPanel,
   totalIssueCount,
+  currentError,
 } = useDocumentLint();
 
 /**
@@ -119,6 +120,11 @@ async function handleDocumentLint(): Promise<void> {
   if (panelWillRunCheck) return;
 
   const result = await runCheck();
+  if (!result) {
+    // null：检查失败（面板已显示原因）或被更新的检查抢占，都不能提示「未发现问题」
+    if (currentError.value) autotoast.show(`检查失败：${currentError.value}`, "error");
+    return;
+  }
   const total = result.formatIssues.length + result.spellIssues.length;
   autotoast.show(
     total > 0 ? `检查完成，发现 ${total} 处问题` : "检查完成，未发现问题",
