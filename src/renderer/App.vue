@@ -250,10 +250,20 @@ watch(
   { flush: "sync" }
 );
 
-// ✅ 仅切换可见性写入的上下文键，保持当前展开状态不变（§7）：
-// 打开工作区不应把用户手动展开的侧边栏关掉，展开状态继续跟随用户操作写入新上下文
-watch(watchedDirPath, (workspacePath) => {
+// 启动恢复会话期间为 true：此时打开的工作区属于「恢复」而非用户主动打开，保持启动折叠的约定
+let isRestoringLaunchSession = false;
+
+// ✅ 切换可见性写入的上下文键（§7）：打开工作区不应把用户手动展开的侧边栏关掉。
+// 用户主动打开/切换到新工作区时自动展开左侧文件树，让用户直观看到文件夹里的文档。
+watch(watchedDirPath, (workspacePath, prevWorkspacePath) => {
   const nextSidebarContextKey = getSidebarContextKey(workspacePath);
+  if (workspacePath && workspacePath !== prevWorkspacePath && !isRestoringLaunchSession) {
+    console.info("[App] 打开新工作区，自动展开左侧边栏:", workspacePath);
+    // 先切换上下文键，展开状态写入新工作区对应的偏好
+    activeSidebarContextKey = nextSidebarContextKey;
+    toggleShowOutline(true);
+    return;
+  }
   if (nextSidebarContextKey === activeSidebarContextKey) return;
   activeSidebarContextKey = nextSidebarContextKey;
 });
@@ -320,6 +330,19 @@ async function restoreLaunchSession(): Promise<void> {
 
   if (launchMode === "new") return;
 
+  isRestoringLaunchSession = true;
+  try {
+    await restoreLaunchSessionByMode(launchMode);
+  } finally {
+    // watchedDirPath 的 watch 默认 pre flush：等本轮回调执行完再解除恢复标记
+    await nextTick();
+    isRestoringLaunchSession = false;
+  }
+}
+
+async function restoreLaunchSessionByMode(
+  launchMode: NonNullable<typeof config.value.workspace>["launchMode"]
+): Promise<void> {
   // fixed 模式：打开固定工作区（沿用 startupPath）
   if (launchMode === "fixed") {
     const startupPath = config.value.workspace?.startupPath;
