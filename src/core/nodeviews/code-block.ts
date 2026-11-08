@@ -95,6 +95,8 @@ export function detectDarkTheme(): boolean {
  * 全局 mermaid 渲染队列，保证同一时刻只有一个 render 在执行
  */
 let mermaidRenderQueue: Promise<void> = Promise.resolve();
+/** 全局唯一展开中的代码块下拉框（语言 / Mermaid 模式）的关闭函数：打开新的下拉框前先关闭旧的 */
+let activeCustomSelectClose: (() => void) | null = null;
 let mermaidIdCounter = 0;
 
 /** Mermaid 原始 SVG 缓存：键为「主题签名 + 图表源码」，避免滚动/切换时重复渲染 */
@@ -586,6 +588,8 @@ export class CodeBlockView implements NodeView {
   private mermaidRenderToken = 0;
   /** 取消共享主题变化订阅 */
   private themeUnsubscribe: (() => void) | null = null;
+  /** 本代码块当前展开的下拉框关闭函数（弹层挂在 body 上，销毁/重建头部时需主动关闭） */
+  private openSelectClosers = new Set<() => void>();
   // 源码模式相关
   private sourceViewMode: boolean = false;
   private sourceViewUnsubscribe: (() => void) | null = null;
@@ -1255,6 +1259,8 @@ export class CodeBlockView implements NodeView {
   private createHeader(language: string): HTMLElement {
     const header = document.createElement("div");
     header.className = "livemd-code-block-header";
+    // 重建头部前关闭旧下拉框，避免 body 上残留孤立弹层
+    this.closeOpenSelects();
     // 全屏按钮挂在代码块容器右上角，而不是底部工具栏里，保证图表卡片右上角可发现
     this.mermaidExpandButton?.remove();
     this.mermaidExpandButton = null;
@@ -1536,6 +1542,13 @@ export class CodeBlockView implements NodeView {
     this.dom.style.setProperty("--livemd-code-fold-height", `${height}px`);
   }
 
+  /** 关闭本代码块所有已展开的下拉框 */
+  private closeOpenSelects(): void {
+    // close() 会从集合中删除自身；Set 迭代期间删除当前元素是安全的
+    for (const close of this.openSelectClosers) close();
+    this.openSelectClosers.clear();
+  }
+
   /**
    * 创建自定义下拉选择器
    */
@@ -1553,20 +1566,63 @@ export class CodeBlockView implements NodeView {
     const currentOption = options.find((o) => o.value === currentValue);
     button.textContent = currentOption?.label || options[0].label;
 
+    // 下拉弹层挂到 document.body（portal）+ fixed 定位，原因：
+    // 1. 头部 .livemd-code-block-header 仅在代码块 hover 时可见（opacity/pointer-events），
+    //    鼠标从按钮移到向下展开的列表时离开了代码块，列表随头部一起被隐藏、无法点击；
+    // 2. 大文档模式下顶层代码块带 content-visibility:auto（隐含绘制裁剪），短代码块的列表被裁掉；
+    // 3. 头部 z-index 形成局部层叠上下文，列表会被后续内容遮挡，单纯加大 z-index 无效。
     const dropdown = document.createElement("div");
-    dropdown.className = "livemd-custom-select-dropdown";
+    dropdown.className = "livemd-custom-select-dropdown livemd-custom-select-dropdown--portal";
 
     // 选项 DOM 延迟到首次展开时创建：语言列表有 37 项，若每个代码块都立即创建，
     // 数百个代码块会在首屏生成上万个节点。
     let populated = false;
     let outsideHandler: ((event: MouseEvent) => void) | null = null;
+    let keydownHandler: ((event: KeyboardEvent) => void) | null = null;
+
+    // 按按钮位置定位弹层：下方空间不足且上方更充裕时向上弹出；水平方向溢出视口右缘时左收
+    const reposition = () => {
+      const rect = button.getBoundingClientRect();
+      // 按钮已滚出视口（或节点已被移除）时直接关闭，避免弹层悬空
+      if (!button.isConnected || rect.bottom < 0 || rect.top > window.innerHeight) {
+        close();
+        return;
+      }
+      const gap = 4;
+      const margin = 8;
+      const dropdownHeight = Math.min(dropdown.scrollHeight || 240, 240);
+      const dropdownWidth = Math.max(dropdown.offsetWidth, rect.width, 120);
+      const spaceBelow = window.innerHeight - rect.bottom - margin;
+      const spaceAbove = rect.top - margin;
+      const openUp = spaceBelow < dropdownHeight && spaceAbove > spaceBelow;
+      container.classList.toggle("dropup", openUp);
+
+      let top = openUp ? rect.top - gap - dropdownHeight : rect.bottom + gap;
+      top = Math.max(margin, Math.min(top, window.innerHeight - margin - dropdownHeight));
+      let left = rect.left;
+      if (left + dropdownWidth > window.innerWidth - margin) {
+        left = Math.max(margin, window.innerWidth - margin - dropdownWidth);
+      }
+      dropdown.style.top = `${Math.round(top)}px`;
+      dropdown.style.left = `${Math.round(left)}px`;
+      dropdown.style.minWidth = `${Math.round(rect.width)}px`;
+    };
 
     const close = () => {
       container.classList.remove("open");
+      dropdown.remove();
       if (outsideHandler) {
-        document.removeEventListener("click", outsideHandler);
+        document.removeEventListener("click", outsideHandler, true);
         outsideHandler = null;
       }
+      if (keydownHandler) {
+        document.removeEventListener("keydown", keydownHandler, true);
+        keydownHandler = null;
+      }
+      window.removeEventListener("resize", reposition);
+      window.removeEventListener("scroll", reposition, true);
+      this.openSelectClosers.delete(close);
+      if (activeCustomSelectClose === close) activeCustomSelectClose = null;
     };
 
     const populate = () => {
@@ -1599,44 +1655,49 @@ export class CodeBlockView implements NodeView {
       e.stopPropagation();
       const willOpen = !container.classList.contains("open");
 
-      // 关闭所有其他下拉框
-      document.querySelectorAll(".livemd-custom-select.open").forEach((el) => {
-        if (el !== container) {
-          el.classList.remove("open");
-        }
-      });
-
       if (!willOpen) {
         close();
         return;
       }
 
+      // 同一时刻只保留一个展开的下拉框（跨代码块）
+      activeCustomSelectClose?.();
+
       populate();
-
-      // 检测是否需要向上弹出
-      const buttonRect = button.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const spaceBelow = viewportHeight - buttonRect.bottom;
-      const dropdownHeight = 240; // 最大高度
-
-      if (spaceBelow < dropdownHeight && buttonRect.top > spaceBelow) {
-        container.classList.add("dropup");
-      } else {
-        container.classList.remove("dropup");
-      }
-
       container.classList.add("open");
+      document.body.appendChild(dropdown);
+      reposition();
+      // 当前项滚动到可视区域，便于在 37 种语言中定位
+      dropdown.querySelector<HTMLElement>(".livemd-custom-select-item.selected")?.scrollIntoView({
+        block: "nearest",
+      });
+
+      activeCustomSelectClose = close;
+      this.openSelectClosers.add(close);
+      window.addEventListener("resize", reposition);
+      // 捕获阶段监听滚动：编辑区任意祖先容器滚动都需要重新定位
+      window.addEventListener("scroll", reposition, true);
+
+      // 外部点击关闭：弹层已不在 container 内，需同时判断两者
       outsideHandler = (event: MouseEvent) => {
-        if (!container.contains(event.target as Node)) close();
+        const target = event.target as Node;
+        if (!container.contains(target) && !dropdown.contains(target)) close();
+      };
+      keydownHandler = (event: KeyboardEvent) => {
+        if (event.key === "Escape") {
+          event.stopPropagation();
+          close();
+          button.focus();
+        }
       };
       // 延迟注册，避免当前这次点击立即触发关闭
       window.setTimeout(() => {
-        if (outsideHandler) document.addEventListener("click", outsideHandler);
+        if (outsideHandler) document.addEventListener("click", outsideHandler, true);
+        if (keydownHandler) document.addEventListener("keydown", keydownHandler, true);
       }, 0);
     });
 
     container.appendChild(button);
-    container.appendChild(dropdown);
     return container;
   }
 
@@ -2511,6 +2572,7 @@ export class CodeBlockView implements NodeView {
     }
     this.themeUnsubscribe?.();
     this.themeUnsubscribe = null;
+    this.closeOpenSelects();
     this.hideContextMenu();
     // 取消订阅源码模式状态
     if (this.sourceViewUnsubscribe) {

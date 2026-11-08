@@ -483,6 +483,25 @@
   transform: translateY(0);
 }
 
+/* portal 变体：弹层挂在 body 上，fixed 定位由 createCustomSelect 按按钮位置计算 */
+.livemd-custom-select-dropdown--portal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  margin: 0;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+
+/* 下拉展开期间保持代码块头部可见（鼠标移到弹层上时代码块已失去 hover） */
+.livemd-code-block:has(.livemd-custom-select.open) .livemd-code-block-header {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .livemd-custom-select-item {
   padding: 6px 12px;
   font-size: 12px;
