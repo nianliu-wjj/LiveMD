@@ -44,7 +44,7 @@ import {
 } from "./plugins/fold";
 import { createSyntaxFixerPlugin } from "./plugins/syntax-fixer";
 import { extractPlainText, markdownToPlainText } from "./utils/plain-text";
-import { MINDMAP_TEMPLATE } from "./utils/mindmap-markdown";
+import { createMindMapTemplate } from "./utils/mindmap-document";
 import { createSyntaxDetectorPlugin } from "./plugins/syntax-detector";
 import { createHeadingSyncPlugin } from "./plugins/heading-sync";
 import {
@@ -2549,7 +2549,7 @@ export class LivemdEditor implements ILivemdEditor {
   insertMindmapBlock(): void {
     const codeBlockType = this.schema.nodes.code_block;
     if (!codeBlockType) return;
-    const node = codeBlockType.create({ language: "mindmap" }, this.schema.text(MINDMAP_TEMPLATE));
+    const node = codeBlockType.create({ language: "mindmap" }, this.schema.text(createMindMapTemplate()));
     console.info("[LivemdEditor] 插入思维导图代码块");
     this.view.focus();
     this.view.dispatch(this.view.state.tr.replaceSelectionWith(node).scrollIntoView());

@@ -1,0 +1,164 @@
+/**
+ * 思维导图编辑器公共样式（按钮 / 表单行 / 输入框 / 下拉 / 分组标题），在 MindMapEditor.vue 中全局引入一次。
+ * 所有子组件直接使用这些类名，保证视觉一致；颜色全部取 LiveMD 主题变量，自动适配明暗主题。
+ *
+ * 类名速查：
+ * - 按钮：.mm-btn / .mm-btn--primary / .mm-btn--small / .mm-btn--danger
+ * - 分组标题：.mm-section-title
+ * - 表单行：.mm-row（label 在左、控件在右）/ .mm-row__label / .mm-row__control
+ * - 控件：.mm-input / .mm-select / .mm-textarea / .mm-number
+ * - 单选按钮组：.mm-segment > .mm-segment__item(.is-active)
+ */
+.mindmap-editor {
+  .mm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 30px;
+    padding: 0 14px;
+    border: 1px solid var(--border-color-1, #dcdfe6);
+    border-radius: 6px;
+    background: var(--background-color-1, #fff);
+    color: var(--text-color-1, #333);
+    font-size: 13px;
+    cursor: pointer;
+    white-space: nowrap;
+
+    &:hover:not(:disabled) {
+      border-color: var(--primary-color, #409eff);
+      color: var(--primary-color, #409eff);
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  }
+
+  .mm-btn--primary {
+    border-color: var(--primary-color, #409eff);
+    background: var(--primary-color, #409eff);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      color: #fff;
+      opacity: 0.88;
+    }
+  }
+
+  .mm-btn--danger:hover:not(:disabled) {
+    border-color: #e53e3e;
+    color: #e53e3e;
+  }
+
+  .mm-btn--small {
+    height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .mm-section-title {
+    margin: 16px 0 10px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-color, #333);
+
+    &:first-child {
+      margin-top: 0;
+    }
+  }
+
+  .mm-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 32px;
+    margin-bottom: 8px;
+  }
+
+  .mm-row__label {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text-color-2, #666);
+  }
+
+  .mm-row__control {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .mm-input,
+  .mm-select,
+  .mm-number,
+  .mm-textarea {
+    box-sizing: border-box;
+    height: 28px;
+    padding: 0 8px;
+    border: 1px solid var(--border-color-1, #dcdfe6);
+    border-radius: 4px;
+    background: var(--background-color-1, #fff);
+    color: var(--text-color, #333);
+    font-size: 12px;
+    outline: none;
+
+    &:focus {
+      border-color: var(--primary-color, #409eff);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+
+  .mm-input {
+    width: 100%;
+  }
+
+  .mm-select {
+    min-width: 110px;
+    padding-right: 4px;
+  }
+
+  .mm-number {
+    width: 80px;
+  }
+
+  .mm-textarea {
+    width: 100%;
+    height: auto;
+    min-height: 120px;
+    padding: 8px;
+    resize: vertical;
+    font-family: inherit;
+    line-height: 1.6;
+  }
+
+  .mm-segment {
+    display: inline-flex;
+    border: 1px solid var(--border-color-1, #dcdfe6);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .mm-segment__item {
+    padding: 4px 10px;
+    font-size: 12px;
+    color: var(--text-color-2, #666);
+    cursor: pointer;
+    user-select: none;
+
+    & + & {
+      border-left: 1px solid var(--border-color-1, #dcdfe6);
+    }
+
+    &.is-active {
+      background: var(--primary-color, #409eff);
+      color: #fff;
+    }
+  }
+}

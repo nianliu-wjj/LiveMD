@@ -46,7 +46,7 @@ import {
 import { canFoldCodeBlock, getCodeBlockFoldHeight } from "./code-block-fold";
 import { formatCode, getFormatSupport } from "../utils/code-formatter";
 import { describeIndentRule, getIndentRule, reindentCode } from "../utils/code-indent";
-import { renderMindMapSvg } from "./mindmap";
+import { peekMindMapPreview, renderMindMapPreview } from "./mindmap-preview";
 import { attachMermaidInteractions } from "./mermaid-interactions";
 import {
   parsePositionsAttr,
@@ -613,6 +613,10 @@ export class CodeBlockView implements NodeView {
   private mindmapPreview: HTMLElement | null = null;
   /** 思维导图块是否同时显示源码编辑器（默认只显示图，空块默认显示源码便于输入） */
   private mindmapShowSource = false;
+  /** 思维导图预览渲染令牌：内容变化后丢弃过期的异步结果 */
+  private mindmapRenderToken = 0;
+  /** 取消思维导图预览的「接近视口」观察 */
+  private mindmapLazyUnobserve: (() => void) | null = null;
   mermaidPreview: HTMLElement | null = null;
   mermaidDisplayMode: MermaidDisplayMode = globalMermaidDefaultMode;
   headerElement: HTMLElement | null = null;
@@ -2175,23 +2179,7 @@ export class CodeBlockView implements NodeView {
     }
 
     const canvas = this.mindmapPreview.querySelector<HTMLElement>(".livemd-mindmap-canvas");
-    if (canvas) {
-      const source = this.node.textContent;
-      try {
-        if (source.trim()) {
-          canvas.innerHTML = renderMindMapSvg(source);
-        } else {
-          canvas.innerHTML = "";
-          const placeholder = document.createElement("div");
-          placeholder.className = "livemd-mindmap-placeholder";
-          placeholder.textContent = "输入缩进层级文本（每级 2 个空格），或点击「编辑思维导图」";
-          canvas.appendChild(placeholder);
-        }
-      } catch (error) {
-        console.error("[CodeBlock] 思维导图渲染失败:", error);
-        canvas.textContent = `思维导图渲染失败：${String(error)}`;
-      }
-    }
+    if (canvas) this.renderMindmapCanvas(canvas, this.node.textContent);
 
     // 源码模式下整个块由源码文本接管
     if (this.sourceViewMode) {
@@ -2207,6 +2195,66 @@ export class CodeBlockView implements NodeView {
       ".livemd-mindmap-toggle-source"
     );
     if (toggle) toggle.textContent = this.mindmapShowSource ? "隐藏源码" : "显示源码";
+  }
+
+  /**
+   * 渲染思维导图预览图：命中缓存直接显示；否则接近视口时交给引擎离屏渲染（见 mindmap-preview.ts）
+   */
+  private renderMindmapCanvas(canvas: HTMLElement, source: string): void {
+    const token = ++this.mindmapRenderToken;
+    this.mindmapLazyUnobserve?.();
+    this.mindmapLazyUnobserve = null;
+
+    const showMessage = (text: string, isError = false) => {
+      canvas.replaceChildren();
+      const message = document.createElement("div");
+      message.className = `livemd-mindmap-placeholder${isError ? " is-error" : ""}`;
+      message.textContent = text;
+      canvas.appendChild(message);
+    };
+    const showImage = (url: string) => {
+      const existing = canvas.querySelector<HTMLImageElement>("img.livemd-mindmap-image");
+      if (existing) {
+        existing.src = url;
+        return;
+      }
+      const img = document.createElement("img");
+      img.className = "livemd-mindmap-image";
+      img.alt = "思维导图";
+      img.draggable = false;
+      img.src = url;
+      canvas.replaceChildren(img);
+    };
+
+    if (!source.trim()) {
+      showMessage("点击「编辑思维导图」开始创作");
+      return;
+    }
+    const cached = peekMindMapPreview(source);
+    if (cached) {
+      showImage(cached);
+      return;
+    }
+    // 内容变化时保留旧图（避免高度跳动），首次渲染显示占位
+    if (!canvas.querySelector("img.livemd-mindmap-image")) showMessage("思维导图渲染中…");
+
+    this.mindmapLazyUnobserve = observeNearViewport(
+      canvas,
+      () => {
+        this.mindmapLazyUnobserve = null;
+        renderMindMapPreview(source)
+          .then((url) => {
+            if (token === this.mindmapRenderToken && !this.destroyed) showImage(url);
+          })
+          .catch((error) => {
+            console.error("[CodeBlock] 思维导图预览渲染失败:", error);
+            if (token !== this.mindmapRenderToken || this.destroyed) return;
+            const reason = error instanceof SyntaxError ? "数据格式错误（JSON 无法解析）" : String(error);
+            showMessage(`思维导图渲染失败：${reason}`, true);
+          });
+      },
+      "320px 0px"
+    );
   }
 
   /** 创建思维导图预览 DOM：工具栏（编辑 / 源码开关）+ 画布 */
@@ -2956,6 +3004,8 @@ export class CodeBlockView implements NodeView {
     }
     this.mindmapPreview?.remove();
     this.mindmapPreview = null;
+    this.mindmapLazyUnobserve?.();
+    this.mindmapLazyUnobserve = null;
     this.disposeMermaidInteractions();
     this.themeUnsubscribe?.();
     this.themeUnsubscribe = null;
