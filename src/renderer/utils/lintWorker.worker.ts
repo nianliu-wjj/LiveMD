@@ -11,6 +11,8 @@
  *
  * 词典在 worker 内加载（首次任务时懒加载并常驻），与主线程各自独立。
  */
+// 必须是第一个 import：为 Worker 注入 $t 兜底（见 workerI18nShim.ts）
+import "./workerI18nShim.ts";
 import { runDocumentLint, type DocumentLintResult, type RuleConfig } from "./documentLint.ts";
 
 interface LintRequest {

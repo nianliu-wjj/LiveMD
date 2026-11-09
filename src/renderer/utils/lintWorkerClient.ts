@@ -123,7 +123,9 @@ function runInWorker(
       type: "lint",
       id,
       content,
-      ruleConfig,
+      // 调用方传入的通常是 Vue 响应式代理，结构化克隆不支持 Proxy（报 could not be cloned），
+      // 这里展开成普通对象再发送（规则配置只有一层 boolean 值）
+      ruleConfig: { ...ruleConfig },
       spellEnabled,
       dictionaryBaseUrl,
     });
