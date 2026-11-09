@@ -495,17 +495,19 @@ async function handleMindmapEditRequest(event: Event) {
   }
 
   let dialog: typeof import("@/renderer/components/dialogs/MindMapEditDialog.vue");
+  let result: string | null | undefined;
   try {
     dialog = await import("@/renderer/components/dialogs/MindMapEditDialog.vue");
+    result = (await autodialog.show(dialog.default, {
+      props: { source: detail.source },
+    })) as string | null | undefined;
   } catch (error) {
+    // 典型场景：开发服务器依赖预构建过期（504 Outdated Optimize Dep）或安装包资源缺失。
+    // 过去这里的异常没有出口，表现为「点击按钮没有任何反应」
     console.error("[LivemdEditor] 思维导图编辑弹窗加载失败:", error);
-    autotoast.show("思维导图编辑器加载失败", "error");
+    autotoast.show("思维导图编辑器加载失败，请刷新页面后重试（开发模式下请重启开发服务器）", "error");
     return;
   }
-
-  const result = (await autodialog.show(dialog.default, {
-    props: { source: detail.source },
-  })) as string | null | undefined;
   if (typeof result !== "string" || !editor) return;
 
   // 弹窗打开期间文档可能被外部改动（文件监听写回等）：节点已不匹配时放弃写回，避免覆盖到错误位置

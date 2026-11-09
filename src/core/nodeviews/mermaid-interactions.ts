@@ -301,24 +301,76 @@ function renderNode(node: NodeEntry): void {
 }
 
 /** 扩展 viewBox 容纳移出原边界的节点，并按比例放宽 max-width，避免图表整体被缩小 */
+/**
+ * 已渲染内容（节点 / 连线 / 连线标签 / 子图框）在 SVG 用户坐标下的实际边界
+ *
+ * getBBox 返回元素自身坐标系（不含自身 transform）的包围盒，因此要再叠加自身 translate 与祖先累计平移。
+ * 图表处于隐藏状态（代码模式）时取不到尺寸，返回 null。
+ */
+function measureContentBounds(
+  svg: SVGSVGElement
+): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  let bounds: { minX: number; minY: number; maxX: number; maxY: number } | null = null;
+  const selector = 'g.node[id], path[data-edge="true"], g.edgeLabel, g.cluster';
+  svg.querySelectorAll<SVGGraphicsElement>(selector).forEach((element) => {
+    let box: DOMRect;
+    try {
+      box = element.getBBox();
+    } catch {
+      return;
+    }
+    if (box.width === 0 && box.height === 0) return;
+    const own = parseTranslate(element);
+    const offset = ancestorOffset(element, svg);
+    const x = box.x + own.x + offset.x;
+    const y = box.y + own.y + offset.y;
+    bounds = bounds
+      ? {
+          minX: Math.min(bounds.minX, x),
+          minY: Math.min(bounds.minY, y),
+          maxX: Math.max(bounds.maxX, x + box.width),
+          maxY: Math.max(bounds.maxY, y + box.height),
+        }
+      : { minX: x, minY: y, maxX: x + box.width, maxY: y + box.height };
+  });
+  return bounds;
+}
+
+/**
+ * 按拖动后的实际内容重算 viewBox：节点移出原边界时扩展，移走后留下的空白区域则收缩，
+ * 图表在文档中的占用高度随之变化；max-width 按宽度比例同步，保持与自动布局相同的显示比例。
+ */
 function fitViewBox(
   svg: SVGSVGElement,
   nodes: Map<string, NodeEntry>,
   base: { x: number; y: number; width: number; height: number; maxWidth: number } | null
 ): void {
   if (!base) return;
-  let minX = base.x;
-  let minY = base.y;
-  let maxX = base.x + base.width;
-  let maxY = base.y + base.height;
-  for (const node of nodes.values()) {
-    if (node.delta.dx === 0 && node.delta.dy === 0) continue;
-    const cx = node.base.x + node.delta.dx + node.offset.x;
-    const cy = node.base.y + node.delta.dy + node.offset.y;
-    minX = Math.min(minX, cx - node.halfW - VIEWBOX_PADDING);
-    minY = Math.min(minY, cy - node.halfH - VIEWBOX_PADDING);
-    maxX = Math.max(maxX, cx + node.halfW + VIEWBOX_PADDING);
-    maxY = Math.max(maxY, cy + node.halfH + VIEWBOX_PADDING);
+  const content = measureContentBounds(svg);
+  let minX: number;
+  let minY: number;
+  let maxX: number;
+  let maxY: number;
+  if (content) {
+    minX = content.minX - VIEWBOX_PADDING;
+    minY = content.minY - VIEWBOX_PADDING;
+    maxX = content.maxX + VIEWBOX_PADDING;
+    maxY = content.maxY + VIEWBOX_PADDING;
+  } else {
+    // 隐藏状态量不到尺寸：退化为「原边界 ∪ 移动后的节点」，再次显示并拖动时会重新收紧
+    minX = base.x;
+    minY = base.y;
+    maxX = base.x + base.width;
+    maxY = base.y + base.height;
+    for (const node of nodes.values()) {
+      if (node.delta.dx === 0 && node.delta.dy === 0) continue;
+      const cx = node.base.x + node.delta.dx + node.offset.x;
+      const cy = node.base.y + node.delta.dy + node.offset.y;
+      minX = Math.min(minX, cx - node.halfW - VIEWBOX_PADDING);
+      minY = Math.min(minY, cy - node.halfH - VIEWBOX_PADDING);
+      maxX = Math.max(maxX, cx + node.halfW + VIEWBOX_PADDING);
+      maxY = Math.max(maxY, cy + node.halfH + VIEWBOX_PADDING);
+    }
   }
   const width = maxX - minX;
   const height = maxY - minY;
@@ -329,6 +381,7 @@ function fitViewBox(
   // 全屏查看与导出按该固有尺寸计算
   svg.dataset.livemdIntrinsicWidth = String(width);
   svg.dataset.livemdIntrinsicHeight = String(height);
+  console.debug("[mermaid-interactions] 重算图表边界:", fmt(width), "x", fmt(height));
 }
 
 function readBaseViewBox(svg: SVGSVGElement) {
