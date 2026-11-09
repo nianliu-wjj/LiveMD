@@ -189,6 +189,26 @@
   color: var(--text-color-2, #6a737d);
 }
 
+/* 标题对齐：变量由「设置 → 外观 → 标题位置」写入（useHeadingAlign），源码模式保持靠左便于编辑 */
+.livemd-editor:not(.source-view) h1 {
+  text-align: var(--livemd-heading-align-h1, left);
+}
+.livemd-editor:not(.source-view) h2 {
+  text-align: var(--livemd-heading-align-h2, left);
+}
+.livemd-editor:not(.source-view) h3 {
+  text-align: var(--livemd-heading-align-h3, left);
+}
+.livemd-editor:not(.source-view) h4 {
+  text-align: var(--livemd-heading-align-h4, left);
+}
+.livemd-editor:not(.source-view) h5 {
+  text-align: var(--livemd-heading-align-h5, left);
+}
+.livemd-editor:not(.source-view) h6 {
+  text-align: var(--livemd-heading-align-h6, left);
+}
+
 /* 段落：对齐 Typora github 的 0.8em 垂直节奏（相邻段落边距折叠后即段间距） */
 .livemd-editor p {
   margin: 0.8em 0;

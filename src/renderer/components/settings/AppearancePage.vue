@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import FontPage from "./FontPage.vue";
+import HeadingAlignSetting from "./HeadingAlignSetting.vue";
 import OtherSetting from "./OtherSetting.vue";
 import ThemePage from "./ThemePage.vue";
 </script>
@@ -18,6 +19,14 @@ import ThemePage from "./ThemePage.vue";
 
       <div class="appearance-item-content">
         <FontPage />
+      </div>
+    </div>
+
+    <div class="appearance-item">
+      <h2>标题位置</h2>
+
+      <div class="appearance-item-content">
+        <HeadingAlignSetting />
       </div>
     </div>
 

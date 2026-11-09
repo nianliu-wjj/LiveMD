@@ -4,6 +4,7 @@ import { useContext } from "@/renderer/hooks/useContext";
 import { useConfig } from "@/renderer/hooks/useConfig";
 import useFont from "@/renderer/hooks/useFont";
 import useOtherConfig from "@/renderer/hooks/useOtherConfig";
+import useHeadingAlign from "@/renderer/hooks/useHeadingAlign";
 import { isShowOutline, toggleShowOutline } from "@/renderer/hooks/useOutline";
 import { useSaveConfirmDialog } from "@/renderer/hooks/useSaveConfirmDialog";
 import {
@@ -56,6 +57,8 @@ const { init: initTheme } = useTheme();
 const { isLoading, loadingMessage } = useUiLoading();
 const { init: initFont } = useFont();
 const { init: initOtherConfig } = useOtherConfig();
+// 标题对齐：模块内 watch(immediate) 在启动时即把已保存的对齐方式写入 CSS 变量
+useHeadingAlign();
 const { config, setConf } = useConfig();
 const { openWorkSpaceByPath, watchedDirPath } = useWorkSpace();
 const { isShowSource } = useSourceCode(); // 用于控制大纲显示

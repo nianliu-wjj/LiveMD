@@ -16,6 +16,19 @@ import {
   type LegacyImageConfig,
 } from "@/shared/utils/imageInsert";
 
+/** 标题对齐方式 */
+export type HeadingAlign = "left" | "center" | "right";
+
+/** 标题级别 */
+export type HeadingLevelKey = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+
+/** 各级标题的对齐方式 */
+export type HeadingAlignConfig = Record<HeadingLevelKey, HeadingAlign>;
+
+export const HEADING_LEVEL_KEYS: readonly HeadingLevelKey[] = ["h1", "h2", "h3", "h4", "h5", "h6"];
+
+const HEADING_ALIGNS: readonly HeadingAlign[] = ["left", "center", "right"];
+
 /** 启动恢复模式（设置页"启动时打开"选择器） */
 export type LaunchMode = "new" | "lastFile" | "lastSession" | "fixed";
 
@@ -34,6 +47,10 @@ interface AppConfig extends Record<string, any> {
   };
   mermaid: {
     defaultDisplayMode: "code" | "mixed" | "diagram";
+  };
+  /** 标题外观：各级标题的对齐方式（即时渲染模式生效，源码模式始终靠左） */
+  heading: {
+    align: HeadingAlignConfig;
   };
   view: {
     focusMode: boolean;
@@ -64,6 +81,9 @@ const defaultConfig: AppConfig = {
   mermaid: {
     defaultDisplayMode: "diagram",
   },
+  heading: {
+    align: { h1: "left", h2: "left", h3: "left", h4: "left", h5: "left", h6: "left" },
+  },
   view: {
     focusMode: false,
     typewriterMode: false,
@@ -82,6 +102,18 @@ const LAUNCH_MODES: readonly LaunchMode[] = ["new", "lastFile", "lastSession", "
 
 function isLaunchMode(value: unknown): value is LaunchMode {
   return typeof value === "string" && (LAUNCH_MODES as readonly string[]).includes(value);
+}
+
+/** 合并标题对齐配置：逐级校验取值，非法值回退为靠左 */
+function mergeHeadingAlign(partial?: Partial<Record<string, unknown>>): HeadingAlignConfig {
+  const result = { ...defaultConfig.heading.align };
+  for (const level of HEADING_LEVEL_KEYS) {
+    const value = partial?.[level];
+    if (typeof value === "string" && (HEADING_ALIGNS as readonly string[]).includes(value)) {
+      result[level] = value as HeadingAlign;
+    }
+  }
+  return result;
 }
 
 function mergeAppConfig(partial?: Partial<AppConfig>): AppConfig {
@@ -112,6 +144,9 @@ function mergeAppConfig(partial?: Partial<AppConfig>): AppConfig {
     mermaid: {
       ...defaultConfig.mermaid,
       ...partial?.mermaid,
+    },
+    heading: {
+      align: mergeHeadingAlign(partial?.heading?.align),
     },
     view: {
       ...defaultConfig.view,
