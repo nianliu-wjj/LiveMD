@@ -1,0 +1,111 @@
+/**
+ * 节点样式（Style.vue）/ 基础样式（BaseStyle.vue）面板共用样式
+ *
+ * 在两个组件的 <style scoped> 中 @import，编译时内联并各自加上作用域属性，不影响其它组件。
+ * 按钮 / 输入框 / 表单行 / 分组标题等通用样式来自 ui/mm-common.less，这里只补充两个面板特有的部分。
+ */
+
+/* 只读模式下整体禁用表单：原生控件随 fieldset 一起禁用，这里去掉 fieldset 默认外观 */
+.mm-sp-fieldset {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  &:disabled {
+    .mm-sp-check,
+    .mm-sp-range input[type="range"] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+/* 复选框 + 文字（替代 el-checkbox） */
+.mm-sp-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-color-1, #333);
+  cursor: pointer;
+  user-select: none;
+
+  input {
+    margin: 0;
+    accent-color: var(--primary-color, #409eff);
+    cursor: inherit;
+  }
+}
+
+/* 滑块 + 当前数值（替代 el-slider，拖动结束才提交，与 el-slider 的 change 事件一致） */
+.mm-sp-range {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+
+  input[type="range"] {
+    flex: 1;
+    min-width: 0;
+    max-width: 170px;
+    margin: 0;
+    accent-color: var(--primary-color, #409eff);
+    cursor: pointer;
+  }
+}
+
+.mm-sp-range__value {
+  flex-shrink: 0;
+  width: 30px;
+  text-align: right;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-color-2, #666);
+}
+
+/* .mm-segment 的选项改用 <button>（只读时随 fieldset 禁用），去掉按钮默认外观；
+   内边距、颜色、选中态沿用 mm-common.less 的 .mm-segment__item */
+.mm-sp-segment-btn {
+  margin: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  line-height: inherit;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+/* 简单页签（替代 el-tabs） */
+.mm-sp-tabs {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-color-1, #e1e4e8);
+}
+
+.mm-sp-tab {
+  margin: 0 0 -1px;
+  padding: 6px 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-color-2, #666);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--primary-color, #409eff);
+  }
+
+  &.is-active {
+    border-bottom-color: var(--primary-color, #409eff);
+    color: var(--primary-color, #409eff);
+  }
+}

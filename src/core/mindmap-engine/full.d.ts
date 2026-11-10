@@ -68,6 +68,8 @@ export interface MindMapInstance {
   getCustomThemeConfig(): Record<string, unknown>;
   updateConfig(opt: Record<string, unknown>): void;
   setMode(mode: "readonly" | "edit"): void;
+  addPlugin(plugin: unknown, opt?: Record<string, unknown>): void;
+  removePlugin(plugin: unknown): void;
   resize(): void;
   render(callback?: () => void, source?: string): void;
   reRender(callback?: () => void, source?: string): void;
@@ -91,8 +93,23 @@ export interface MindMapStatic {
     transformMarkdownTo(markdown: string): MindMapNodeData;
   };
   version: string;
+  /** 引擎类上已注册的插件（实例化时逐个初始化） */
+  pluginList: MindMapPluginClass[];
+  /** 插件在 pluginList 中的下标，未注册为 -1 */
+  hasPlugin(plugin: MindMapPluginClass): number;
+  usePlugin(plugin: MindMapPluginClass, opt?: Record<string, unknown>): MindMapStatic;
   [key: string]: any;
 }
 
+/** 插件类（编辑器按设置动态 addPlugin / removePlugin） */
+export interface MindMapPluginClass {
+  instanceName: string;
+  new (...args: any[]): unknown;
+}
+
 declare const MindMap: MindMapStatic;
+/** 节点富文本插件 */
+export declare const RichText: MindMapPluginClass;
+/** 画布滚动条插件 */
+export declare const Scrollbar: MindMapPluginClass;
 export default MindMap;

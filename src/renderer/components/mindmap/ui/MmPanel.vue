@@ -36,7 +36,7 @@ function close(): void {
   top: 110px;
   right: 72px;
   bottom: 70px;
-  z-index: 1000;
+  z-index: 1100;
   width: 320px;
   display: flex;
   flex-direction: column;

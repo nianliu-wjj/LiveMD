@@ -530,6 +530,18 @@ const supportedLanguages = [
   { value: "mindmap", label: "思维导图" },
 ];
 
+/** 当前存活的思维导图代码块（编辑器关闭后统一刷新预览：全局引擎选项可能已变化） */
+const mindmapBlockViews = new Set<CodeBlockView>();
+
+/**
+ * 刷新所有思维导图代码块的预览图
+ * 由渲染层在思维导图编辑器关闭后调用：彩虹线条等全局引擎选项变化不改变代码块内容，
+ * 需要主动重渲染；选项未变化时命中缓存，开销可以忽略。
+ */
+export function refreshMindmapPreviews(): void {
+  for (const view of mindmapBlockViews) view.refreshMindmapPreview();
+}
+
 /** 思维导图编辑请求事件：代码块 NodeView（core 层）通过 window 事件桥接到渲染层的编辑弹窗 */
 export const MINDMAP_EDIT_EVENT = "livemd:mindmap-edit";
 
@@ -2150,9 +2162,13 @@ export class CodeBlockView implements NodeView {
     this.updateFoldAvailability();
   }
 
-  /**
-   * 更新 Mermaid 显示
-   */
+  /** 重新渲染思维导图预览图（供 refreshMindmapPreviews 调用） */
+  refreshMindmapPreview(): void {
+    if (this.destroyed || !this.isMindmap()) return;
+    const canvas = this.mindmapPreview?.querySelector<HTMLElement>(".livemd-mindmap-canvas");
+    if (canvas) this.renderMindmapCanvas(canvas, this.node.textContent);
+  }
+
   /** 当前代码块是否为思维导图 */
   private isMindmap(): boolean {
     return normalizeLanguage(this.node.attrs.language || "") === "mindmap";
@@ -2160,10 +2176,11 @@ export class CodeBlockView implements NodeView {
 
   /**
    * 同步思维导图预览：语言为 mindmap 时创建 / 刷新预览，否则移除预览并恢复源码编辑器。
-   * 预览为自研同步渲染（解析 + tidy-tree 布局 + SVG 字符串），无需懒加载。
+   * 预览图由思维导图引擎离屏渲染（见 renderMindmapCanvas / mindmap-preview.ts）。
    */
   private syncMindmapPreview(): void {
     if (!this.isMindmap()) {
+      mindmapBlockViews.delete(this);
       if (this.mindmapPreview) {
         this.mindmapPreview.remove();
         this.mindmapPreview = null;
@@ -2173,6 +2190,7 @@ export class CodeBlockView implements NodeView {
       return;
     }
 
+    mindmapBlockViews.add(this);
     if (!this.mindmapPreview) {
       this.mindmapPreview = this.createMindmapPreviewElement();
       this.dom.appendChild(this.mindmapPreview);
@@ -2249,7 +2267,8 @@ export class CodeBlockView implements NodeView {
           .catch((error) => {
             console.error("[CodeBlock] 思维导图预览渲染失败:", error);
             if (token !== this.mindmapRenderToken || this.destroyed) return;
-            const reason = error instanceof SyntaxError ? "数据格式错误（JSON 无法解析）" : String(error);
+            const reason =
+              error instanceof SyntaxError ? "数据格式错误（JSON 无法解析）" : String(error);
             showMessage(`思维导图渲染失败：${reason}`, true);
           });
       },
@@ -2270,7 +2289,7 @@ export class CodeBlockView implements NodeView {
     editButton.type = "button";
     editButton.className = "livemd-mindmap-btn livemd-mindmap-edit";
     editButton.textContent = "编辑思维导图";
-    editButton.title = "在独立弹窗中图形化编辑（双击图也可打开）";
+    editButton.title = "在全屏编辑器中编辑（双击图也可打开）";
     editButton.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -2304,12 +2323,8 @@ export class CodeBlockView implements NodeView {
     return preview;
   }
 
-  /** 通过 window 事件请求渲染层打开思维导图编辑弹窗 */
+  /** 通过 window 事件请求渲染层打开思维导图全屏编辑器（只读文档以只读方式打开，仅供查看） */
   private requestMindmapEdit(): void {
-    if (this.isReadOnly()) {
-      console.info("[CodeBlock] 只读模式下不打开思维导图编辑弹窗");
-      return;
-    }
     const pos = this.getPos();
     if (pos === undefined) return;
     const detail: MindmapEditEventDetail = {
@@ -3004,6 +3019,7 @@ export class CodeBlockView implements NodeView {
     }
     this.mindmapPreview?.remove();
     this.mindmapPreview = null;
+    mindmapBlockViews.delete(this);
     this.mindmapLazyUnobserve?.();
     this.mindmapLazyUnobserve = null;
     this.disposeMermaidInteractions();

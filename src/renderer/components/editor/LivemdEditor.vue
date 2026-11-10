@@ -5,7 +5,16 @@
  * 每个 tab 拥有独立的编辑器实例（v-for + v-show 模式）
  */
 import type { Tab } from "@/types/tab";
-import { computed, ref, onMounted, onUnmounted, watch, nextTick } from "vue";
+import {
+  computed,
+  ref,
+  shallowRef,
+  onMounted,
+  onUnmounted,
+  watch,
+  nextTick,
+  type Component,
+} from "vue";
 import {
   LivemdEditor,
   createLivemdEditor,
@@ -37,7 +46,11 @@ import emitter from "@/renderer/events";
 import autodialog from "autodialog.js";
 import autotoast from "autotoast.js";
 import "@/core/styles/livemd.css";
-import { MINDMAP_EDIT_EVENT, type MindmapEditEventDetail } from "@/core/nodeviews/code-block";
+import {
+  MINDMAP_EDIT_EVENT,
+  refreshMindmapPreviews,
+  type MindmapEditEventDetail,
+} from "@/core/nodeviews/code-block";
 import { normalizeMarkdownForDirtyCheck } from "@/renderer/utils/markdown";
 import { getFoldForDoc, migrateFoldDocKey, setFoldForDoc } from "@/renderer/utils/foldStates";
 import useAppCommands from "@/renderer/hooks/useAppCommands";
@@ -482,55 +495,108 @@ function handleInsertLinkRequest() {
   void handleInsertLink();
 }
 
+/** 当前打开的思维导图编辑会话：代码块位置 + 最近一次写回时的内容（写回前据此校验 / 重新定位代码块） */
+const mindmapSession = shallowRef<{ pos: number; source: string } | null>(null);
+/** 打开时传给编辑器的初始内容（保存后不变，避免编辑器重建） */
+const mindmapInitialSource = ref("");
+/** 以只读方式打开（文档只读时只能查看） */
+const mindmapReadonly = ref(false);
+/** 全屏编辑器组件（首次打开时按需加载，首屏不加载引擎与编辑界面） */
+const mindmapEditorComponent = shallowRef<Component | null>(null);
+
+/** 在文档中查找内容为 source 的思维导图代码块，多个时取离 nearPos 最近的一个 */
+function findMindmapBlock(source: string, nearPos: number): number | null {
+  if (!editor) return null;
+  let best: number | null = null;
+  editor.view.state.doc.descendants((node, pos) => {
+    if (node.type.name !== "code_block") return true;
+    if (node.attrs.language === "mindmap" && node.textContent === source) {
+      if (best === null || Math.abs(pos - nearPos) < Math.abs(best - nearPos)) best = pos;
+    }
+    return false;
+  });
+  return best;
+}
+
 /**
- * 思维导图代码块请求编辑：动态加载弹窗（首屏不加载该 chunk），保存时把序列化文本写回代码块
+ * 思维导图代码块请求编辑：按需加载全屏编辑器
  * 多个标签页的编辑器同时存活，事件经 window 广播，需按 editorDom 过滤出自己的实例
  */
 async function handleMindmapEditRequest(event: Event) {
   const detail = (event as CustomEvent<MindmapEditEventDetail>).detail;
   if (!editor || !detail || detail.editorDom !== editor.view.dom) return;
-  if (effectiveReadOnly.value) {
-    autotoast.show("只读模式下无法编辑思维导图");
-    return;
-  }
+  if (mindmapSession.value) return;
 
-  let dialog: typeof import("@/renderer/components/dialogs/MindMapEditDialog.vue");
-  let result: string | null | undefined;
   try {
-    dialog = await import("@/renderer/components/dialogs/MindMapEditDialog.vue");
-    result = (await autodialog.show(dialog.default, {
-      props: { source: detail.source },
-    })) as string | null | undefined;
+    mindmapEditorComponent.value ??= (
+      await import("@/renderer/components/mindmap/MindMapEditor.vue")
+    ).default;
   } catch (error) {
     // 典型场景：开发服务器依赖预构建过期（504 Outdated Optimize Dep）或安装包资源缺失。
     // 过去这里的异常没有出口，表现为「点击按钮没有任何反应」
-    console.error("[LivemdEditor] 思维导图编辑弹窗加载失败:", error);
-    autotoast.show("思维导图编辑器加载失败，请刷新页面后重试（开发模式下请重启开发服务器）", "error");
+    console.error("[LivemdEditor] 思维导图编辑器加载失败:", error);
+    autotoast.show(
+      "思维导图编辑器加载失败，请刷新页面后重试（开发模式下请重启开发服务器）",
+      "error"
+    );
     return;
   }
-  if (typeof result !== "string" || !editor) return;
 
-  // 弹窗打开期间文档可能被外部改动（文件监听写回等）：节点已不匹配时放弃写回，避免覆盖到错误位置
+  mindmapReadonly.value = effectiveReadOnly.value;
+  if (mindmapReadonly.value) autotoast.show("文档为只读，思维导图仅供查看");
+  mindmapInitialSource.value = detail.source;
+  mindmapSession.value = { pos: detail.pos, source: detail.source };
+  console.info("[LivemdEditor] 打开思维导图编辑器，位置:", detail.pos);
+}
+
+/** 编辑器「保存」：写回代码块（单条事务，可撤销），编辑器保持打开 */
+function handleMindmapSave(source: string) {
+  const session = mindmapSession.value;
+  if (!session || !editor) return;
+  if (effectiveReadOnly.value) {
+    autotoast.show(
+      isReadOnlyMode.value ? "只读模式下无法保存思维导图" : "只读文档无法保存思维导图"
+    );
+    return;
+  }
+
+  // 编辑期间文档可能被外部改动（文件监听写回等）导致位置偏移：按上次内容重新定位，找不到则放弃写回
   const { view } = editor;
-  const node = view.state.doc.nodeAt(detail.pos);
-  if (
-    !node ||
-    node.type.name !== "code_block" ||
-    node.attrs.language !== "mindmap" ||
-    node.textContent !== detail.source
-  ) {
-    console.warn("[LivemdEditor] 思维导图节点已变化，放弃写回，位置:", detail.pos);
-    autotoast.show("文档已发生变化，思维导图未保存，请重新打开编辑", "error");
-    return;
+  let pos = session.pos;
+  const node = view.state.doc.nodeAt(pos);
+  const matches =
+    node?.type.name === "code_block" &&
+    node.attrs.language === "mindmap" &&
+    node.textContent === session.source;
+  if (!matches) {
+    const relocated = findMindmapBlock(session.source, pos);
+    if (relocated === null) {
+      console.warn("[LivemdEditor] 找不到原思维导图代码块，放弃写回，原位置:", pos);
+      autotoast.show("文档中的思维导图已被修改或删除，本次未保存", "error");
+      return;
+    }
+    console.info("[LivemdEditor] 思维导图代码块位置已变化，重新定位:", pos, "→", relocated);
+    pos = relocated;
   }
-  if (result === detail.source) return;
 
-  const start = detail.pos + 1;
-  view.dispatch(
-    view.state.tr.replaceWith(start, start + node.content.size, view.state.schema.text(result))
-  );
-  console.info("[LivemdEditor] 思维导图已写回，位置:", detail.pos);
-  autotoast.show("思维导图已更新", "success");
+  const target = view.state.doc.nodeAt(pos);
+  if (!target) return;
+  if (source !== session.source) {
+    const start = pos + 1;
+    view.dispatch(
+      view.state.tr.replaceWith(start, start + target.content.size, view.state.schema.text(source))
+    );
+  }
+  mindmapSession.value = { pos, source };
+  console.info("[LivemdEditor] 思维导图已写回，位置:", pos);
+  autotoast.show("思维导图已保存到文档", "success");
+}
+
+/** 编辑器关闭：回到文档，并刷新各思维导图预览（编辑器里可能改了彩虹线条等全局外观选项） */
+function handleMindmapClose() {
+  mindmapSession.value = null;
+  refreshMindmapPreviews();
+  editor?.focus();
 }
 
 /** 将应用的视图模式配置同步到编辑器实例 */
@@ -1163,6 +1229,17 @@ defineExpose({
         <span>正在加载大文件...</span>
       </div>
     </div>
+    <!-- 思维导图全屏编辑器：挂到 body，覆盖整个窗口 -->
+    <Teleport to="body">
+      <component
+        :is="mindmapEditorComponent"
+        v-if="mindmapSession && mindmapEditorComponent"
+        :source="mindmapInitialSource"
+        :readonly="mindmapReadonly"
+        @save="handleMindmapSave"
+        @close="handleMindmapClose"
+      />
+    </Teleport>
   </div>
 </template>
 

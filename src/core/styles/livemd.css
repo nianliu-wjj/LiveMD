@@ -810,7 +810,18 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
-/* ============ 思维导图（```mindmap 代码块，自研渲染） ============ */
+/* ============ 思维导图（```mindmap 代码块：引擎离屏渲染的预览图，见 nodeviews/mindmap-preview.ts） ============ */
+
+/*
+ * 思维导图引擎的富文本节点（代码块预览的离屏渲染与全屏编辑器共用，包括引擎测量文字尺寸的隐藏元素）：
+ * 参考项目依赖全局「* { margin: 0; padding: 0 }」复位，LiveMD 没有全局复位，
+ * 这里只对引擎富文本节点的内容复位，否则段落的默认外边距会把文字挤出节点而被裁切。
+ */
+.smm-richtext-node-wrap,
+.smm-richtext-node-wrap * {
+  margin: 0;
+  padding: 0;
+}
 .livemd-mindmap-preview {
   position: relative;
   border-top: 1px solid var(--border-color, #e1e4e8);
@@ -867,9 +878,12 @@
   cursor: zoom-in;
 }
 
-.livemd-mindmap-canvas > svg {
+/* 预览图按原始尺寸显示，超宽时缩到容器宽度（双击打开全屏编辑器查看细节） */
+.livemd-mindmap-image {
+  display: inline-block;
   max-width: 100%;
   height: auto;
+  user-select: none;
 }
 
 .livemd-mindmap-placeholder {
@@ -878,97 +892,8 @@
   color: var(--text-color-3, #999);
 }
 
-/* 分支配色：浅色主题取饱和色，深色主题提亮（与 nodeviews/mindmap.ts 的 MINDMAP_BRANCH_COLORS 对应） */
-.livemd-mindmap-svg {
-  --mm-root-bg: var(--primary-color, #4f6b47);
-  --mm-root-text: #fff;
-  --mm-text: var(--text-color, #333);
-  --mm-c0: #e8590c;
-  --mm-c1: #1c7ed6;
-  --mm-c2: #2f9e44;
-  --mm-c3: #ae3ec9;
-  --mm-c4: #f08c00;
-  --mm-c5: #0c8599;
-  --mm-c6: #d6336c;
-  --mm-c7: #5f3dc4;
-  font-family: inherit;
-}
-
-html[data-theme-mode="dark"] .livemd-mindmap-svg {
-  --mm-root-text: #10141a;
-  --mm-c0: #ff922b;
-  --mm-c1: #4dabf7;
-  --mm-c2: #69db7c;
-  --mm-c3: #da77f2;
-  --mm-c4: #ffd43b;
-  --mm-c5: #3bc9db;
-  --mm-c6: #f783ac;
-  --mm-c7: #9775fa;
-}
-
-.livemd-mindmap-branch-0 { --mm-branch: var(--mm-c0); }
-.livemd-mindmap-branch-1 { --mm-branch: var(--mm-c1); }
-.livemd-mindmap-branch-2 { --mm-branch: var(--mm-c2); }
-.livemd-mindmap-branch-3 { --mm-branch: var(--mm-c3); }
-.livemd-mindmap-branch-4 { --mm-branch: var(--mm-c4); }
-.livemd-mindmap-branch-5 { --mm-branch: var(--mm-c5); }
-.livemd-mindmap-branch-6 { --mm-branch: var(--mm-c6); }
-.livemd-mindmap-branch-7 { --mm-branch: var(--mm-c7); }
-
-.livemd-mindmap-edge {
-  stroke: var(--mm-branch, var(--border-color-2, #999));
-}
-
-.livemd-mindmap-node text {
-  fill: var(--mm-text);
-  pointer-events: none;
-}
-
-.livemd-mindmap-node.is-root rect {
-  fill: var(--mm-root-bg);
-}
-
-.livemd-mindmap-node.is-root text {
-  fill: var(--mm-root-text);
-  font-weight: 600;
-}
-
-.livemd-mindmap-node.is-branch rect {
-  fill: color-mix(in srgb, var(--mm-branch) 16%, var(--background-color-1, #fff));
-  stroke: var(--mm-branch);
-  stroke-width: 1.5;
-}
-
-.livemd-mindmap-node.is-branch text {
-  font-weight: 500;
-}
-
-.livemd-mindmap-node .livemd-mindmap-hit {
-  fill: transparent;
-}
-
-.livemd-mindmap-node line {
-  stroke: var(--mm-branch);
-}
-
-/* 编辑弹窗中的交互态 */
-.livemd-mindmap-svg.is-interactive .livemd-mindmap-node {
-  cursor: pointer;
-}
-
-.livemd-mindmap-svg.is-interactive .livemd-mindmap-node:hover .livemd-mindmap-hit,
-.livemd-mindmap-svg.is-interactive .livemd-mindmap-node:hover.is-branch rect {
-  fill: color-mix(in srgb, var(--mm-branch, var(--primary-color)) 14%, transparent);
-}
-
-.livemd-mindmap-node.is-selected rect {
-  stroke: var(--primary-color, #0366d6);
-  stroke-width: 2.5;
-  stroke-dasharray: 4 3;
-}
-
-.livemd-mindmap-node.is-selected.is-root rect {
-  stroke: var(--text-color, #333);
+.livemd-mindmap-placeholder.is-error {
+  color: #d03050;
 }
 
 .livemd-mermaid-error {

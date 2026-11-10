@@ -93,6 +93,13 @@ interface Window {
     exportAsWord: (blocks: Block, outputName: string) => Promise<void>;
     // 通过路径读取文件（用于拖拽）
     readFileBase64: (filePath: string) => Promise<string>;
+    /** 弹出「另存为」对话框并写入二进制内容，用户取消时返回 null */
+    saveBinaryFile: (
+      bytes: Uint8Array,
+      defaultName: string,
+      filterName: string,
+      extensions: string[]
+    ) => Promise<string | null>;
     /** 移动文件到目标目录（目标同名文件需调用方先行确认覆盖），返回新路径 */
     moveFile: (filePath: string, targetDir: string) => Promise<string | null>;
     /** 复制文件到目标路径，返回新路径 */

@@ -5,6 +5,7 @@ import { vDraggable } from "vue-draggable-plus";
 import AppIcon from "@/renderer/components/ui/AppIcon.vue";
 import { eventMatchesShortcutKey, useShortcutConfig } from "@/renderer/hooks/useShortcutConfig";
 import useTab from "@/renderer/hooks/useTab";
+import { isMindMapEditorOpen } from "@/renderer/utils/mindmapEditorState";
 
 const {
   formattedTabs,
@@ -58,6 +59,8 @@ function switchToTabByNumber(key: string) {
 
 function handleTabKeyboardShortcut(e: KeyboardEvent) {
   if (isShortcutRecordingTarget(e.target)) return;
+  // 思维导图全屏编辑器打开时不切换 / 关闭标签页
+  if (isMindMapEditorOpen()) return;
 
   const isMac = window.electronAPI.platform === "darwin";
   if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === "w") {

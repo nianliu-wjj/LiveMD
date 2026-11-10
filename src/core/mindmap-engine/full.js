@@ -6,6 +6,8 @@
  *
  * 与上游 full.js 的差异：
  * - 不注册 Cooperate（协同编辑，依赖 yjs / y-webrtc）；
+ * - RichText（节点富文本）与 Scrollbar（滚动条）不全局注册，而是导出给编辑器按「设置」开关
+ *   动态 addPlugin / removePlugin（与参考项目编辑页一致）；代码块离屏预览不需要这两个插件；
  * - 注册全部扩展主题（58 套），供编辑器「主题」面板切换。
  */
 import MindMap from './index'
@@ -53,12 +55,10 @@ MindMap.usePlugin(MiniMap)
   .usePlugin(Export)
   .usePlugin(Select)
   .usePlugin(AssociativeLine)
-  .usePlugin(RichText)
   .usePlugin(TouchEvent)
   .usePlugin(NodeImgAdjust)
   .usePlugin(Search)
   .usePlugin(Painter)
-  .usePlugin(Scrollbar)
   .usePlugin(Formula)
   .usePlugin(RainbowLines)
   .usePlugin(Demonstrate)
@@ -68,4 +68,5 @@ MindMap.usePlugin(MiniMap)
 
 Themes.init(MindMap)
 
+export { RichText, Scrollbar }
 export default MindMap

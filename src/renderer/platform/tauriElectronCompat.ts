@@ -4,6 +4,7 @@ import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { Document, HeadingLevel, Packer, Paragraph, TextRun } from "docx";
 
 import type { Block, ExportPDFOptions } from "@/main/types";
+import { isMindMapEditorOpen } from "@/renderer/utils/mindmapEditorState";
 
 type Listener = (...args: any[]) => void;
 
@@ -201,6 +202,8 @@ function installKeyboardShortcuts(): void {
     "keydown",
     (event) => {
       if (event.isComposing) return;
+      // 思维导图全屏编辑器打开时让出全局快捷键（Ctrl+S 等由编辑器自行处理）
+      if (isMindMapEditorOpen()) return;
       const modifier = platform === "darwin" ? event.metaKey : event.ctrlKey;
 
       if (event.key === "F11") {
@@ -533,6 +536,19 @@ const electronAPI = {
   exportAsWord,
   readFileByPath: (filePath: string) => invoke("read_file_by_path", { filePath }),
   readFileBase64: (filePath: string) => invoke<string>("read_file_base64", { filePath }),
+  /** 弹出「另存为」对话框并写入二进制内容（思维导图导出等），用户取消时返回 null */
+  saveBinaryFile: (
+    bytes: Uint8Array,
+    defaultName: string,
+    filterName: string,
+    extensions: string[]
+  ) =>
+    invoke<string | null>("save_binary_file", {
+      bytes: Array.from(bytes),
+      defaultName,
+      filterName,
+      extensions,
+    }),
   showOverwriteConfirm: (fileName: string) => invoke("show_overwrite_confirm", { fileName }),
   showCloseConfirm: (fileName: string) => invoke("show_close_confirm", { fileName }),
   showOpenDialog: (options: any) => invoke("show_open_dialog", { options }),

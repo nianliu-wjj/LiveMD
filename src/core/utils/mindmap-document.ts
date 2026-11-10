@@ -29,6 +29,25 @@ export interface MindMapDocument {
   view: unknown;
 }
 
+/**
+ * 编辑器「设置 / 基础样式」修改的引擎选项在 localStorage 中的键（全局偏好，与参考项目 storeConfig 一致）。
+ * 编辑器（renderer/components/mindmap/context.ts）与代码块预览（nodeviews/mindmap-preview.ts）共用。
+ */
+export const MINDMAP_ENGINE_CONFIG_KEY = "livemd-mindmap-engine-config";
+
+/**
+ * 影响渲染外观的引擎选项：代码块预览按这些选项渲染，保证与编辑器所见一致
+ * （水印、鼠标行为等只在编辑器里有意义的选项不参与预览）
+ */
+export const MINDMAP_PREVIEW_ENGINE_OPTION_KEYS = [
+  "rainbowLinesConfig",
+  "outerFramePaddingX",
+  "outerFramePaddingY",
+  "imgTextMargin",
+  "textContentMargin",
+  "enableInheritAncestorLineStyle",
+] as const;
+
 /** 新插入的思维导图默认使用的结构与主题 */
 export const DEFAULT_MINDMAP_LAYOUT = "logicalStructure";
 export const DEFAULT_MINDMAP_THEME = "default";

@@ -27,6 +27,7 @@ import useDocumentLint from "@/renderer/hooks/useDocumentLint";
 import useWorkSpace from "@/renderer/hooks/useWorkSpace";
 import type { FormatIssue } from "@/renderer/utils/documentLint";
 import { shouldAutoLoadWorkspace } from "@/renderer/utils/workspacePath";
+import { isMindMapEditorOpen } from "@/renderer/utils/mindmapEditorState";
 import { getSidebarContextKey, writeSidebarVisibility } from "@/renderer/utils/sidebarVisibility";
 import SaveConfirmDialog from "./components/dialogs/SaveConfirmDialog.vue";
 import UpdateConfirmDialog from "./components/dialogs/UpdateConfirmDialog.vue";
@@ -296,6 +297,8 @@ function onOutlineTransitionEnd(e: TransitionEvent) {
 // 快速打开 / 命令面板 / 工作区搜索全局快捷键
 function handleGlobalKeydown(event: KeyboardEvent) {
   if (event.defaultPrevented || event.isComposing) return;
+  // 思维导图全屏编辑器打开时，全局快捷键不作用于被遮住的文档
+  if (isMindMapEditorOpen()) return;
 
   const mod = event.ctrlKey || event.metaKey;
   if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "k") {

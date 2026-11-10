@@ -10,6 +10,7 @@ import useTitle from "./useTitle";
 import useUiLoading from "./useUiLoading";
 import { recordRecentFile } from "./useRecentFiles";
 import { resolveImageSaveTarget } from "@/shared/utils/imageInsert";
+import { isMindMapEditorOpen } from "@/renderer/utils/mindmapEditorState";
 
 interface OpenFileAtLaunchPayload {
   filePath: string;
@@ -207,6 +208,8 @@ export default function useFile() {
   const handleDrop = async (event: DragEvent) => {
     event.preventDefault();
     event.stopPropagation();
+    // 思维导图全屏编辑器打开时，拖入的文件由编辑器处理，不插入 / 打开到被遮住的文档
+    if (isMindMapEditorOpen()) return;
 
     const files = Array.from(event.dataTransfer?.files ?? []);
 

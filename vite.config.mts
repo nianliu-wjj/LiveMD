@@ -43,6 +43,9 @@ const alias = [
 const useGoogleTranslator = process.env.LIVEMD_ENABLE_TRANSLATE === "1";
 const i18nPlugin = vitePluginsAutoI18n({
   deepScan: true,
+  // 移植的思维导图引擎（含主题）不参与自动翻译：其中的中文多为 CSS 注释、默认节点文字与内部比较用的字面量，
+  // 改写成 $t() 既无翻译价值，又会把这些字符串写进打包进首屏的翻译字典
+  excludedPath: ["node_modules", "mindmap-engine"],
   globalPath: "./lang",
   namespace: "lang",
   distPath: "./dist/assets",
@@ -70,6 +73,24 @@ export default defineConfig({
   },
   server: {
     open: false,
+  },
+  // 思维导图引擎的依赖只在打开思维导图时按需加载：预先纳入依赖预构建，避免开发服务器运行中首次遇到
+  // 这些依赖时重新优化，导致已打开页面里的按需 import 失效（504 Outdated Optimize Dep，表现为点击无反应）
+  optimizeDeps: {
+    include: [
+      "@svgdotjs/svg.js",
+      "deepmerge",
+      "eventemitter3",
+      "uuid",
+      "quill",
+      "quill-delta",
+      "parchment",
+      "jszip",
+      "xml-js",
+      "pdf-lib",
+      "mdast-util-from-markdown",
+      "katex",
+    ],
   },
   root: "src/renderer",
   base: "./",
