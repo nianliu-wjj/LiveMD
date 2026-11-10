@@ -72,7 +72,8 @@ export default class KeyCommand {
   recoveryCheckInSvg() {
     const { enableShortcutOnlyWhenMouseInSvg } = this.mindMap.opt
     if (!enableShortcutOnlyWhenMouseInSvg) return
-    this.isStopCheckInSvg = true
+    // LiveMD 改动：上游此处误设为 true，编辑过一次节点文字后「鼠标在画布内才响应快捷键」永久失效
+    this.isStopCheckInSvg = false
   }
 
   //  绑定事件

@@ -427,8 +427,33 @@ function createEngine(container: HTMLElement): MindMapInstance {
   for (const event of FORWARDED_EVENTS) {
     instance.on(event, (...args: any[]) => bus.emit(event, ...args));
   }
-  instance.keyCommand.addShortcut("Control+s", save);
   return instance;
+}
+
+/**
+ * 编辑器级快捷键：Ctrl/⌘+S 保存、Ctrl/⌘+F 搜索。
+ *
+ * 不注册进引擎 keyCommand：引擎开启了 enableShortcutOnlyWhenMouseInSvg，鼠标在工具栏 / 面板上时
+ * 快捷键表不响应，而保存、搜索属于整个编辑器的操作，不应取决于鼠标位置。
+ * 生效范围与引擎一致：按键目标为 body 或节点文字编辑框（引擎 defaultEnableCheck），且引擎快捷键未暂停
+ * （节点弹窗打开期间会 startTextEdit 暂停）；面板、弹窗内的输入框按键已被阻止冒泡，不会到这里。
+ */
+const EDITOR_SHORTCUTS: Record<string, () => void> = {
+  s: () => save(),
+  f: () => bus.emit("show_search"),
+};
+
+function onEditorShortcutKeydown(event: KeyboardEvent): void {
+  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey || event.isComposing)
+    return;
+  const handler = EDITOR_SHORTCUTS[event.key.toLowerCase()];
+  const keyCommand = mindMap.value?.keyCommand;
+  if (!handler || !keyCommand || keyCommand.isPause) return;
+  if (!keyCommand.defaultEnableCheck(event)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  console.debug("[MindMap/Editor] 编辑器快捷键:", event.key);
+  handler();
 }
 
 /** 打开节点超链接：相对路径按当前文档解析，http(s) 等交给系统浏览器 */
@@ -545,6 +570,7 @@ onMounted(() => {
   window.addEventListener("dragover", onWindowDragOver, true);
   window.addEventListener("dragleave", onWindowDragLeave, true);
   window.addEventListener("drop", onWindowDropCapture, true);
+  window.addEventListener("keydown", onEditorShortcutKeydown);
   // 打开前焦点通常还在被遮住的文档编辑区里，不移走的话按键会继续输入到文档中
   (document.activeElement as HTMLElement | null)?.blur?.();
   bindBusEvents();
@@ -579,6 +605,7 @@ onUnmounted(() => {
   window.removeEventListener("dragover", onWindowDragOver, true);
   window.removeEventListener("dragleave", onWindowDragLeave, true);
   window.removeEventListener("drop", onWindowDropCapture, true);
+  window.removeEventListener("keydown", onEditorShortcutKeydown);
   if (dirtyTimer) clearTimeout(dirtyTimer);
   resizeObserver?.disconnect();
   busDisposers.forEach((dispose) => dispose());

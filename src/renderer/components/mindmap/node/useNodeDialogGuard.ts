@@ -7,8 +7,8 @@
  *    这里推广到全部节点内容弹窗）；
  * 2. 可选 initialFocus：打开时优先聚焦指定控件（MmDialog 默认聚焦第一个输入控件，子组件已聚焦时它不再处理）。
  *
- * 注：默认的「鼠标在画布内才响应快捷键」检查，会因上游 KeyCommand.recoveryCheckInSvg 把标志设反，
- * 在编辑过一次节点文字后失效，所以不能指望它挡住弹窗打开期间的按键。
+ * 注：引擎「鼠标在画布内才响应快捷键」的检查（上游 recoveryCheckInSvg 标志设反的问题已在引擎中修正）
+ * 只看鼠标位置，挡不住弹窗打开期间鼠标仍停在画布区域时的按键，所以这里仍需暂停快捷键表。
  */
 import { nextTick, onBeforeUnmount, watch, type Ref } from "vue";
 import { useMindMapContext } from "../context";

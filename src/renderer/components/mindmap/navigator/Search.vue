@@ -2,7 +2,8 @@
 /**
  * 搜索与替换（对应参考项目 Search.vue，基于引擎 Search 插件）
  *
- * - 打开：总线 show_search（底部栏派发）或快捷键 Ctrl+F（注册到引擎 keyCommand，与参考项目一致）；打开时收起右侧面板；
+ * - 打开：总线 show_search（底部栏派发）或快捷键 Ctrl+F（根组件的编辑器级快捷键派发 show_search，
+ *   不依赖鼠标是否在画布内；参考项目注册在引擎 keyCommand）；打开时收起右侧面板；
  * - 回车搜索 / 跳到下一个，结果列表点击定位；替换当前、全部替换（只读时禁用）；
  * - 监听总线 search_info_change（当前序号 / 总数）、node_click / draw_click / expand_btn_click（让输入框失焦）、
  *   setData（导入新数据时关闭搜索）；直接监听引擎 search_match_node_list_change（匹配列表）。
@@ -214,7 +215,6 @@ useBusEvent("expand_btn_click", blur);
 useBusEvent("setData", close);
 
 instance?.on("search_match_node_list_change", onSearchMatchNodeListChange);
-instance?.keyCommand.addShortcut("Control+f", showSearch);
 
 onMounted(() => {
   setSearchResultListHeight();
@@ -223,7 +223,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   instance?.off("search_match_node_list_change", onSearchMatchNodeListChange);
-  instance?.keyCommand.removeShortcut("Control+f", showSearch);
   window.removeEventListener("resize", setSearchResultListHeight);
 });
 </script>
