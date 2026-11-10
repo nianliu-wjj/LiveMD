@@ -584,7 +584,8 @@ export const replaceHtmlText = (html, searchText, replaceText) => {
         // 文本节点
         root.replaceChild(
           document.createTextNode(
-            node.nodeValue.replace(new RegExp(searchText, 'g'), replaceText)
+            // LiveMD 改动：按字面量替换（原 new RegExp(searchText) 未转义）
+            node.nodeValue.split(searchText).join(replaceText)
           ),
           node
         )

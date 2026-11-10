@@ -297,7 +297,8 @@ class Search {
     if (richText) {
       return replaceHtmlText(text, searchText, replaceText)
     } else {
-      return text.replace(new RegExp(searchText, 'g'), replaceText)
+      // LiveMD 改动：按字面量替换，与匹配用的 includes 一致（原 new RegExp(searchText) 未转义）
+      return text.split(searchText).join(replaceText)
     }
   }
 
