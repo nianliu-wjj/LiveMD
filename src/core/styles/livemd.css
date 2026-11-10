@@ -25,7 +25,9 @@
 
 /* 源码模式下为行号留出空间 */
 .livemd-editor.source-view {
-  padding-left: calc(var(--livemd-editor-padding-effective, var(--livemd-editor-padding, 20px)) + 60px); /* 左右边距 + 行号区域 */
+  padding-left: calc(
+    var(--livemd-editor-padding-effective, var(--livemd-editor-padding, 20px)) + 60px
+  ); /* 左右边距 + 行号区域 */
 }
 
 /* 语法标记 - 隐藏 */
@@ -1546,7 +1548,11 @@
   /* 使用 padding 来定位，与编辑器的 padding 保持一致 */
   left: 0;
   top: 0;
-  padding: 58px calc(var(--livemd-editor-padding-effective, var(--livemd-editor-padding, 20px)) + var(--livemd-paragraph-indent));
+  padding: 58px
+    calc(
+      var(--livemd-editor-padding-effective, var(--livemd-editor-padding, 20px)) +
+        var(--livemd-paragraph-indent)
+    );
 }
 
 /* 源码模式下的占位符需要向右偏移以避开行号 */
@@ -1760,9 +1766,7 @@
 }
 
 /* 二级：空心圆 */
-.livemd-bullet-list:not(.source-view)
-  .livemd-bullet-list:not(.source-view)
-  > .livemd-list-item {
+.livemd-bullet-list:not(.source-view) .livemd-bullet-list:not(.source-view) > .livemd-list-item {
   --livemd-bullet-size: 0.5em;
 }
 
@@ -2581,10 +2585,7 @@ body.livemd-fullscreen-open {
   min-height: 0;
   overflow: hidden;
   background-color: var(--background-color-2, #f6f8fa);
-  background-image: radial-gradient(
-    var(--border-color, rgba(0, 0, 0, 0.12)) 1px,
-    transparent 1px
-  );
+  background-image: radial-gradient(var(--border-color, rgba(0, 0, 0, 0.12)) 1px, transparent 1px);
   background-size: 18px 18px;
   cursor: grab;
   touch-action: none;
@@ -2699,4 +2700,8 @@ body.livemd-fullscreen-open {
   .livemd-fullscreen-viewer__hint {
     display: none;
   }
+}
+
+.livemd-code-block-delete-btn:hover {
+  color: #ef4444;
 }

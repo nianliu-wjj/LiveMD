@@ -31,6 +31,7 @@ interface PendingTask {
   resolve: (result: DocumentLintResult) => void;
   reject: (error: Error) => void;
   timer: ReturnType<typeof setTimeout>;
+  onProgress?: (result: DocumentLintResult) => void;
 }
 
 let worker: Worker | null = null;
@@ -50,6 +51,10 @@ function createWorker(): Worker {
       message?: string;
     };
     if (!pending || data.id !== pending.id) return;
+    if (data.type === "progress" && data.result) {
+      pending.onProgress?.(data.result);
+      return;
+    }
     clearTimeout(pending.timer);
     const task = pending;
     pending = null;
@@ -96,7 +101,8 @@ function runInWorker(
   content: string,
   ruleConfig: RuleConfig,
   spellEnabled: boolean,
-  dictionaryBaseUrl?: string
+  dictionaryBaseUrl?: string,
+  onProgress?: (result: DocumentLintResult) => void
 ): Promise<DocumentLintResult> {
   // 新任务抢占：立即废弃旧任务并重建线程（换文档场景——旧文档检查直接终止）
   killWorker();
@@ -118,7 +124,7 @@ function runInWorker(
       reject(new Error(`文档检查超时（${Math.round(LINT_TASK_TIMEOUT_MS / 1000)}s）`));
     }, LINT_TASK_TIMEOUT_MS);
 
-    pending = { id, resolve, reject, timer };
+    pending = { id, resolve, reject, timer, onProgress };
     instance.postMessage({
       type: "lint",
       id,
@@ -148,14 +154,15 @@ export async function runLintOffThread(
   content: string,
   ruleConfig: RuleConfig,
   spellEnabled = true,
-  dictionaryBaseUrl?: string
+  dictionaryBaseUrl?: string,
+  onProgress?: (result: DocumentLintResult) => void
 ): Promise<DocumentLintResult> {
   const base = dictionaryBaseUrl ?? getDictionaryBaseUrl();
   if (!isWorkerAvailable()) {
     const { runDocumentLint } = await loadFallback();
-    return runDocumentLint(content, ruleConfig, base, spellEnabled);
+    return runDocumentLint(content, ruleConfig, base, spellEnabled, onProgress, false);
   }
-  return runInWorker(content, ruleConfig, spellEnabled, base);
+  return runInWorker(content, ruleConfig, spellEnabled, base, onProgress);
 }
 
 /** 当前是否有任务在途（供调用方判断竞态） */

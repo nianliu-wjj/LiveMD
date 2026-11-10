@@ -193,3 +193,30 @@ test("runSpellCheck: 句首大写的错词也要报告，项目词典中的词�
 test("runSpellCheck: 数学公式内容不参与拼写检查", async () => {
   assert.deepEqual(await runSpellCheck("$$\n\\zzqqx\n$$\n\nvalue $zzqqx$ here\n"), []);
 });
+
+test("runDocumentLint: 格式结果在拼写结果之前发布", async () => {
+  let partial;
+  const result = await runDocumentLint("# Title\n\n\n\nzzqqx\n", {}, undefined, true, (value) => {
+    partial = value;
+    assert.equal(value.spellIssues.length, 0);
+    assert.ok(value.formatIssues.length > 0);
+  });
+  assert.ok(partial);
+  assert.deepEqual(partial.formatIssues, result.formatIssues);
+  assert.ok(result.spellIssues.some((issue) => issue.word === "zzqqx"));
+});
+
+test("runDocumentLint: 快速全文校验保留错词并跳过建议生成", async () => {
+  const result = await runDocumentLint("# Title\n\nzzqqx\n", {}, undefined, true, undefined, false);
+  const issue = result.spellIssues.find((value) => value.word === "zzqqx");
+  assert.ok(issue);
+  assert.deepEqual(issue.suggestions, []);
+});
+
+test("runDocumentLint: 快速校验完成 3000 行混合文档", async () => {
+  const content = "# Title\n\n" + "This is technical documentation with zzqqx.\n".repeat(3000);
+  const started = performance.now();
+  const result = await runDocumentLint(content, {}, undefined, true, undefined, false);
+  console.log(`[lint benchmark] 3000 行: ${Math.round(performance.now() - started)}ms`);
+  assert.equal(result.spellIssues.filter((issue) => issue.word === "zzqqx").length, 1);
+});

@@ -456,8 +456,8 @@ function scanLines(
       // 去重键不含行号：同一错词全文档只 correct/suggest 一次
       const key = word.toLowerCase();
       if (reported.has(key)) continue;
+      reported.add(key);
       if (!checker.correct(word)) {
-        reported.add(key);
         found.push({ line: lineIndex + 1, column: start + 1, word });
       }
     }
@@ -480,7 +480,8 @@ export class SpellDictionaryUnavailableError extends Error {
 
 export async function runSpellCheck(
   content: string,
-  dictionaryBaseUrl?: string
+  dictionaryBaseUrl?: string,
+  includeSuggestions = true
 ): Promise<SpellIssue[]> {
   const checker = await getSpellChecker(dictionaryBaseUrl);
   // 过去这里返回 []，词典加载失败会被误报成「没有拼写问题」
@@ -496,7 +497,10 @@ export async function runSpellCheck(
     const to = Math.min(from + SCAN_BATCH, lines.length);
     for (const candidate of scanLines(lines, masks, from, to, checker, reported)) {
       if (issues.length >= MAX_SPELL_ISSUES) continue;
-      issues.push({ ...candidate, suggestions: getSuggestions(checker, candidate.word) });
+      issues.push({
+        ...candidate,
+        suggestions: includeSuggestions ? getSuggestions(checker, candidate.word) : [],
+      });
     }
     await new Promise((resolve) => setTimeout(resolve, 0));
   }
@@ -507,7 +511,7 @@ export async function runSpellCheck(
 // ============ 汇总入口 ============
 
 /**
- * 执行完整文档检查（拼写 + 格式），顺序执行并各自让出主线程
+ * 执行完整文档检查：先发布格式结果，再执行拼写检查
  *
  * 不用 Promise.all 并行：markdownlint 本身是同线程长任务，并行只会
  * 让拼写扫描的分批 yield 失去意义（格式检查一跑起来主线程照样冻结）。
@@ -516,14 +520,19 @@ export async function runDocumentLint(
   content: string,
   ruleConfig: RuleConfig,
   dictionaryBaseUrl?: string,
-  spellEnabled = true
+  spellEnabled = true,
+  onFormatResult?: (result: DocumentLintResult) => void,
+  includeSuggestions = true
 ): Promise<DocumentLintResult> {
+  // 格式结果先返回，避免词典加载和拼写建议计算阻塞格式列表。
+  const formatIssues = await runFormatCheck(content, ruleConfig);
+  onFormatResult?.({ formatIssues, spellIssues: [] });
   const notices: string[] = [];
   // 拼写开关关闭时跳过拼写阶段（省掉词典加载与全文档词元扫描）
   let spellIssues: SpellIssue[] = [];
   if (spellEnabled) {
     try {
-      spellIssues = await runSpellCheck(content, dictionaryBaseUrl);
+      spellIssues = await runSpellCheck(content, dictionaryBaseUrl, includeSuggestions);
     } catch (error) {
       // 拼写阶段失败不拖垮格式检查，但必须作为提示透出（不能静默成「没有拼写问题」）
       const message = error instanceof Error ? error.message : String(error);
@@ -534,7 +543,6 @@ export async function runDocumentLint(
   // 进入格式检查前让出主线程，保证 UI 在两阶段之间仍可响应
   await new Promise((resolve) => setTimeout(resolve, 0));
   // 格式检查失败（规则加载失败等）直接向上抛，由调用方展示为「检查失败」
-  const formatIssues = await runFormatCheck(content, ruleConfig);
   return notices.length > 0
     ? { spellIssues, formatIssues, notices }
     : { spellIssues, formatIssues };

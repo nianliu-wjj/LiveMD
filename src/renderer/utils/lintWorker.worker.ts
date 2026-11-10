@@ -6,7 +6,7 @@
  *
  * 消息协议：
  * - 入站  { type: "lint"; id; content; ruleConfig; spellEnabled?; dictionaryBaseUrl? }
- * - 出站  { type: "result"; id; result: DocumentLintResult }
+ * - 出站  { type: "result" | "progress"; id; result: DocumentLintResult }
  *        { type: "error";  id; message: string }
  *
  * 词典在 worker 内加载（首次任务时懒加载并常驻），与主线程各自独立。
@@ -27,7 +27,7 @@ interface LintRequest {
 }
 
 interface LintResultMessage {
-  type: "result";
+  type: "result" | "progress";
   id: number;
   result: DocumentLintResult;
 }
@@ -58,7 +58,10 @@ workerScope.onmessage = async (event: MessageEvent<LintRequest>) => {
       request.content,
       request.ruleConfig,
       request.dictionaryBaseUrl,
-      request.spellEnabled ?? true
+      request.spellEnabled ?? true,
+      (result) => workerScope.postMessage({ type: "progress", id: request.id, result }),
+      // 全文检查只校验拼写；Hunspell 的候选生成开销无界，不能对数百个词逐个执行。
+      false
     );
     const response: LintResultMessage = { type: "result", id: request.id, result };
     workerScope.postMessage(response);

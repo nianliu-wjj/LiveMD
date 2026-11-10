@@ -120,7 +120,18 @@ async function runCheck(): Promise<DocumentLintResult | null> {
   isLintRunning.value = true;
   try {
     // 检查在 Web Worker 中执行（主线程只收发消息）：拼写开关关闭时跳过拼写阶段
-    const nextResult = await runLintOffThread(content, ruleConfig.value, isSpellCheckEnabled.value);
+    const nextResult = await runLintOffThread(
+      content,
+      ruleConfig.value,
+      isSpellCheckEnabled.value,
+      undefined,
+      (partial) => {
+        if (generation !== checkGeneration) return;
+        lintResult.value = partial;
+        lintError.value = null;
+        resultTabId.value = tabId;
+      }
+    );
     // 期间 tab 已切换或发起了更新的检查时丢弃本次结果
     if (generation !== checkGeneration) return null;
     lintResult.value = nextResult;
@@ -133,7 +144,8 @@ async function runCheck(): Promise<DocumentLintResult | null> {
     if (generation !== checkGeneration) return null;
     const message = error instanceof Error ? error.message : String(error);
     console.error("[useDocumentLint] 文档检查失败:", message);
-    lintResult.value = EMPTY_RESULT;
+    // 后续拼写阶段失败时保留已经发布的格式结果。
+    if (resultTabId.value !== tabId) lintResult.value = EMPTY_RESULT;
     lintError.value = message;
     resultTabId.value = tabId;
     return null;
@@ -180,7 +192,7 @@ watch(isSpellCheckEnabled, () => {
 /** 打开面板：无结果归属时立刻检查，避免出现空面板让人误解 */
 function openLintPanel(): void {
   isLintPanelVisible.value = true;
-  if (resultTabId.value === null && useTab().currentTab.value) {
+  if (!isLintRunning.value && resultTabId.value === null && useTab().currentTab.value) {
     void runCheck();
   }
 }

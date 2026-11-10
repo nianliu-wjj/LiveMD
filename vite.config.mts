@@ -78,6 +78,21 @@ export default defineConfig({
   // 这些依赖时重新优化，导致已打开页面里的按需 import 失效（504 Outdated Optimize Dep，表现为点击无反应）
   optimizeDeps: {
     include: [
+      // 语言包预构建，避免首次动态加载触发重新优化并使旧模块 URL 失效。
+      "@codemirror/lang-javascript",
+      "@codemirror/lang-python",
+      "@codemirror/lang-html",
+      "@codemirror/lang-css",
+      "@codemirror/lang-json",
+      "@codemirror/lang-markdown",
+      "@codemirror/lang-go",
+      "@codemirror/lang-java",
+      "@codemirror/lang-cpp",
+      "@codemirror/lang-php",
+      "@codemirror/lang-rust",
+      "@codemirror/lang-sql",
+      "@codemirror/lang-xml",
+      "@codemirror/lang-yaml",
       "@svgdotjs/svg.js",
       "deepmerge",
       "eventemitter3",

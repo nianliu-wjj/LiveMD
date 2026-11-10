@@ -1375,10 +1375,8 @@ export class CodeBlockView implements NodeView {
       this.dom.appendChild(this.createMermaidExpandButton());
     }
 
-    // 格式化按钮（该语言支持格式化时显示）
-    if (getFormatSupport(language)) {
-      header.appendChild(this.createFormatButton());
-    }
+    // 所有语言都提供格式化入口，未配置格式化器时按语言规则调整缩进。
+    header.appendChild(this.createFormatButton());
 
     // 折叠按钮（长代码块可用）
     header.appendChild(this.createFoldButton());
@@ -1403,6 +1401,20 @@ export class CodeBlockView implements NodeView {
       });
     });
     header.appendChild(copyBtn);
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.className = "livemd-code-block-format-btn livemd-code-block-delete-btn";
+    deleteBtn.title = "删除代码块";
+    deleteBtn.setAttribute("aria-label", deleteBtn.title);
+    deleteBtn.innerHTML =
+      '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg>';
+    deleteBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      this.deleteCodeBlock();
+    });
+    header.appendChild(deleteBtn);
 
     return header;
   }
@@ -1506,17 +1518,26 @@ export class CodeBlockView implements NodeView {
     button.type = "button";
     button.className = "livemd-code-block-format-btn";
     button.title = "格式化代码";
+    button.setAttribute("aria-label", button.title);
     button.innerHTML =
       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10"/><path d="M4 12h16"/><path d="M4 17h7"/><path d="M17 15l3 3-3 3"/></svg>';
 
+    const formatIcon = button.innerHTML;
     button.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
+      if (button.disabled) return;
+      button.disabled = true;
       void this.formatCodeBlock().then((outcome) => {
+        button.disabled = false;
+        button.innerHTML = outcome.ok
+          ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+          : formatIcon;
         button.title = outcome.ok ? "格式化完成" : outcome.reason;
         button.classList.toggle("formatted", outcome.ok);
         button.classList.toggle("format-error", !outcome.ok);
         window.setTimeout(() => {
+          button.innerHTML = formatIcon;
           button.classList.remove("formatted", "format-error");
           button.title = "格式化代码";
         }, 1500);
@@ -1533,10 +1554,22 @@ export class CodeBlockView implements NodeView {
    * PM → CM 的同步由 update(node) 承担，无需在此手动改 CodeMirror。
    */
   private async formatCodeBlock(): Promise<{ ok: true } | { ok: false; reason: string }> {
-    if (!this.cm) return { ok: false, reason: "代码编辑器未就绪" };
-
-    const code = this.cm.state.doc.toString();
-    const result = await formatCode(code, this.node.attrs.language ?? "");
+    if (this.isReadOnly()) return { ok: false, reason: "只读模式无法格式化" };
+    const code = this.node.textContent;
+    const language = this.node.attrs.language ?? "";
+    console.debug("[CodeBlock] 格式化代码，语言:", language);
+    const result = getFormatSupport(language)
+      ? await formatCode(code, language)
+      : { ok: true as const, code: reindentCode(code, getIndentRule(language)) };
+    // 异步格式化期间文档可能已被编辑或节点已销毁，避免覆盖较新的内容。
+    if (
+      this.destroyed ||
+      this.isReadOnly() ||
+      this.node.textContent !== code ||
+      this.node.attrs.language !== language
+    ) {
+      return { ok: false, reason: "代码块已变化，请重新格式化" };
+    }
     if (!result.ok) return result;
 
     const pos = this.getPos();
@@ -2755,6 +2788,7 @@ export class CodeBlockView implements NodeView {
    * 删除代码块
    */
   private deleteCodeBlock(): void {
+    if (this.isReadOnly() || this.destroyed) return;
     const pos = this.getPos();
     if (pos === undefined) return;
 
