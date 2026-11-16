@@ -74,8 +74,12 @@ export default defineConfig({
   server: {
     open: false,
   },
-  // 思维导图引擎的依赖只在打开思维导图时按需加载：预先纳入依赖预构建，避免开发服务器运行中首次遇到
-  // 这些依赖时重新优化，导致已打开页面里的按需 import 失效（504 Outdated Optimize Dep，表现为点击无反应）
+  // 按需加载的依赖预先纳入依赖预构建，避免开发服务器运行中首次遇到这些依赖时重新优化，
+  // 导致已打开页面里的按需 import 失效（504 Outdated Optimize Dep，Safari/WebKit 下表现为
+  // "Importing a module script failed"，点击无反应或渲染报错）：
+  // - 思维导图引擎依赖只在打开思维导图时加载
+  // - mermaid 只在代码块渲染 Mermaid 图时动态 import；其依赖树庞大（dagre/cytoscape/elkjs 等），
+  //   运行中冷发现会连续触发多轮重新优化，必须启动时一次预构建完成
   optimizeDeps: {
     include: [
       // 语言包预构建，避免首次动态加载触发重新优化并使旧模块 URL 失效。
@@ -105,6 +109,7 @@ export default defineConfig({
       "pdf-lib",
       "mdast-util-from-markdown",
       "katex",
+      "mermaid",
     ],
   },
   root: "src/renderer",
