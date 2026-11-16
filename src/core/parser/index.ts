@@ -129,6 +129,13 @@ const INLINE_SYNTAXES: InlineSyntax[] = [
   },
 ];
 
+/**
+ * 内容按字面处理的行内 mark 类型（行内代码/行内公式）
+ * 这些语法内部是字面文本，不再二次解析任何行内语法
+ * （如 `a == b == c` 中的 == 不应被识别为高亮语法）
+ */
+const LITERAL_INLINE_MARKS = ["code_inline", "math_inline"];
+
 /** 块级语法模式 */
 const BLOCK_PATTERNS = {
   heading: /^(#{1,6})\s+(.*)$/,
@@ -513,6 +520,11 @@ export class MarkdownParser {
   private parseInlineWithSyntax(text: string, inheritedMarks: Mark[] = []): Node[] {
     if (!text) return [];
 
+    // 行内代码/行内公式内部为字面文本，不再解析任何行内语法
+    if (inheritedMarks.some((mark) => LITERAL_INLINE_MARKS.includes(mark.type.name))) {
+      return [this.schema.text(text, inheritedMarks)];
+    }
+
     // 转义预处理：先收集链接和行内数学匹配范围，这些范围内的转义不拆分文本
     const protectedRanges: Array<{ start: number; end: number }> = [];
     const linkSyntax = INLINE_SYNTAXES.find((s) => s.type === "link");
@@ -680,7 +692,7 @@ export class MarkdownParser {
     if (!text) return [];
 
     const shouldRenderEntities = !inheritedMarks.some((mark) =>
-      ["code_inline", "math_inline"].includes(mark.type.name)
+      LITERAL_INLINE_MARKS.includes(mark.type.name)
     );
     if (!shouldRenderEntities) {
       return [this.schema.text(text, inheritedMarks.length > 0 ? inheritedMarks : undefined)];

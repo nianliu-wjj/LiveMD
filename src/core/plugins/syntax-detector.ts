@@ -544,8 +544,10 @@ function detectNestedSyntax(
     });
 
     // 递归处理内容（传递合并后的 attrs）
-    // 数学公式内容不做嵌套语法检测（\| \hat 等是 LaTeX 命令，不是 Markdown 语法）
-    if (m.syntax.type === "math_inline") {
+    // 行内代码/行内公式内容不做嵌套语法检测：
+    // - 公式内容 \| \hat 等是 LaTeX 命令，不是 Markdown 语法
+    // - 行内代码内容是字面文本（如 `a == b == c` 中的 == 不是高亮语法）
+    if (m.syntax.type === "math_inline" || m.syntax.type === "code_inline") {
       if (m.content.length > 0) {
         results.push({
           from: baseOffset + m.contentStart,
