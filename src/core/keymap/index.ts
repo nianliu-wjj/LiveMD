@@ -25,6 +25,40 @@ const defaultConfig: KeymapConfig = {
   list: true,
 };
 
+/** 节点是否是语法标记文本（隐藏的 markdown 标记字符） */
+function isSyntaxMarkerNode(node: any): boolean {
+  return !!node?.marks?.some((m: any) => m.type.name === "syntax_marker");
+}
+
+/**
+ * Enter 前光标安全化：LiveMD 的语法标记（`**`、`` ` ``、`==` 等）是真实 DOM 文本，
+ * 仅靠 CSS 隐藏。浏览器 caret 吸附会把点击「行末/标记附近」的光标落到标记边界内部，
+ * 从该位置 split 会把标记劈进新块，产生畸形结构（孤立 `**`、兄弟项被吸入新 item 等）。
+ *
+ * 「普通文本 | 标记组起点」的边界本身是安全分割点（split 时标记自然跟随新块）；
+ * 只有光标处于标记组内部或标记之后（nodeBefore 是标记）才会劈坏结构，
+ * 此时回拨到连续标记组之前的文本末尾。
+ *
+ * 返回安全位置，光标本来就安全时返回 null。
+ */
+function findSafeEnterPos($from: any): number | null {
+  const doc = $from.doc;
+  const parentStart = $from.start();
+  const head = $from.pos;
+
+  const before = $from.nodeBefore;
+  if (!isSyntaxMarkerNode(before)) return null;
+
+  // 回拨到连续标记组之前的文本末尾
+  let safe = head - before.nodeSize;
+  while (safe > parentStart) {
+    const prev = doc.resolve(safe).nodeBefore;
+    if (!isSyntaxMarkerNode(prev)) break;
+    safe -= prev.nodeSize;
+  }
+  return Math.max(parentStart, safe);
+}
+
 /**
  * 创建块级元素 Enter 键处理
  * - 当输入 ``` 或 ```lang 后按回车，创建代码块
@@ -133,7 +167,8 @@ function createListKeymap(schema: Schema): Record<string, any> {
   const taskItemSplit = schema.nodes.task_item ? splitListItem(schema.nodes.task_item) : null;
 
   if (listItemSplit || taskItemSplit) {
-    keys["Enter"] = (state: any, dispatch: any) => {
+    // Enter 原始逻辑（列表分割），交由 wrapper 做光标安全化后调用
+    const enterHandler = (state: any, dispatch: any) => {
       const { $from, empty } = state.selection;
 
       // 只处理光标选区
@@ -291,6 +326,23 @@ function createListKeymap(schema: Schema): Record<string, any> {
         return true;
       }
       return false;
+    };
+
+    // Enter 入口：光标贴着隐藏语法标记时先拨到安全位置再执行分割，
+    // 防止 split 从标记边界执行导致标记被劈进新块（孤立 `**`、兄弟项吸入等畸形结构）
+    keys["Enter"] = (state: any, dispatch: any) => {
+      const { $from, empty } = state.selection;
+      if (empty) {
+        const safePos = findSafeEnterPos($from);
+        if (safePos !== null && safePos !== $from.pos) {
+          if (!dispatch) return true;
+          const selTr = state.tr.setSelection(TextSelection.create(state.doc, safePos));
+          dispatch(selTr);
+          const nextState = state.apply(selTr);
+          return enterHandler(nextState, dispatch);
+        }
+      }
+      return enterHandler(state, dispatch);
     };
   }
 
