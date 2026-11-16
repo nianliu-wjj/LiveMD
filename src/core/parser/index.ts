@@ -136,6 +136,28 @@ const INLINE_SYNTAXES: InlineSyntax[] = [
  */
 const LITERAL_INLINE_MARKS = ["code_inline", "math_inline"];
 
+/** 掩码用占位符：不参与任何行内语法正则匹配的控制字符 */
+const ESCAPE_MASK_CHAR = "\u0001";
+
+/**
+ * 构造转义掩码文本：把每个 "\X"（2 字符）替换成两个 ESCAPE_MASK_CHAR，
+ * 使被转义的标记字符不干扰外层语法匹配（如 **a\*b** 的加粗、`x\*y` 的行内代码）。
+ * 掩码与原文等长，匹配到的位置可直接映射回原文。
+ */
+function maskEscapeSequences(
+  text: string,
+  escapePositions: Array<{ index: number; char: string }>
+): string {
+  const chars = text.split("");
+  for (const esc of escapePositions) {
+    chars[esc.index] = ESCAPE_MASK_CHAR;
+    if (esc.index + 1 < chars.length) {
+      chars[esc.index + 1] = ESCAPE_MASK_CHAR;
+    }
+  }
+  return chars.join("");
+}
+
 /** 块级语法模式 */
 const BLOCK_PATTERNS = {
   heading: /^(#{1,6})\s+(.*)$/,
@@ -560,9 +582,11 @@ export class MarkdownParser {
       }
     }
 
-    if (escapePositions.length > 0) {
-      return this.parseInlineWithEscapes(text, inheritedMarks, escapePositions);
-    }
+    // 转义掩码：把每个 "\X"（2 字符）替换成等长的两个 \u0001 后再做语法匹配。
+    // 这样被转义的标记字符（如加粗内的 \*、行内代码内的 \*）不会干扰外层语法配对，
+    // 同时掩码与原文等长，匹配位置可直接映射回原文。
+    const matchedText =
+      escapePositions.length > 0 ? maskEscapeSequences(text, escapePositions) : text;
 
     // 收集所有匹配
     interface MatchInfo {
@@ -583,11 +607,13 @@ export class MarkdownParser {
       re.lastIndex = 0;
       let match: RegExpExecArray | null;
 
-      while ((match = re.exec(text)) !== null) {
+      while ((match = re.exec(matchedText)) !== null) {
         const prefix = typeof syntax.prefix === "function" ? syntax.prefix(match) : syntax.prefix;
         const suffix = typeof syntax.suffix === "function" ? syntax.suffix(match) : syntax.suffix;
-        // 支持多捕获组的情况（如 strong 的正则有两种模式）
-        const content = match[syntax.contentIndex] || match[syntax.contentIndex + 2] || "";
+        // 掩码与原文等长：内容按位置取原文切片，避免把掩码字符带进文档内容
+        const contentFrom = match.index + prefix.length;
+        const contentTo = match.index + match[0].length - suffix.length;
+        const content = text.slice(contentFrom, contentTo);
 
         // 跳过无效匹配
         if (!prefix || !content) continue;
@@ -626,10 +652,9 @@ export class MarkdownParser {
     let pos = 0;
 
     for (const m of filtered) {
-      // 前面的纯文本
+      // 前面的纯文本（其中可能包含转义序列，需要生成转义节点）
       if (m.start > pos) {
-        const plainText = text.slice(pos, m.start);
-        nodes.push(...this.createTextNodesWithHtmlEntities(plainText, inheritedMarks));
+        nodes.push(...this.createSegmentNodes(text, pos, m.start, escapePositions, inheritedMarks));
       }
 
       // 语法标记和内容
@@ -676,13 +701,38 @@ export class MarkdownParser {
       pos = m.end;
     }
 
-    // 剩余文本
+    // 剩余文本（其中可能包含转义序列，需要生成转义节点）
     if (pos < text.length) {
-      const remainingText = text.slice(pos);
-      nodes.push(...this.createTextNodesWithHtmlEntities(remainingText, inheritedMarks));
+      nodes.push(
+        ...this.createSegmentNodes(text, pos, text.length, escapePositions, inheritedMarks)
+      );
     }
 
     return nodes;
+  }
+
+  /**
+   * 生成一段纯文本（不含语法匹配）的节点：段内转义序列拆为
+   * `\`（escape 语法标记）+ 字面字符两个节点，其余按普通文本（含 HTML entity 处理）。
+   */
+  private createSegmentNodes(
+    text: string,
+    segmentStart: number,
+    segmentEnd: number,
+    escapePositions: Array<{ index: number; char: string }>,
+    inheritedMarks: Mark[]
+  ): Node[] {
+    const plain = text.slice(segmentStart, segmentEnd);
+    if (!plain) return [];
+
+    const segmentEscapes = escapePositions
+      .filter((e) => e.index >= segmentStart && e.index + 2 <= segmentEnd)
+      .map((e) => ({ index: e.index - segmentStart, char: e.char }));
+
+    if (segmentEscapes.length === 0) {
+      return this.createTextNodesWithHtmlEntities(plain, inheritedMarks);
+    }
+    return this.parseInlineWithEscapes(plain, inheritedMarks, segmentEscapes);
   }
 
   /**

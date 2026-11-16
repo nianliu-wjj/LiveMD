@@ -289,19 +289,32 @@ interface DetectedRegion {
   attrs?: Record<string, any>;
 }
 
+/** 掩码用占位符：不参与任何行内语法正则匹配的控制字符 */
+const ESCAPE_MASK_CHAR = "\u0001";
+
+/**
+ * 构造转义掩码文本：把每个 "\X"（2 字符）替换成两个 ESCAPE_MASK_CHAR，
+ * 使被转义的标记字符不干扰外层语法匹配（如 **a\*b** 的加粗、`x\*y` 的行内代码）。
+ * 掩码与原文等长，匹配到的位置可直接映射回原文。
+ */
+function maskEscapeRanges(
+  text: string,
+  escapeRanges: Array<{ start: number; end: number }>
+): string {
+  const chars = text.split("");
+  for (const range of escapeRanges) {
+    for (let i = range.start; i < range.end && i < chars.length; i++) {
+      chars[i] = ESCAPE_MASK_CHAR;
+    }
+  }
+  return chars.join("");
+}
+
 /**
  * 检测文本中的所有语法匹配
  */
 function detectSyntaxMatches(text: string): MatchInfo[] {
   const matches: MatchInfo[] = [];
-
-  // 收集所有转义范围
-  const escapeRanges: Array<{ start: number; end: number }> = [];
-  const escRe = new RegExp(ESCAPE_RE.source, "g");
-  let escMatch: RegExpExecArray | null;
-  while ((escMatch = escRe.exec(text)) !== null) {
-    escapeRanges.push({ start: escMatch.index, end: escMatch.index + escMatch[0].length });
-  }
 
   // 先收集链接匹配的范围，链接 URL 内的转义不应阻止链接匹配
   const linkRanges: Array<{ start: number; end: number }> = [];
@@ -314,26 +327,47 @@ function detectSyntaxMatches(text: string): MatchInfo[] {
     }
   }
 
+  // 收集行内数学匹配范围（与 detectPlainTextRegions 的保护语义一致）
+  const mathRanges: Array<{ start: number; end: number }> = [];
+  const mathSyntax = INLINE_SYNTAXES.find((s) => s.type === "math_inline");
+  if (mathSyntax) {
+    const mathRe = new RegExp(mathSyntax.pattern.source, mathSyntax.pattern.flags);
+    let mathMatch: RegExpExecArray | null;
+    while ((mathMatch = mathRe.exec(text)) !== null) {
+      mathRanges.push({ start: mathMatch.index, end: mathMatch.index + mathMatch[0].length });
+    }
+  }
+
+  // 收集所有转义范围（跳过链接 URL / 数学公式内的转义：
+  // URL 里的 \( 是链接语法的一部分，公式里的 \| \hat 等是 LaTeX 命令）
+  const escapeRanges: Array<{ start: number; end: number }> = [];
+  const escRe = new RegExp(ESCAPE_RE.source, "g");
+  let escMatch: RegExpExecArray | null;
+  while ((escMatch = escRe.exec(text)) !== null) {
+    const overlapsProtected = [...linkRanges, ...mathRanges].some(
+      (r) => escMatch!.index >= r.start && escMatch!.index + 2 <= r.end
+    );
+    if (!overlapsProtected) {
+      escapeRanges.push({ start: escMatch.index, end: escMatch.index + escMatch[0].length });
+    }
+  }
+
+  // 语法匹配在掩码文本上进行：被转义的标记字符不参与语法配对
+  const matchedText = escapeRanges.length > 0 ? maskEscapeRanges(text, escapeRanges) : text;
+
   for (const syntax of INLINE_SYNTAXES) {
     const re = new RegExp(syntax.pattern.source, syntax.pattern.flags);
     let match: RegExpExecArray | null;
 
-    while ((match = re.exec(text)) !== null) {
+    while ((match = re.exec(matchedText)) !== null) {
       const prefix = typeof syntax.prefix === "function" ? syntax.prefix(match) : syntax.prefix;
       const suffix = typeof syntax.suffix === "function" ? syntax.suffix(match) : syntax.suffix;
-      const content = match[syntax.contentIndex] || match[syntax.contentIndex + 2] || "";
-
+      // 掩码与原文等长：内容按位置取原文切片，避免把掩码字符带进内容
       const start = match.index;
       const end = start + match[0].length;
       const contentStart = start + prefix.length;
       const contentEnd = end - suffix.length;
-
-      // 跳过与转义范围重叠的匹配，但链接和行内数学除外
-      // （链接 URL 内允许转义括号，数学公式内的 \| \hat 等是 LaTeX 命令）
-      if (syntax.type !== "link" && syntax.type !== "math_inline") {
-        const overlapsEscape = escapeRanges.some((esc) => esc.start < end && esc.end > start);
-        if (overlapsEscape) continue;
-      }
+      const content = text.slice(contentStart, contentEnd);
 
       matches.push({
         syntax,

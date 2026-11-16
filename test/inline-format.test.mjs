@@ -13,10 +13,9 @@ const server = await createServer({
 
 const { defaultParser } = await server.ssrLoadModule("/src/core/parser/index.ts");
 const { livemdSchema } = await server.ssrLoadModule("/src/core/schema/index.ts");
-const {
-  createEnhancedHtmlTagCommand,
-  createEnhancedToggleMark,
-} = await server.ssrLoadModule("/src/core/commands/enhanced-commands.ts");
+const { createEnhancedHtmlTagCommand, createEnhancedToggleMark } = await server.ssrLoadModule(
+  "/src/core/commands/enhanced-commands.ts"
+);
 const { serializeMarkdown } = await server.ssrLoadModule("/src/core/serializer/index.ts");
 
 after(async () => {
@@ -152,5 +151,75 @@ test("行内代码可继续嵌套于加粗斜体等语法", () => {
   const { doc } = defaultParser.parse(source);
 
   assert.deepEqual(collectStraySyntaxInCodeMarks(doc, "highlight"), []);
+  assert.equal(serializeMarkdown(doc).trimEnd(), source);
+});
+
+test("加粗内容含 \\* 转义时加粗仍然生效", () => {
+  const source = "**通用逻辑上提 Abstract/骨架\\*差异点\\***：正文";
+  const { doc } = defaultParser.parse(source);
+
+  // 加粗内容完整保留（\* 的 \ 隐藏后显示字面 *）
+  const strongTexts = [];
+  doc.descendants((node) => {
+    if (
+      node.isText &&
+      node.marks.some((m) => m.type.name === "strong") &&
+      !node.marks.some((m) => m.type.name === "syntax_marker")
+    ) {
+      strongTexts.push(node.text || "");
+    }
+    return true;
+  });
+  assert.equal(strongTexts.join(""), "通用逻辑上提 Abstract/骨架*差异点*");
+
+  // 转义字符 \\ 成为 escape 语法标记节点（继承加粗），显示层只展示字面 *
+  const escapeNodes = [];
+  doc.descendants((node) => {
+    if (node.isText && node.text === "\\") {
+      escapeNodes.push(node.marks.map((m) => m.type.name));
+    }
+    return true;
+  });
+  assert.ok(escapeNodes.length > 0, "应存在转义节点");
+  for (const marks of escapeNodes) {
+    assert.ok(marks.includes("syntax_marker"), "转义节点应带 syntax_marker");
+    assert.ok(marks.includes("strong"), "转义节点应继承加粗");
+  }
+
+  // 往返序列化保留原文
+  assert.equal(serializeMarkdown(doc).trimEnd(), source);
+});
+
+test("无语法包裹的普通 \\* 转义不受影响", () => {
+  const source = "普通 \\* 星号与 \\_ 下划线";
+  const { doc } = defaultParser.parse(source);
+
+  const escapeCount = [];
+  doc.descendants((node) => {
+    if (node.isText && node.text === "\\") {
+      escapeCount.push(...node.marks.map((m) => m.type.name));
+    }
+    return true;
+  });
+  assert.equal(escapeCount.filter((t) => t === "syntax_marker").length, 2);
+  assert.equal(serializeMarkdown(doc).trimEnd(), source);
+});
+
+test("行内代码内含 \\* 转义仍构成代码段", () => {
+  const source = "代码 `a\\*b` 场景";
+  const { doc } = defaultParser.parse(source);
+
+  const codeTexts = [];
+  doc.descendants((node) => {
+    if (
+      node.isText &&
+      node.marks.some((m) => m.type.name === "code_inline") &&
+      !node.marks.some((m) => m.type.name === "syntax_marker")
+    ) {
+      codeTexts.push(node.text || "");
+    }
+    return true;
+  });
+  assert.equal(codeTexts.join(""), "a\\*b");
   assert.equal(serializeMarkdown(doc).trimEnd(), source);
 });
