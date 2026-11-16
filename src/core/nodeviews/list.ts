@@ -137,8 +137,8 @@ export class OrderedListView implements NodeView {
   }
 
   /**
-   * 同步起始编号：既写 start 属性（语义 / 复制 HTML），也写 CSS 变量供即时渲染模式的 counter 使用。
-   * counter-reset 之后首个 counter-increment 会先 +1，故变量取 start - 1，使首项编号恰为 start。
+   * 同步起始编号：写 start 属性，原生 decimal 编号直接消费。
+   * （旧实现还写 --ol-start CSS 变量供自绘 counter 使用，原生 marker 回退后已摘除。）
    */
   private applyStart(rawStart: unknown): void {
     const start = Number.isFinite(Number(rawStart)) ? Number(rawStart) : 1;
@@ -147,15 +147,11 @@ export class OrderedListView implements NodeView {
     } else {
       this.dom.removeAttribute("start");
     }
-    this.dom.style.setProperty("--ol-start", String(start - 1));
   }
 
   ignoreMutation(mutation: ViewMutationRecord): boolean {
-    // 忽略 class / style 属性变化（style 用于写入 --ol-start）
-    if (
-      mutation.type === "attributes" &&
-      (mutation.attributeName === "class" || mutation.attributeName === "style")
-    ) {
+    // 忽略 class 属性变化
+    if (mutation.type === "attributes" && mutation.attributeName === "class") {
       return true;
     }
     return false;
