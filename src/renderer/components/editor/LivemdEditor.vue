@@ -1301,6 +1301,10 @@ defineExpose({
   }
 
   &.large-document-mode {
+    /* 注意：不要把 .livemd-editor li 加回本选择器列表——
+       content-visibility:auto 在 WKWebView 下对类名变化不恢复绘制（重绘 bug 家族），
+       是列表行“光标进可见、移开不可见”幽灵态的总根源（docs/BUGFIX-GUIDE.md 问题八）。
+       li 是单行高度级小元素，收益趋零；顶层大块规则已覆盖绝大部分滚动性能收益。 */
     :deep(.livemd-editor > p),
     :deep(.livemd-editor > h1),
     :deep(.livemd-editor > h2),
@@ -1317,7 +1321,6 @@ defineExpose({
     :deep(.livemd-editor > .livemd-image-block),
     :deep(.livemd-editor > .html-block),
     :deep(.livemd-editor > .math-block),
-    :deep(.livemd-editor li),
     :deep(.livemd-editor blockquote > *) {
       content-visibility: auto;
       contain-intrinsic-size: auto 36px;
