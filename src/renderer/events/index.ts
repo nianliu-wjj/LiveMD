@@ -66,7 +66,6 @@ type Events = {
   "bookmarks:show-bar": void; // 外部展开书签栏入口（便签/命令面板）
   // ============ 文档检查（拼写 / 格式）============
   "lint:reveal-line": number; // 结果面板 → 活跃编辑器：按 1-based 行号滚动并放置光标
-  foldChange: { indices: number[] }; // 编辑器 → 渲染层：折叠状态变化，需按文件持久化
   "workspace:open-path": string; // useTab → App：新窗口携带的工作区路径，需要加载
 } & Record<string, unknown>;
 

@@ -35,13 +35,6 @@ import { createInstantRenderPlugin } from "./plugins/instant-render";
 import { createInputRulesPlugin } from "./plugins/input-rules";
 import { createAutoPairPlugin } from "./plugins/auto-pair";
 import { createTableResizePlugin } from "./plugins/table-resize";
-import {
-  createFoldPlugin,
-  foldPluginKey,
-  getFoldedIndices,
-  setFoldedBlocks as applyFoldedBlocks,
-  type FoldMeta,
-} from "./plugins/fold";
 import { createSyntaxFixerPlugin } from "./plugins/syntax-fixer";
 import { extractPlainText, markdownToPlainText } from "./utils/plain-text";
 import { createMindMapTemplate } from "./utils/mindmap-document";
@@ -324,8 +317,6 @@ export class LivemdEditor implements ILivemdEditor {
       createAutoPairPlugin(),
       // 表格行列尺寸调整（Ctrl + 拖拽）
       createTableResizePlugin(),
-      // 标题 / 表格折叠（折叠状态存插件 state，不改文档结构）
-      createFoldPlugin(),
       // 语法修复插件
       createSyntaxFixerPlugin(),
       // 语法检测插件
@@ -409,13 +400,6 @@ export class LivemdEditor implements ILivemdEditor {
 
     const newState = this.view.state.apply(tr);
     this.view.updateState(newState);
-
-    // 折叠状态变化：回传块索引，由渲染层按文件持久化。
-    // 必须在 updateState 之后读取：此前在 apply 之前 emit，回传的是变更前的旧索引，
-    // restoreDoc 注入折叠时会把持久化记录覆盖成空集合。
-    if (tr.getMeta(foldPluginKey)) {
-      this.emit("foldChange", { indices: this.getFoldedBlocks() });
-    }
 
     // 光标所在表格显示悬浮工具栏（其余表格隐藏）
     this.syncTableToolbarVisibility();
@@ -608,28 +592,18 @@ export class LivemdEditor implements ILivemdEditor {
   }
 
   /**
-   * 恢复文档：内容替换 + 折叠 + 书签 + 光标合并为**一条事务**
+   * 恢复文档：内容替换 + 书签 + 光标合并为**一条事务**
    *
-   * 渲染层原来 `setMarkdown + setBookmarkedBlocks + setFoldedBlocks` 三连调 = 3 条事务
-   * = 3 次 appendTransaction 插件全文档跑 + 3 次全量 decorate；合并后打开文档的插件开销砍掉 2/3。
-   * 折叠 / 书签插件都按 meta 生效，可以挂在同一条事务上；光标偏移越界时自动钳制。
+   * 渲染层原来 `setMarkdown + setBookmarkedBlocks` 等多次连调 = 多条事务
+   * = 多次 appendTransaction 插件全文档跑 + 多次全量 decorate；合并后打开文档的插件开销大幅降低。
+   * 书签插件按 meta 生效，可以挂在同一条事务上；光标偏移越界时自动钳制。
    */
-  restoreDoc(
-    content: string,
-    options: { folded?: number[]; bookmarks?: number[]; cursorOffset?: number } = {}
-  ): void {
+  restoreDoc(content: string, options: { bookmarks?: number[]; cursorOffset?: number } = {}): void {
     const { doc } = this.parser.parse(content);
     let tr = this.view.state.tr
       .replaceWith(0, this.view.state.doc.content.size, doc.content)
       .setMeta("addToHistory", false);
 
-    if (options.folded) {
-      // 折叠插件按 meta 生效：set 语义覆盖为完整折叠集合
-      tr = tr.setMeta(foldPluginKey, {
-        type: "set",
-        indices: options.folded,
-      } satisfies FoldMeta);
-    }
     if (options.bookmarks) {
       tr = tr.setMeta(bookmarksPluginKey, options.bookmarks);
     }
@@ -712,16 +686,6 @@ export class LivemdEditor implements ILivemdEditor {
   }
 
   /** 更新当前编辑器显示的书签块 */
-  /** 读取当前折叠块索引（渲染层持久化用） */
-  getFoldedBlocks(): number[] {
-    return getFoldedIndices(this.view.state);
-  }
-
-  /** 恢复折叠状态（读取本地持久化数据后调用） */
-  setFoldedBlocks(indices: number[]): void {
-    applyFoldedBlocks(this.view.state, this.view.dispatch.bind(this.view), indices);
-  }
-
   setBookmarkedBlocks(indices: number[]): void {
     setBookmarkedBlocks(this.view.state, this.view.dispatch.bind(this.view), indices);
   }

@@ -2124,42 +2124,6 @@
   opacity: 1;
 }
 
-/* 标题 / 表格折叠：块前箭头与隐藏块 */
-.livemd-editor .livemd-fold-arrow {
-  position: absolute;
-  margin-left: -1.25em;
-  margin-top: 0.15em;
-  width: 1.1em;
-  height: 1.1em;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font-size: 0.9em;
-  line-height: 1;
-  opacity: 0.35;
-  cursor: pointer;
-  transition:
-    opacity 0.15s ease,
-    transform 0.15s ease;
-}
-
-.livemd-editor .livemd-fold-arrow::before {
-  content: "▾";
-}
-
-.livemd-editor .livemd-fold-arrow:not(.folded) {
-  transform: rotate(-90deg);
-}
-
-.livemd-editor .livemd-fold-arrow:hover {
-  opacity: 0.9;
-}
-
-.livemd-editor .livemd-fold-hidden {
-  display: none !important;
-}
-
 /* ============ 表格：横向滚动容器 + 表头悬浮工具栏 ============ */
 
 .livemd-table-block {

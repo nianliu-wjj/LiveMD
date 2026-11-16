@@ -52,7 +52,6 @@ import {
   type MindmapEditEventDetail,
 } from "@/core/nodeviews/code-block";
 import { normalizeMarkdownForDirtyCheck } from "@/renderer/utils/markdown";
-import { getFoldForDoc, migrateFoldDocKey, setFoldForDoc } from "@/renderer/utils/foldStates";
 import useAppCommands from "@/renderer/hooks/useAppCommands";
 
 interface Props {
@@ -709,11 +708,6 @@ function emitOutlineUpdate() {
   }, 150);
 }
 
-/** 折叠状态持久化键（与批注/大纲一致：已保存文档用路径，未保存用 tab id） */
-function foldDocKeyOf(): string {
-  return props.tab.filePath ? `file:${props.tab.filePath}` : `tab:${props.tab.id}`;
-}
-
 function createEditorInstance() {
   if (!containerRef.value) return;
 
@@ -811,27 +805,12 @@ function createEditorInstance() {
     emitter.emit("annotation:clicked", { id: payload.id });
   });
 
-  // 折叠状态变化：按文档键持久化（core 不知道文件路径，索引由编辑器回传）
   // 内核（表格工具栏等）请求执行渲染层命令：按 id 找到命令并执行
   editor.on("rendererCommand", ({ id }: { id: string }) => {
     const command = appCommands.value.find((item) => item.id === id);
     if (!command) return;
     void command.run();
   });
-
-  editor.on("foldChange", ({ indices }: { indices: number[] }) => {
-    setFoldForDoc(foldDocKeyOf(), indices);
-  });
-
-  // 未保存文档保存后迁移折叠记录，避免折叠状态丢失
-  watch(
-    () => props.tab.filePath,
-    (nextPath, previousPath) => {
-      if (nextPath && !previousPath) {
-        migrateFoldDocKey(`tab:${props.tab.id}`, `file:${nextPath}`);
-      }
-    }
-  );
 
   // 监听变更事件
   editor.on("change", ({ markdown }: { markdown: string }) => {
@@ -889,8 +868,8 @@ function restoreScrollPosition(): void {
 /**
  * 第二阶段：注入内容
  *
- * 内容 + 折叠 + 书签 + 光标合并为一条 restoreDoc 事务（原来 setMarkdown + setBookmarkedBlocks +
- * setFoldedBlocks 三连调 = 3 条事务 = 3 次 appendTransaction 插件全文档跑 + 3 次全量 decorate），
+ * 内容 + 书签 + 光标合并为一条 restoreDoc 事务（原来 setMarkdown + setBookmarkedBlocks
+ * 等多次连调 = 多条事务 = 多次 appendTransaction 插件全文档跑 + 多次全量 decorate），
  * 随后恢复持久化批注（需要文档内容就绪后重定位）、大纲与滚动位置。
  */
 function hydrateEditorContent(): void {
@@ -898,12 +877,10 @@ function hydrateEditorContent(): void {
   hasHydrated = true;
 
   const contentForRendering = preprocessContent(props.tab.content);
-  const savedFolds = getFoldForDoc(foldDocKeyOf());
 
   isHydrating = true;
   try {
     editor.restoreDoc(contentForRendering, {
-      folded: savedFolds.length > 0 ? savedFolds : undefined,
       bookmarks: bookmarkedIndices.value,
       cursorOffset: props.tab.milkdownCursorOffset || undefined,
     });
@@ -974,11 +951,9 @@ function syncEditorFromTab(content: string) {
       }
 
       const contentForRendering = preprocessContent(content);
-      // 外部内容更新（文件 watcher / 检查修复写回等）同样走单事务：内容 + 书签 + 持久化折叠一次注入
-      const savedFolds = getFoldForDoc(foldDocKeyOf());
+      // 外部内容更新（文件 watcher / 检查修复写回等）同样走单事务：内容 + 书签一次注入
       editor?.restoreDoc(contentForRendering, {
         bookmarks: bookmarkedIndices.value,
-        folded: savedFolds.length > 0 ? savedFolds : undefined,
       });
 
       // 写回后保持视口：按记录的滚动比例还原（修复写回后视口不跳）
