@@ -88,6 +88,12 @@
   word-break: break-word;
 }
 
+/* 语法标记（如行内代码的反引号）所在的 code 壳必须保持朴素形态：
+   反引号文本被隐藏后，空 code 壳若保留背景/边框/内边距，会在行内代码前后
+   渲染成可见的"竖杠"。外部主题（Typora 导入主题等）常用
+   html[data-xxx-theme] .livemd-editor code（特异性 (0,2,2)）给 code 上胶囊样式，
+   仅靠 (0,2,0) 的规则压不住，因此叠加属性选择器把优先级提升到 (0,3,0)。 */
+.livemd-editor [data-syntax-type] .livemd-code-inline,
 .livemd-syntax .livemd-code-inline,
 .livemd-syntax-visible .livemd-code-inline,
 .livemd-syntax-marker .livemd-code-inline,
