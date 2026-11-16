@@ -319,10 +319,16 @@ export class LivemdEditor implements ILivemdEditor {
       createTableResizePlugin(),
       // 语法修复插件
       createSyntaxFixerPlugin(),
+      // 标题同步插件：必须装配在语法检测插件之前。
+      // 用户在标题文本上增删 #（### → ####）时，level 属性由本插件先行同步，
+      // 语法检测随后的行内重扫才能按正确的 level 计算标题前缀长度
+      // （getHeadingSyntaxPrefixLength 按 level 验证前缀，# 数与 level 不符时
+      // 前缀长度判 0，# 前缀被当作内容一并清掉 marks）；
+      // 反向装配时语法检测产出的事务带 syntax-plugin-internal meta，
+      // 后跑的标题同步按 transactions.some(meta) 整批跳过，level 永不同步。
+      createHeadingSyncPlugin(),
       // 语法检测插件
       createSyntaxDetectorPlugin(),
-      // 标题同步插件
-      createHeadingSyncPlugin(),
       // 粘贴处理插件
       createPastePlugin(this.config.pasteConfig),
       // 数学块状态同步插件
@@ -2513,7 +2519,10 @@ export class LivemdEditor implements ILivemdEditor {
   insertMindmapBlock(): void {
     const codeBlockType = this.schema.nodes.code_block;
     if (!codeBlockType) return;
-    const node = codeBlockType.create({ language: "mindmap" }, this.schema.text(createMindMapTemplate()));
+    const node = codeBlockType.create(
+      { language: "mindmap" },
+      this.schema.text(createMindMapTemplate())
+    );
     console.info("[LivemdEditor] 插入思维导图代码块");
     this.view.focus();
     this.view.dispatch(this.view.state.tr.replaceSelectionWith(node).scrollIntoView());
