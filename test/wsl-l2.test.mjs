@@ -8,7 +8,7 @@ import {
   partitionPaths,
   snapshotEntry,
   snapshotChanged,
-} from "../src/main/wslWatch.ts";
+} from "../src/shared/utils/wslWatch.ts";
 
 test("normalizeWatchPath: 还原 \\\\?\\UNC\\ 前缀为 \\\\", () => {
   assert.equal(

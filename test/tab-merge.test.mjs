@@ -6,7 +6,7 @@ import ts from "typescript";
 import * as vue from "vue";
 
 const hookSource = readFileSync(
-  new URL("../src/renderer/hooks/useTab.ts", import.meta.url),
+  new URL("../src/hooks/useTab.ts", import.meta.url),
   "utf8"
 );
 const hookCode = ts.transpileModule(hookSource, {
@@ -56,16 +56,16 @@ function createWindow(t, apiOverrides = {}) {
   const dependencies = {
     vue,
     "autotoast.js": { show() {} },
-    "@/plugins/imagePathPlugin": {
+    "@/shared/utils/imagePathPlugin": {
       setCurrentMarkdownFilePath: (value) => {
         imagePath = value;
       },
     },
-    "@/renderer/events": { emit() {} },
-    "@/renderer/services/fileService": {},
-    "@/renderer/utils/inertiaScroll": {},
-    "@/renderer/utils/markdown": { normalizeMarkdownForDirtyCheck: (value) => value },
-    "@/renderer/utils/tool": { randomUUID: () => `local-tab-${++nextId}` },
+    "@/events": { emit() {} },
+    "@/service/fileService": {},
+    "@/utils/inertiaScroll": {},
+    "@/utils/markdown": { normalizeMarkdownForDirtyCheck: (value) => value },
+    "@/utils/tool": { randomUUID: () => `local-tab-${++nextId}` },
     "./useConfig": { useConfig: () => ({ config: vue.ref({ other: { autoSave: false } }) }) },
     "./useRecentFiles": { recordRecentFile() {} },
     "./useUiLoading": () => ({
@@ -74,7 +74,7 @@ function createWindow(t, apiOverrides = {}) {
       nextFrame: async () => {},
     }),
     // 只读模式开关（状态栏锁形按钮）：测试中恒为关闭
-    "@/renderer/hooks/useReadOnlyMode": { isReadOnlyMode: vue.ref(false) },
+    "@/hooks/useReadOnlyMode": { isReadOnlyMode: vue.ref(false) },
     // 图片插入规则：本文件用例不涉及图片落盘，返回不落盘的默认目标
     "@/shared/utils/imageInsert": {
       resolveImageSaveTarget: () => ({

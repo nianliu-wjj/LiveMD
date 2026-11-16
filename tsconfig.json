@@ -12,8 +12,7 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["src/*"],
-      "@renderer/*": ["src/renderer/*"],
-      "@ui/*": ["src/renderer/components/ui/*"]
+      "@ui/*": ["src/components/ui/*"]
     },
     "resolveJsonModule": true,
 

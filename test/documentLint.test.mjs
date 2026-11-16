@@ -8,8 +8,8 @@ import {
   runFormatCheck,
   runSpellCheck,
   writeRuleConfig,
-} from "../src/renderer/utils/documentLint.ts";
-import { MARKDOWNLINT_RULES } from "../src/renderer/utils/markdownLintRules.ts";
+} from "../src/utils/documentLint.ts";
+import { MARKDOWNLINT_RULES } from "../src/utils/markdownLintRules.ts";
 
 /** 内存版 storage：只实现配置读写用到的两个成员 */
 function createStorage(initial = {}) {

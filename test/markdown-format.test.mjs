@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatCjkSpacing } from "../src/renderer/utils/markdownFormat.ts";
+import { formatCjkSpacing } from "../src/utils/markdownFormat.ts";
 
 test("pads between CJK and latin letters or digits", () => {
   assert.equal(formatCjkSpacing("中文English测试123。"), "中文 English 测试 123。");

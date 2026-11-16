@@ -7,7 +7,7 @@ import {
   countParagraphs,
   countWords,
   formatReadingTime,
-} from "../src/renderer/utils/wordCount.ts";
+} from "../src/utils/wordCount.ts";
 
 test("word count treats CJK characters and latin words separately", () => {
   assert.equal(countWords("你好，世界 Hello world 100"), 7);

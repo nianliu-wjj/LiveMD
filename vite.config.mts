@@ -27,8 +27,7 @@ function resolveDecodeNamedCharacterReference(): string | null {
 const decodeNamedCharacterReferencePath = resolveDecodeNamedCharacterReference();
 
 const alias = [
-  { find: "@renderer", replacement: path.resolve(__dirname, "./src/renderer") },
-  { find: "@ui", replacement: path.resolve(__dirname, "./src/renderer/components/ui") },
+  { find: "@ui", replacement: path.resolve(__dirname, "./src/components/ui") },
   { find: "@", replacement: path.resolve(__dirname, "./src") },
   // 精确匹配包名（不影响子路径导入），主包与 worker 包共用同一 resolve 配置
   ...(decodeNamedCharacterReferencePath
@@ -112,16 +111,15 @@ export default defineConfig({
       "mermaid",
     ],
   },
-  root: "src/renderer",
   base: "./",
   build: {
-    outDir: "../../dist",
+    outDir: "dist",
     emptyOutDir: true,
     rollupOptions: {
       input: {
-        main: path.resolve(__dirname, "src/renderer/index.html"),
-        "theme-editor": path.resolve(__dirname, "src/renderer/theme-editor.html"),
-        "image-preview": path.resolve(__dirname, "src/renderer/image-preview.html"),
+        main: path.resolve(__dirname, "index.html"),
+        "theme-editor": path.resolve(__dirname, "theme-editor.html"),
+        "image-preview": path.resolve(__dirname, "image-preview.html"),
       },
     },
   },

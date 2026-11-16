@@ -1,7 +1,7 @@
 /**
  * 从 SVG 生成多尺寸 ICO 和 ICNS 图标（src/assets/icons）
  * - livemd.ico / livemd.icns：应用图标，母版 src-tauri/icons/app-icon.svg（与 Tauri 打包图标同源）
- * - file.ico / file.icns：Markdown 文件关联图标，源 src/renderer/public/file-icon.svg
+ * - file.ico / file.icns：Markdown 文件关联图标，源 public/file-icon.svg
  * 用法: pnpm generate-icons
  */
 
@@ -29,7 +29,7 @@ const ICONS = [
   },
   {
     // Markdown 文件关联图标（文档 + 底部 md 色带 + LiveMD L 角标）
-    svg: join(ROOT, "src/renderer/public/file-icon.svg"),
+    svg: join(ROOT, "public/file-icon.svg"),
     output: join(ROOT, "src/assets/icons/file"),
   },
 ];

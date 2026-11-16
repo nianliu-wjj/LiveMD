@@ -7,7 +7,7 @@ import {
   removeBookmarkFromMap,
   serializeBookmarks,
   toggleBookmarkInMap,
-} from "../src/renderer/utils/bookmarks.ts";
+} from "../src/utils/bookmarks.ts";
 
 test("storage key stays stable", () => {
   assert.equal(BOOKMARKS_STORAGE_KEY, "livemd-bookmarks");

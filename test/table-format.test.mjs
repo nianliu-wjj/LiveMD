@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { formatMarkdownTables } from "../src/renderer/utils/tableFormat.ts";
+import { formatMarkdownTables } from "../src/utils/tableFormat.ts";
 
 test("aligns table columns and trims cell padding", () => {
   const input = [

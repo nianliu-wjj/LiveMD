@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { ref } from "vue";
-import { createEditorZoomController } from "../src/renderer/utils/editorZoom.ts";
+import { createEditorZoomController } from "../src/utils/editorZoom.ts";
 
 function createTab(overrides = {}) {
   return {

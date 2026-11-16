@@ -7,7 +7,7 @@ import {
   fileStemOfPath,
   joinPathOf,
   relativeToWorkspace,
-} from "../src/renderer/utils/workspacePathHelpers.ts";
+} from "../src/utils/workspacePathHelpers.ts";
 
 test("fileNameOfPath / dirnameOfPath: Windows 与 POSIX 路径", () => {
   assert.equal(fileNameOfPath("C:\\docs\\a.md"), "a.md");

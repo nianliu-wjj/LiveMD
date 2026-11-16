@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createDefaultMarkdownFileName } from "../src/main/defaultMarkdownFileName.ts";
+import { createDefaultMarkdownFileName } from "../src/shared/utils/defaultMarkdownFileName.ts";
 
 test("createDefaultMarkdownFileName: 优先使用第一个标题", () => {
   assert.equal(createDefaultMarkdownFileName("正文\n\n# 第一标题\n\n## 第二标题"), "第一标题.md");

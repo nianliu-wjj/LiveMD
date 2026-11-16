@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createSidebarWidthController } from "../src/renderer/hooks/useSidebarWidth.ts";
+import { createSidebarWidthController } from "../src/hooks/useSidebarWidth.ts";
 
 test("sidebar width defaults to 25 percent and clamps to the allowed range", () => {
   const controller = createSidebarWidthController({

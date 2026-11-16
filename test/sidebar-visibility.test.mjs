@@ -6,7 +6,7 @@ import {
   resolveSidebarVisibility,
   STANDALONE_SIDEBAR_CONTEXT,
   writeSidebarVisibility,
-} from "../src/renderer/utils/sidebarVisibility.ts";
+} from "../src/utils/sidebarVisibility.ts";
 
 function createStorage(initial = {}) {
   const values = new Map(Object.entries(initial));

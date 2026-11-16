@@ -2,7 +2,7 @@
 // 运行: node --experimental-strip-types --test test/wsl-watchers.test.mjs
 import test from "node:test";
 import assert from "node:assert/strict";
-import { WslFileWatcher, WslDirectoryWatcher } from "../src/main/wslWatch.ts";
+import { WslFileWatcher, WslDirectoryWatcher } from "../src/shared/utils/wslWatch.ts";
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
