@@ -30,29 +30,37 @@
   ); /* 左右边距 + 行号区域 */
 }
 
-/* 语法标记 - 隐藏 */
-.livemd-syntax-hidden {
-  font-size: 0;
-  opacity: 0;
-  width: 0;
-  display: inline;
+/* 语法标记文本的恒定内层 meta wrapper（syntax_marker mark 的 toDOM 生成）：
+   display:none 静态隐藏——不参与布局与 text run（旧机制 livemd-syntax-hidden 的
+   font-size:0 仍留在 text run 内，WebKit 下引发正文渲染丢失，见 docs/BUGFIX-GUIDE.md 问题六）；
+   标记文本的显示由焦点块 / 源码模式的祖先选择器接管 */
+.livemd-syntax-meta {
+  display: none;
   user-select: none;
   pointer-events: none;
 }
 
-/* 语法标记 - 显示 */
-.livemd-syntax-visible,
-.livemd-syntax {
+/* 焦点块（光标所在 textblock）内显示语法标记原文（灰色等宽 0.9em） */
+.livemd-focus-block .livemd-syntax-meta {
+  display: inline;
   color: var(--text-color-3, #999);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.9em;
+  user-select: auto;
+  pointer-events: auto;
 }
 
+/* 焦点块内 HTML entity 显示原文（隐藏解码 widget） */
+.livemd-focus-block .livemd-html-entity-rendered {
+  display: none;
+}
+
+/* 语法标记外层结构 span（livemd-syntax）：仅作结构锚点与旧类兼容，无文本内容 */
 .livemd-html-entity-rendered {
   white-space: pre;
 }
 
-/* 语法标记 - 默认样式 */
+/* 语法标记 - 默认样式（兼容旧类引用） */
 .livemd-syntax-marker {
   color: var(--text-color-3, #999);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
@@ -144,7 +152,8 @@
 .livemd-editor .livemd-link.livemd-syntax,
 .livemd-editor .livemd-link.livemd-syntax-marker,
 .livemd-editor span.livemd-syntax-visible[data-syntax-type="link"],
-.livemd-editor span.livemd-syntax[data-syntax-type="link"] {
+.livemd-editor span.livemd-syntax[data-syntax-type="link"],
+.livemd-editor span.livemd-syntax[data-syntax-type="link"] .livemd-syntax-meta {
   color: var(--primary-color, #0366d6);
   font-family: inherit;
   font-size: inherit;
@@ -1330,7 +1339,8 @@
 
 /* 行内数学公式的语法标记（$ 符号）- 颜色与正文一致 */
 .livemd-editor span.livemd-syntax[data-syntax-type="math_inline"],
-.livemd-editor span.livemd-syntax-visible[data-syntax-type="math_inline"] {
+.livemd-editor span.livemd-syntax-visible[data-syntax-type="math_inline"],
+.livemd-editor span.livemd-syntax[data-syntax-type="math_inline"] .livemd-syntax-meta {
   color: inherit !important;
   font-family: inherit !important;
   font-size: inherit !important;
@@ -1425,15 +1435,19 @@
   border-color: #dc3545;
 }
 
-/* 源码视图模式 */
-.livemd-editor.source-view .livemd-syntax-hidden {
-  font-size: 0.9em;
-  opacity: 1;
-  width: auto;
+/* 源码视图模式：全部语法标记显示原文 */
+.livemd-editor.source-view .livemd-syntax-meta {
   display: inline;
-  user-select: auto;
   color: var(--text-color-3, #999);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 0.9em;
+  user-select: auto;
+  pointer-events: auto;
+}
+
+/* 源码模式下 HTML entity 显示原文（隐藏解码 widget） */
+.livemd-editor.source-view .livemd-html-entity-rendered {
+  display: none;
 }
 
 /* 源码模式下隐藏数学公式渲染 widget */

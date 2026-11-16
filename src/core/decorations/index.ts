@@ -252,24 +252,6 @@ export const SYNTAX_CLASSES: Record<string, string> = {
   html_entity: "livemd-html-entity", // HTML entity
 };
 
-/** 语法类型关联映射 - 用于处理嵌套语法 */
-const SYNTAX_TYPE_RELATIONS: Record<string, string[]> = {
-  strong_emphasis: ["strong", "emphasis"],
-  strong: ["strong", "strong_emphasis"],
-  emphasis: ["emphasis", "strong_emphasis"],
-  highlight: ["highlight"],
-  strikethrough: ["strikethrough"],
-  code_inline: ["code_inline"],
-  link: ["link"],
-  math_inline: ["math_inline"],
-  heading: ["heading"],
-  escape: ["escape"],
-  sub: ["sub"],
-  sup: ["sup"],
-  html_inline: ["html_inline"],
-  html_entity: ["html_entity"],
-};
-
 /**
  * 查找文档中所有的 syntax_marker 区域
  */
@@ -550,14 +532,6 @@ export function getActiveSemanticRegion(
 }
 
 /**
- * 检查语法类型是否与语义区域类型相关
- */
-function isSyntaxTypeRelated(syntaxType: string, semanticType: string): boolean {
-  const relatedTypes = SYNTAX_TYPE_RELATIONS[syntaxType] || [syntaxType];
-  return relatedTypes.includes(semanticType);
-}
-
-/**
  * 计算装饰集
  */
 export function computeDecorations(
@@ -573,8 +547,7 @@ export function computeDecorations(
   mathInlineRegions: MathInlineRegion[];
 } {
   // 源码模式下跳过所有装饰计算：
-  // - 语法标记通过 .livemd-syntax-marker 类（mark 自带）已有正确样式
-  // - 无需 hidden/visible 装饰切换
+  // - 语法标记原文通过 .livemd-editor.source-view 根类（插件 view() 钩子挂载）显示
   // - 无需行内数学公式渲染 widget
   if (sourceView) {
     return {
@@ -589,102 +562,33 @@ export function computeDecorations(
   const mathInlineRegions = precomputedMathRegions ?? findMathInlineRegions(doc);
   const decorations: Decoration[] = [];
 
-  // 获取光标所在的所有语义区域
-  const activeSemanticRegions = getActiveSemanticRegions(doc, cursorPos);
+  // 焦点块 node 装饰：光标所在 textblock 挂 livemd-focus-block 类。
+  // 语法标记的显示/隐藏完全交给 CSS（.livemd-syntax-meta 恒定 display:none，
+  // 焦点块内 display:inline）——node 装饰只 patch 块元素自身的 class，
+  // 绝不触碰 text 节点的 wrapper 层，WebKit 文本引擎的 DOM 结构保持冻结。
+  const $cursor = doc.resolve(Math.min(Math.max(cursorPos, 0), doc.content.size));
+  let focusDepth = $cursor.depth;
+  while (focusDepth > 0 && !$cursor.node(focusDepth).isTextblock) focusDepth--;
+  if (focusDepth > 0 && $cursor.node(focusDepth).isTextblock) {
+    const blockStart = $cursor.before(focusDepth);
+    decorations.push(
+      Decoration.node(blockStart, blockStart + $cursor.node(focusDepth).nodeSize, {
+        class: "livemd-focus-block",
+      })
+    );
+  }
 
+  // HTML entity 的解码 widget 恒定生成：显示原文还是解码结果由 CSS 接管
+  // （焦点块/源码模式显示原文，其余位置仅显示解码字符）
   for (const region of syntaxRegions) {
-    // 判断这个语法标记是否应该显示
-    let shouldShow: boolean = sourceView;
-
-    if (!shouldShow && region.syntaxType === "escape") {
-      // escape 类型特殊处理：当光标在 `\` 或紧邻的被转义字符上时显示
-      // region 是 `\` 的位置，被转义字符紧跟其后（region.to 位置）
-      if (cursorPos >= region.from && cursorPos <= region.to + 1) {
-        shouldShow = true;
-      }
-    } else if (!shouldShow && activeSemanticRegions.length > 0) {
-      // 如果光标在某个语义区域内，显示该区域的所有语法标记
-      for (const activeRegion of activeSemanticRegions) {
-        // 检查这个 syntax_marker 是否属于当前活跃的语义区域
-        if (isSyntaxTypeRelated(region.syntaxType, activeRegion.type)) {
-          // 检查位置是否在语义区域内（严格检查）
-          if (region.from >= activeRegion.from && region.to <= activeRegion.to) {
-            shouldShow = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!shouldShow) {
-      // 检查光标是否直接在这个 syntax_marker 内
-      if (cursorPos >= region.from && cursorPos <= region.to) {
-        shouldShow = true;
-      }
-    }
-
-    if (!shouldShow) {
-      // 隐藏语法标记
-      if (region.syntaxType === "heading") {
-        // 标题语法标记特殊处理：只隐藏 # 字符，保留尾部空格可见
-        const text = doc.textBetween(region.from, region.to);
-        const hashEnd = text.search(/[^#]/);
-        if (hashEnd > 0 && hashEnd < text.length) {
-          decorations.push(
-            Decoration.inline(region.from, region.from + hashEnd, {
-              class: "livemd-syntax-hidden",
-              contenteditable: "false",
-              "aria-hidden": "true",
-            })
-          );
-        } else {
-          decorations.push(
-            Decoration.inline(region.from, region.to, {
-              class: "livemd-syntax-hidden",
-              contenteditable: "false",
-              "aria-hidden": "true",
-            })
-          );
-        }
-      } else if (region.syntaxType === HTML_ENTITY_SYNTAX_TYPE) {
-        const entityText = doc.textBetween(region.from, region.to);
-        const decoded = decodeHtmlEntity(entityText);
-        if (decoded) {
-          decorations.push(
-            Decoration.inline(region.from, region.to, {
-              class: "livemd-syntax-hidden",
-              contenteditable: "false",
-              "aria-hidden": "true",
-            })
-          );
-
-          const widget = document.createElement("span");
-          widget.className = "livemd-html-entity-rendered";
-          widget.textContent = decoded;
-          decorations.push(Decoration.widget(region.to, widget, { side: -1 }));
-        } else {
-          decorations.push(
-            Decoration.inline(region.from, region.to, {
-              class: "livemd-syntax-visible",
-            })
-          );
-        }
-      } else {
-        decorations.push(
-          Decoration.inline(region.from, region.to, {
-            class: "livemd-syntax-hidden",
-            contenteditable: "false",
-            "aria-hidden": "true",
-          })
-        );
-      }
-    } else {
-      // 显示语法标记
-      decorations.push(
-        Decoration.inline(region.from, region.to, {
-          class: "livemd-syntax-visible",
-        })
-      );
+    if (region.syntaxType !== HTML_ENTITY_SYNTAX_TYPE) continue;
+    const entityText = doc.textBetween(region.from, region.to);
+    const decoded = decodeHtmlEntity(entityText);
+    if (decoded) {
+      const widget = document.createElement("span");
+      widget.className = "livemd-html-entity-rendered";
+      widget.textContent = decoded;
+      decorations.push(Decoration.widget(region.to, widget, { side: -1 }));
     }
   }
 
@@ -806,6 +710,24 @@ export function createDecorationPlugin(initialSourceView = false): Plugin<Decora
       decorations(state) {
         return this.getState(state)?.decorations ?? DecorationSet.empty;
       },
+    },
+
+    view(editorView: EditorView) {
+      const syncRootClass = (view: EditorView) => {
+        view.dom.classList.toggle(
+          "source-view",
+          decorationPluginKey.getState(view.state)?.sourceView === true
+        );
+      };
+      syncRootClass(editorView);
+      return {
+        update(view: EditorView) {
+          syncRootClass(view);
+        },
+        destroy() {
+          editorView?.dom.classList?.remove("source-view");
+        },
+      };
     },
   });
 }

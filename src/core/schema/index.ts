@@ -730,7 +730,9 @@ const syntax_marker: MarkSpec = {
         class: "livemd-syntax",
         "data-syntax-type": mark.attrs.syntaxType,
       },
-      0,
+      // 标记文本永远住在内层 meta wrapper 里：mark 不变则该 DOM 结构永不变化，
+      // 装饰层无需再对 text 节点做任何结构手术（WebKit 幽灵态根治，见 docs/BUGFIX-GUIDE.md 问题六）
+      ["span", { class: "livemd-syntax-meta" }, 0],
     ];
   },
 };
