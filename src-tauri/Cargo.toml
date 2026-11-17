@@ -19,21 +19,29 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
+# 单实例插件仅桌面可用（Android 构建经 lib.rs 的 cfg(desktop) 门控不参与编译）
 tauri-plugin-single-instance = "2"
 tauri-plugin-clipboard-manager = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 notify = "8"
 tokio = { version = "1", features = ["time", "sync", "fs", "io-util", "rt"] }
-reqwest = { version = "0.13", features = ["json", "stream"] }
+# TLS 按平台拆分：Android 走 rustls（native-tls 的 openssl 无法随 NDK 交叉编译），
+# 其余平台保持 native-tls（Windows schannel / macOS sectransport）不变
+reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "charset", "http2"] }
 futures-util = "0.3"
 fontdb = "0.24"
-rfd = "0.17"
 regex = "1"
 url = "2"
 percent-encoding = "2"
 base64 = "0.23"
 uuid = { version = "1", features = ["v4"] }
+
+[target.'cfg(not(target_os = "android"))'.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["native-tls", "system-proxy"] }
+
+[target.'cfg(target_os = "android")'.dependencies]
+reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"

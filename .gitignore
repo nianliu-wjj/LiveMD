@@ -48,3 +48,15 @@ coverage/
 
 # 项目文档
 /docs/
+
+# 鸿蒙壳工程：web 产物同步目录与构建输出（其余 harmony/ 文件入库）
+harmony/entry/src/main/resources/rawfile/www/
+harmony/entry/build/
+harmony/build/
+harmony/.hvigor/
+harmony/oh_modules/
+harmony/node_modules/
+harmony/oh-package-lock.json5
+harmony/entry/oh-package-lock.json5
+harmony/.idea/
+harmony/.claude/

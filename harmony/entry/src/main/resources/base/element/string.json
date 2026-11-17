@@ -1,0 +1,7 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "LiveMD main module" },
+    { "name": "ability_desc", "value": "LiveMD editor" },
+    { "name": "app_name", "value": "LiveMD" }
+  ]
+}

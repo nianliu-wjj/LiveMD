@@ -40,11 +40,18 @@ fn save_dialog_path<R: Runtime>(
     window: &WebviewWindow<R>,
     default_name: Option<String>,
 ) -> Option<PathBuf> {
-    let mut builder = app
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
+    let builder = app
         .dialog()
         .file()
         .set_parent(window)
         .add_filter("Markdown", &["md", "markdown"]);
+    #[cfg(mobile)]
+    let builder = app.dialog().file().add_filter("Markdown", &["md", "markdown"]);
+    #[cfg(mobile)]
+    let _ = window;
+    let mut builder = builder;
     if let Some(name) = default_name {
         builder = builder.set_file_name(name);
     }
@@ -84,12 +91,18 @@ pub async fn open_file<R: Runtime>(
     app: AppHandle<R>,
     window: WebviewWindow<R>,
 ) -> Result<Option<LoadedFile>, String> {
-    let picked = app
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
+    let dialog = app
         .dialog()
         .file()
         .set_parent(&window)
-        .add_filter("Markdown", &["md", "markdown"])
-        .blocking_pick_file();
+        .add_filter("Markdown", &["md", "markdown"]);
+    #[cfg(mobile)]
+    let dialog = app.dialog().file().add_filter("Markdown", &["md", "markdown"]);
+    #[cfg(mobile)]
+    let _ = &window;
+    let picked = dialog.blocking_pick_file();
 
     let Some(path) = picked.and_then(|path| path.into_path().ok()) else {
         return Ok(None);

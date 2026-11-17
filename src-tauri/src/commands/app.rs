@@ -130,13 +130,19 @@ pub async fn theme_editor_window_control<R: Runtime>(
     let window = window::create_theme_editor_window(&app)?;
     match action.as_str() {
         "minimize" => {
+            // 最小化仅桌面有意义
+            #[cfg(desktop)]
             let _ = window.minimize();
         }
         "maximize" => {
-            if window.is_maximized().unwrap_or(false) {
-                let _ = window.unmaximize();
-            } else {
-                let _ = window.maximize();
+            // 最大化/还原仅桌面有意义
+            #[cfg(desktop)]
+            {
+                if window.is_maximized().unwrap_or(false) {
+                    let _ = window.unmaximize();
+                } else {
+                    let _ = window.maximize();
+                }
             }
         }
         "close" => {
@@ -270,6 +276,8 @@ pub fn send_files_to_renderer<R: Runtime>(app: &AppHandle<R>, paths: Vec<String>
     }
 
     if target.is_minimized().unwrap_or(false) {
+        // 最小化还原仅桌面有意义
+        #[cfg(desktop)]
         let _ = target.unminimize();
     }
     let _ = target.show();
@@ -358,7 +366,7 @@ pub async fn open_image_preview<R: Runtime>(
     let preview_width = (parent_width * 0.82).max(480.0);
     let preview_height = (parent_height * 0.82).max(360.0);
 
-    let mut builder = tauri::WebviewWindowBuilder::new(
+    let builder = tauri::WebviewWindowBuilder::new(
         &app,
         "image-preview",
         tauri::WebviewUrl::App("image-preview.html".into()),
@@ -366,8 +374,11 @@ pub async fn open_image_preview<R: Runtime>(
     .title("图片预览")
     .inner_size(preview_width, preview_height)
     .min_inner_size(320.0, 240.0)
-    .decorations(false)
     .initialization_script(&script);
+    // 无边框仅桌面有意义（移动端窗口由系统管理）
+    #[cfg(desktop)]
+    let builder = builder.decorations(false);
+    let mut builder = builder;
 
     if let Some(position) = parent_position {
         builder = builder.position(

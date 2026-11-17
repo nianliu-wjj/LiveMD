@@ -41,10 +41,21 @@ fn show_message_with_buttons<R: Runtime>(
     buttons: MessageDialogButtons,
     kind: MessageDialogKind,
 ) -> MessageDialogResult {
-    app.dialog()
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
+    let builder = app
+        .dialog()
         .message(message.to_string())
         .title(title.to_string())
-        .parent(window)
+        .parent(window);
+    #[cfg(mobile)]
+    let builder = app
+        .dialog()
+        .message(message.to_string())
+        .title(title.to_string());
+    #[cfg(mobile)]
+    let _ = window;
+    builder
         .kind(kind)
         .buttons(buttons)
         .blocking_show_with_result()
@@ -74,7 +85,13 @@ pub async fn show_open_dialog<R: Runtime>(
     let is_directory = properties.iter().any(|value| value == "openDirectory");
     let allow_multiple = properties.iter().any(|value| value == "multiSelections");
 
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
     let mut builder = app.dialog().file().set_parent(&window);
+    #[cfg(mobile)]
+    let mut builder = app.dialog().file();
+    #[cfg(mobile)]
+    let _ = &window;
     if let Some(title) = options.title {
         builder = builder.set_title(title);
     }
@@ -107,20 +124,29 @@ pub async fn show_open_dialog<R: Runtime>(
     }
 
     let file_paths: Vec<String> = if is_directory {
-        if allow_multiple {
-            builder
-                .blocking_pick_folders()
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(file_path_to_buf)
-                .map(|path| path.to_string_lossy().to_string())
-                .collect()
-        } else {
-            builder
-                .blocking_pick_folder()
-                .and_then(file_path_to_buf)
-                .map(|path| vec![path.to_string_lossy().to_string()])
-                .unwrap_or_default()
+        // 目录选择仅桌面受支持（移动端按取消处理）
+        #[cfg(desktop)]
+        {
+            if allow_multiple {
+                builder
+                    .blocking_pick_folders()
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(file_path_to_buf)
+                    .map(|path| path.to_string_lossy().to_string())
+                    .collect()
+            } else {
+                builder
+                    .blocking_pick_folder()
+                    .and_then(file_path_to_buf)
+                    .map(|path| vec![path.to_string_lossy().to_string()])
+                    .unwrap_or_default()
+            }
+        }
+        #[cfg(mobile)]
+        {
+            let _ = builder;
+            Vec::new()
         }
     } else if allow_multiple {
         builder

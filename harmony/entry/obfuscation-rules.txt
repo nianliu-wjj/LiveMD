@@ -1,0 +1,2 @@
+# 混淆规则（release 默认关闭混淆，保留文件占位）
+-enable-property-obfuscation false

@@ -65,10 +65,14 @@ pub async fn export_pdf<R: Runtime>(
         output_name
     };
 
-    let selected = app
-        .dialog()
-        .file()
-        .set_parent(&window)
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
+    let dialog = app.dialog().file().set_parent(&window);
+    #[cfg(mobile)]
+    let dialog = app.dialog().file();
+    #[cfg(mobile)]
+    let _ = &window;
+    let selected = dialog
         .set_title("导出为 PDF")
         .set_file_name(&file_name)
         .add_filter("PDF 文档", &["pdf"])
@@ -409,10 +413,14 @@ pub async fn save_binary_file<R: Runtime>(
         .cloned()
         .unwrap_or_else(|| "bin".to_string());
 
-    let selected = app
-        .dialog()
-        .file()
-        .set_parent(&window)
+    // 对话框父窗口仅桌面有意义
+    #[cfg(desktop)]
+    let dialog = app.dialog().file().set_parent(&window);
+    #[cfg(mobile)]
+    let dialog = app.dialog().file();
+    #[cfg(mobile)]
+    let _ = &window;
+    let selected = dialog
         .set_title("导出文件")
         .set_file_name(&default_name)
         .add_filter(

@@ -1,6 +1,8 @@
 ﻿mod commands;
 mod events;
 mod file_format;
+// 菜单为桌面专属能力（移动端无原生菜单栏）
+#[cfg(desktop)]
 mod menu;
 mod models;
 mod paths;
@@ -12,33 +14,37 @@ use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
 use crate::state::AppState;
 
+/// 移动端（Android）入口：由 gen/android 的 glue 调用；桌面端走 main.rs
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let app = tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
-            if app.try_state::<AppState>().is_none() {
-                return;
-            }
-            window::ensure_main_visible(app);
-            commands::app::send_launch_file_if_exists(
-                app,
-                argv.into_iter().skip(1).collect(),
-            );
-        }))
+    let builder = tauri::Builder::default();
+    // 单实例监听仅桌面有意义（Android 无多实例概念，插件不支持移动端）
+    #[cfg(desktop)]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, argv, _cwd| {
+        if app.try_state::<AppState>().is_none() {
+            return;
+        }
+        window::ensure_main_visible(app);
+        commands::app::send_launch_file_if_exists(app, argv.into_iter().skip(1).collect());
+    }));
+    let app = builder
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .on_menu_event(|app, event| menu::handle_event(app, event.id().as_ref()))
-        .setup(|app| {
+        .plugin(tauri_plugin_clipboard_manager::init());
+    // 菜单事件仅桌面有源（移动端无菜单栏）
+    #[cfg(desktop)]
+    let app = app.on_menu_event(|app, event| menu::handle_event(app, event.id().as_ref()));
+    let app = app.setup(|app| {
             app.manage(AppState::default());
 
-            if cfg!(target_os = "macos") {
-                menu::install(app.handle())?;
-            }
+            // macOS 菜单栏（macOS 必为桌面端，属性门控即可）
+            #[cfg(target_os = "macos")]
+            menu::install(app.handle())?;
 
             // 主窗口由代码创建：配置文件无法按平台区分外观（macOS Overlay / 其他平台无边框）
             let (width, height, min_width, min_height) =
                 window::adaptive_size(app.handle(), Some(1200.0), Some(800.0));
-            let main_window = window::platform_chrome(WebviewWindowBuilder::new(
+            let main_window_builder = window::platform_chrome(WebviewWindowBuilder::new(
                 app,
                 "main",
                 WebviewUrl::App("index.html".into()),
@@ -46,9 +52,11 @@ pub fn run() {
             .title("LiveMD")
             .inner_size(width, height)
             .min_inner_size(min_width, min_height)
-            .resizable(true)
-            .center()
-            .build()?;
+            .resizable(true);
+            // 居中仅桌面有意义（移动端窗口由系统全屏管理）
+            #[cfg(desktop)]
+            let main_window_builder = main_window_builder.center();
+            let main_window = main_window_builder.build()?;
             window::attach_window(app.handle(), &main_window, true);
             let _ = main_window.show();
             let _ = main_window.set_focus();

@@ -26,7 +26,10 @@ pub fn platform_chrome<'a, R: Runtime, M: Manager<R>>(
     }
     #[cfg(not(target_os = "macos"))]
     {
-        builder.decorations(false)
+        // 无边框仅桌面有意义（移动端窗口由系统全屏管理）
+        #[cfg(desktop)]
+        let builder = builder.decorations(false);
+        builder
     }
 }
 
@@ -400,6 +403,8 @@ pub fn close_discard<R: Runtime>(app: &AppHandle<R>, label: &str) {
 pub fn focus_window<R: Runtime>(app: &AppHandle<R>, label: &str) {
     if let Some(window) = app.get_webview_window(label) {
         if window.is_minimized().unwrap_or(false) {
+            // 最小化还原仅桌面有意义
+            #[cfg(desktop)]
             let _ = window.unminimize();
         }
         let _ = window.show();
@@ -410,17 +415,23 @@ pub fn focus_window<R: Runtime>(app: &AppHandle<R>, label: &str) {
 pub fn window_control<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>, action: &str) {
     match action {
         "minimize" => {
+            // 最小化仅桌面有意义
+            #[cfg(desktop)]
             let _ = window.minimize();
         }
         "maximize" => {
-            if window.is_fullscreen().unwrap_or(false) {
-                let _ = window.set_fullscreen(false);
-            } else if window.is_maximized().unwrap_or(false) {
-                let _ = window.unmaximize();
-            } else {
-                let _ = window.maximize();
+            // 最大化/还原仅桌面有意义（移动端窗口由系统管理）
+            #[cfg(desktop)]
+            {
+                if window.is_fullscreen().unwrap_or(false) {
+                    let _ = window.set_fullscreen(false);
+                } else if window.is_maximized().unwrap_or(false) {
+                    let _ = window.unmaximize();
+                } else {
+                    let _ = window.maximize();
+                }
+                schedule_flag_sync(app, window);
             }
-            schedule_flag_sync(app, window);
         }
         "close" => {
             let is_main = {
@@ -441,6 +452,8 @@ pub fn window_control<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>,
     }
 }
 
+// 最大化/还原后的标志同步仅桌面触发
+#[cfg(desktop)]
 fn schedule_flag_sync<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>) {
     let app_handle = app.clone();
     let window = window.clone();
@@ -451,8 +464,14 @@ fn schedule_flag_sync<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>)
 }
 
 pub fn toggle_fullscreen<R: Runtime>(window: &WebviewWindow<R>) {
-    let fullscreen = window.is_fullscreen().unwrap_or(false);
-    let _ = window.set_fullscreen(!fullscreen);
+    // 全屏切换仅桌面有意义（移动端窗口由系统管理）
+    #[cfg(mobile)]
+    let _ = window;
+    #[cfg(desktop)]
+    {
+        let fullscreen = window.is_fullscreen().unwrap_or(false);
+        let _ = window.set_fullscreen(!fullscreen);
+    }
 }
 
 pub fn set_title<R: Runtime>(window: &WebviewWindow<R>, file_path: Option<&str>) {
@@ -487,9 +506,18 @@ pub fn logical_bounds<R: Runtime>(window: &WebviewWindow<R>) -> Option<(f64, f64
 }
 
 pub fn cursor_logical<R: Runtime>(window: &WebviewWindow<R>) -> Option<(f64, f64)> {
-    let scale = window.scale_factor().ok()?;
-    let position = window.cursor_position().ok()?;
-    Some((position.x / scale, position.y / scale))
+    // 光标位置仅桌面有意义（移动端无鼠标，拖拽相关命令不会触发）
+    #[cfg(mobile)]
+    {
+        let _ = window;
+        return None;
+    }
+    #[cfg(desktop)]
+    {
+        let scale = window.scale_factor().ok()?;
+        let position = window.cursor_position().ok()?;
+        Some((position.x / scale, position.y / scale))
+    }
 }
 
 pub fn find_window_at<R: Runtime>(

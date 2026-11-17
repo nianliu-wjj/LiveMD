@@ -1,0 +1,7 @@
+{
+  "name": "livemd",
+  "version": "1.0.18",
+  "description": "LiveMD HarmonyOS NEXT shell (ArkTS WebView hosting the web build)",
+  "main": "",
+  "dependencies": {}
+}
