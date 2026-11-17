@@ -37,6 +37,7 @@ import { createAutoPairPlugin } from "./plugins/auto-pair";
 import { createTableResizePlugin } from "./plugins/table-resize";
 import { createSyntaxFixerPlugin } from "./plugins/syntax-fixer";
 import { extractPlainText, markdownToPlainText } from "./utils/plain-text";
+import { renderScheduler } from "./scheduler/render-scheduler";
 import { createMindMapTemplate } from "./utils/mindmap-document";
 import { createSyntaxDetectorPlugin } from "./plugins/syntax-detector";
 import { createHeadingSyncPlugin } from "./plugins/heading-sync";
@@ -412,6 +413,10 @@ export class LivemdEditor implements ILivemdEditor {
 
     // 触发变更事件
     if (tr.docChanged) {
+      // 无感渲染 P1：文档变化即视为输入活动，昂贵渲染（Mermaid 等）让出帧预算，
+      // 静默窗口（300ms 无输入）后统一泄洪（见 scheduler/render-scheduler.ts）
+      renderScheduler.notifyTyping();
+
       // 文档已变化，作废 getMarkdown 缓存（仅选区变化不影响序列化结果）
       this.markdownCache = null;
       this.emit("change", {

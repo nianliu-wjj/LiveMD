@@ -55,6 +55,7 @@ import {
   type MermaidPositions,
 } from "../utils/diagram-meta";
 import { openMermaidFullscreen, normalizeRenderedMermaidViewport } from "./mermaid-fullscreen";
+import { applyRenderPendingMask, renderScheduler } from "../scheduler/render-scheduler";
 import { FULLSCREEN_ICONS, type FullscreenViewerHandle } from "../viewers/fullscreenViewer";
 
 const FOLD_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>`;
@@ -655,6 +656,10 @@ export class CodeBlockView implements NodeView {
   private mermaidLazyUnobserve: (() => void) | null = null;
   /** Mermaid 异步渲染令牌：内容变化后丢弃过期结果 */
   private mermaidRenderToken = 0;
+  /** 渲染中遮罩的释放函数：重渲染期间按住旧图（无感渲染 P1 遮罩类） */
+  private releaseMermaidMask: (() => void) | null = null;
+  /** 最近一次入队的调度器 blockKey（销毁时按块取消排队任务；destroy 期 getPos 不可靠） */
+  private mermaidBlockKey: string | null = null;
   /** 取消共享主题变化订阅 */
   private themeUnsubscribe: (() => void) | null = null;
   /** 本代码块当前展开的下拉框关闭函数（弹层挂在 body 上，销毁/重建头部时需主动关闭） */
@@ -2416,6 +2421,10 @@ export class CodeBlockView implements NodeView {
     this.mermaidLazyUnobserve?.();
     this.mermaidLazyUnobserve = null;
     const token = ++this.mermaidRenderToken;
+    // 上一次渲染若仍有遮罩挂在该预览上（排队中被内容更新超越 / 缓存命中短路），先释放：
+    // 遮罩是 visibility:hidden，任何不落定的路径漏释放都会让预览永久不可见
+    this.releaseMermaidMask?.();
+    this.releaseMermaidMask = null;
 
     if (!content.trim()) {
       preview.innerHTML = '<div class="livemd-mermaid-placeholder">输入 Mermaid 语法后预览</div>';
@@ -2432,10 +2441,23 @@ export class CodeBlockView implements NodeView {
       return;
     }
 
-    preview.innerHTML = '<div class="livemd-mermaid-placeholder">图表将在进入可视区域后渲染</div>';
+    // 重渲染（预览中已有旧图）不闪占位符：先按住旧内容（遮罩 + 锁高），新图落定后
+    // 放开——渲染空窗期用户看到的是"块原样"而非内容清空（无感渲染 P1 / REA 公理 E-4）。
+    // 首渲仍走占位符（此时无可按住的内容）。
+    const isRerender = preview.querySelector("svg") !== null;
+    this.releaseMermaidMask = isRerender ? applyRenderPendingMask(preview) : null;
+    if (!isRerender) {
+      preview.innerHTML =
+        '<div class="livemd-mermaid-placeholder">图表将在进入可视区域后渲染</div>';
+    }
     this.updateMermaidDisplay();
 
-    if (this.mermaidDisplayMode === "code") return;
+    if (this.mermaidDisplayMode === "code") {
+      // 代码模式下不渲染图：释放可能挂上的遮罩
+      this.releaseMermaidMask?.();
+      this.releaseMermaidMask = null;
+      return;
+    }
 
     this.mermaidLazyUnobserve = observeNearViewport(
       preview,
@@ -2447,47 +2469,63 @@ export class CodeBlockView implements NodeView {
     );
   }
 
-  /** 将 Mermaid 渲染任务追加到全局串行队列 */
+  /** 将 Mermaid 渲染任务经全局渲染调度器入队（打字 busy 期间挂起，静默后泄洪） */
   private enqueueMermaidRender(content: string, cacheKey: string, token: number): void {
-    mermaidRenderQueue = mermaidRenderQueue
-      .then(async () => {
-        if (token !== this.mermaidRenderToken) return;
-
-        // renderId 需要在 try 外声明，以便 catch 中清理 mermaid 遗留的临时元素
-        const renderId = `mermaid-${++mermaidIdCounter}`;
+    const blockKey = `code-block:${this.getPos() ?? "detached"}`;
+    this.mermaidBlockKey = blockKey;
+    const releaseMask = this.releaseMermaidMask;
+    renderScheduler.enqueue({
+      blockKey,
+      kind: "background",
+      run: async (signal) => {
         try {
-          const mermaid = await loadMermaidModule();
-          const isDark = detectDarkTheme();
+          if (signal.aborted || this.destroyed) return;
+          // 模块级串行队列保持原语义：同一时刻只有一个 mermaid.render 在执行；
+          // 调度器只决定何时开始（链的追加推迟到任务真正启动的时刻）
+          await (mermaidRenderQueue = mermaidRenderQueue.then(async () => {
+            if (token !== this.mermaidRenderToken) return;
 
-          mermaid.default.initialize({
-            startOnLoad: false,
-            darkMode: isDark,
-            theme: "base",
-            themeVariables: getMermaidThemeVariables(),
-          });
+            // renderId 需要在 try 外声明，以便 catch 中清理 mermaid 遗留的临时元素
+            const renderId = `mermaid-${++mermaidIdCounter}`;
+            try {
+              const mermaid = await loadMermaidModule();
+              const isDark = detectDarkTheme();
 
-          const { svg } = await mermaid.default.render(renderId, content);
-          writeMermaidCache(cacheKey, svg);
+              mermaid.default.initialize({
+                startOnLoad: false,
+                darkMode: isDark,
+                theme: "base",
+                themeVariables: getMermaidThemeVariables(),
+              });
 
-          if (token !== this.mermaidRenderToken || !this.mermaidPreview) return;
-          this.mermaidPreview.innerHTML = svg;
-          this.afterMermaidRendered(this.mermaidPreview);
-        } catch (error) {
-          // mermaid.render() 语法错误时会在 removeTempElements() 之前抛出异常，
-          // 导致临时 DOM 元素（<div id="d..."> / <svg> / <iframe>）遗留在 document.body 中。
-          // 这些孤儿元素不断累积会干扰页面布局，导致 tab 栏等 UI 元素显示异常。
-          document.getElementById(`d${renderId}`)?.remove();
-          document.getElementById(renderId)?.remove();
-          document.getElementById(`i${renderId}`)?.remove();
+              const { svg } = await mermaid.default.render(renderId, content);
+              writeMermaidCache(cacheKey, svg);
 
-          if (token === this.mermaidRenderToken && this.mermaidPreview) {
-            this.renderMermaidError(this.mermaidPreview, error, content);
+              if (token !== this.mermaidRenderToken || !this.mermaidPreview) return;
+              this.mermaidPreview.innerHTML = svg;
+              this.afterMermaidRendered(this.mermaidPreview);
+            } catch (error) {
+              // mermaid.render() 语法错误时会在 removeTempElements() 之前抛出异常，
+              // 导致临时 DOM 元素（<div id="d..."> / <svg> / <iframe>）遗留在 document.body 中。
+              // 这些孤儿元素不断累积会干扰页面布局，导致 tab 栏等 UI 元素显示异常。
+              document.getElementById(`d${renderId}`)?.remove();
+              document.getElementById(renderId)?.remove();
+              document.getElementById(`i${renderId}`)?.remove();
+
+              if (token === this.mermaidRenderToken && this.mermaidPreview) {
+                this.renderMermaidError(this.mermaidPreview, error, content);
+              }
+            }
+          }));
+        } finally {
+          // 渲染落定（成功/失败/过期）都放开遮罩：先按住、算完放开
+          releaseMask?.();
+          if (this.releaseMermaidMask === releaseMask) {
+            this.releaseMermaidMask = null;
           }
         }
-      })
-      .catch(() => {
-        // 保持队列可继续消费后续任务
-      });
+      },
+    });
   }
 
   /** 渲染完成后的统一收尾：补齐边距、修正空白边界与文字对比度、生成 PNG 兜底 */
@@ -3048,6 +3086,14 @@ export class CodeBlockView implements NodeView {
     this.cancelQueuedBuild = null;
     this.mermaidLazyUnobserve?.();
     this.mermaidLazyUnobserve = null;
+    // 无感渲染 P1：撤销调度器中排队中的 Mermaid 渲染（防旧渲染回写已删除节点），
+    // 并释放可能仍挂着的渲染遮罩（泄漏 = 已删除块的预览区域永久不可见）
+    if (this.mermaidBlockKey) {
+      renderScheduler.cancelBlock(this.mermaidBlockKey);
+      this.mermaidBlockKey = null;
+    }
+    this.releaseMermaidMask?.();
+    this.releaseMermaidMask = null;
     if (this.mermaidPreview) {
       this.mermaidPreview.remove();
     }

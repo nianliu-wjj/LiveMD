@@ -2632,3 +2632,13 @@ body.livemd-fullscreen-open {
 .livemd-code-block-delete-btn:hover {
   color: #ef4444;
 }
+
+/* 无感渲染 P1 渲染遮罩：昂贵渲染（Mermaid 等）落定前按住块内旧内容。
+   visibility 而非 display:none —— 节点仍在布局中，锁高期间滚动位置不跳；
+   contain:paint 隔离重绘。遮罩由 nodeview 入队时挂上、任务落定后摘除
+   （见 core/scheduler/render-scheduler.ts 的 applyRenderPendingMask），
+   绝不允许任何路径漏摘（泄漏 = 预览永久不可见）。 */
+.livemd-render-pending {
+  visibility: hidden;
+  contain: paint;
+}

@@ -52,6 +52,7 @@ import {
   type MindmapEditEventDetail,
 } from "@/core/nodeviews/code-block";
 import { normalizeMarkdownForDirtyCheck } from "@/utils/markdown";
+import { useProgrammaticGuard } from "@/hooks/useProgrammaticGuard";
 import useAppCommands from "@/hooks/useAppCommands";
 
 interface Props {
@@ -311,6 +312,15 @@ async function handleInsertImagePaths({ paths }: { paths: string[] }): Promise<v
 }
 
 let editor: LivemdEditor | null = null;
+/**
+ * 程序更新哨兵（无感渲染 P2 / Z4）：程序化写入（watcher 回写、检查修复、
+ * 内容注入）的 change 回声不参与脏检查与 tab.content 回写；基线核对兜住
+ * 未包裹的旁路路径（见 useProgrammaticGuard.ts 头注释）
+ */
+const programmaticGuard = useProgrammaticGuard(() => ({
+  doc: editor?.view.state.doc ?? null,
+  markdown: editor?.getMarkdown() ?? "",
+}));
 /** 第二阶段内容注入是否已完成（非活跃 tab 延迟到首次激活） */
 let hasHydrated = false;
 /** restoreDoc 注入期间抑制 change 回调的脏检查与 tab.content 回写（注入不是用户修改） */
@@ -815,8 +825,13 @@ function createEditorInstance() {
   // 监听变更事件
   editor.on("change", ({ markdown }: { markdown: string }) => {
     // 源码模式切换是视图变换，不是内容修改，跳过；
-    // 两阶段挂载的内容注入同样不是用户修改，不参与脏检查与 tab.content 回写
+    // 两阶段挂载的内容注入同样不是用户修改，不参与脏检查与 tab.content 回写。
+    // （两条标志之外的程序化写入回声由下方基线核对兜底）
     if (isSourceViewToggling || isHydrating) return;
+    // 无感渲染 P2 / Z4：与基线一致（doc 深相等 + 序列化串相等）的 change 是
+    // 程序更新回声（watcher 回写、检查修复写回的迟到事件），判假跳过；
+    // 真实编辑由哨兵在内部重建基线
+    if (!programmaticGuard.isRealEdit(editor?.view.state.doc, markdown)) return;
     const restoredMarkdown = postprocessContent(markdown);
     lastEmittedValue.value = restoredMarkdown;
 
@@ -880,9 +895,12 @@ function hydrateEditorContent(): void {
 
   isHydrating = true;
   try {
-    editor.restoreDoc(contentForRendering, {
-      bookmarks: bookmarkedIndices.value,
-      cursorOffset: props.tab.milkdownCursorOffset || undefined,
+    // 哨兵包裹：注入期间的 change 回声判假，结束后基线对齐注入后的文档状态
+    programmaticGuard.runProgrammatic(() => {
+      editor.restoreDoc(contentForRendering, {
+        bookmarks: bookmarkedIndices.value,
+        cursorOffset: props.tab.milkdownCursorOffset || undefined,
+      });
     });
   } finally {
     isHydrating = false;
@@ -951,9 +969,13 @@ function syncEditorFromTab(content: string) {
       }
 
       const contentForRendering = preprocessContent(content);
-      // 外部内容更新（文件 watcher / 检查修复写回等）同样走单事务：内容 + 书签一次注入
-      editor?.restoreDoc(contentForRendering, {
-        bookmarks: bookmarkedIndices.value,
+      // 外部内容更新（文件 watcher / 检查修复写回等）同样走单事务：内容 + 书签一次注入。
+      // 程序更新哨兵包裹（Z4）：期间 change 回声判假 + 结束后基线对齐——
+      // 外部回写不再被误判为用户编辑（脏标记误亮 / 保存回环）
+      programmaticGuard.runProgrammatic(() => {
+        editor?.restoreDoc(contentForRendering, {
+          bookmarks: bookmarkedIndices.value,
+        });
       });
 
       // 写回后保持视口：按记录的滚动比例还原（修复写回后视口不跳）
@@ -1181,7 +1203,9 @@ defineExpose({
   getEditor: () => editor,
   focus: () => editor?.focus(),
   getMarkdown: () => editor?.getMarkdown() ?? "",
-  setMarkdown: (content: string) => editor?.setMarkdown(content),
+  setMarkdown: (content: string) =>
+    // 哨兵包裹：外部注入不是用户编辑，change 回声判假 + 基线对齐（Z4）
+    programmaticGuard.runProgrammatic(() => editor?.setMarkdown(content)),
   toggleSourceView: () => editor?.toggleSourceView(),
 });
 </script>
