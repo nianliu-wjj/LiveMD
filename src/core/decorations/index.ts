@@ -17,6 +17,9 @@ import {
   sourceViewTransformAppliedMeta,
 } from "../plugins/source-view-transform";
 import { decodeHtmlEntity, HTML_ENTITY_SYNTAX_TYPE } from "../utils/html-entities";
+import { attachCaretStyle } from "./caret-style";
+
+export { computeCaretRegions, type CaretRegion } from "./caret-style";
 
 // ============ 源码模式状态管理器 ============
 
@@ -720,11 +723,19 @@ export function createDecorationPlugin(initialSourceView = false): Plugin<Decora
         );
       };
       syncRootClass(editorView);
+
+      // 光标紧邻区域级标记显示（进程外 style 元素通道，见 caret-style.ts 头注释）
+      const caretStyle = attachCaretStyle(editorView, () =>
+        decorationPluginKey.getState(editorView.state)
+      );
+
       return {
         update(view: EditorView) {
           syncRootClass(view);
+          caretStyle.refresh();
         },
         destroy() {
+          caretStyle.dispose();
           editorView?.dom.classList?.remove("source-view");
         },
       };

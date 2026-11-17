@@ -40,19 +40,18 @@
   pointer-events: none;
 }
 
-/* 焦点块（光标所在 textblock）内显示语法标记原文（灰色等宽 0.9em） */
-.livemd-focus-block .livemd-syntax-meta {
+/* 光标所在 textblock（焦点块 node 装饰）- 仅标题前缀保持块级显示。
+   行内语义标记（粗体/行内代码/高亮/链接等）不再随焦点块整体显示：改为光标
+   紧邻区域级显示（decoration 插件自管 style 元素命中区域外壳选择器，见
+   core/decorations/caret-style.ts）。引用块 "> " 前缀自此无任何即时渲染
+   显示规则 —— 自始至终不显示（源码模式规则不受影响）。 */
+.livemd-focus-block .livemd-syntax[data-syntax-type="heading"] .livemd-syntax-meta {
   display: inline;
   color: var(--text-color-3, #999);
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: 0.9em;
   user-select: auto;
   pointer-events: auto;
-}
-
-/* 焦点块内 HTML entity 显示原文（隐藏解码 widget） */
-.livemd-focus-block .livemd-html-entity-rendered {
-  display: none;
 }
 
 /* 语法标记外层结构 span（livemd-syntax）：仅作结构锚点与旧类兼容，无文本内容 */
