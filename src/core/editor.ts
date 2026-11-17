@@ -611,9 +611,19 @@ export class LivemdEditor implements ILivemdEditor {
    */
   restoreDoc(content: string, options: { bookmarks?: number[]; cursorOffset?: number } = {}): void {
     const { doc } = this.parser.parse(content);
-    let tr = this.view.state.tr
-      .replaceWith(0, this.view.state.doc.content.size, doc.content)
-      .setMeta("addToHistory", false);
+    // Preserve unchanged blocks and their NodeViews on external updates.
+    const current = this.view.state.doc;
+    const start = current.content.findDiffStart(doc.content);
+    let tr = this.view.state.tr.setMeta("addToHistory", false);
+    if (start !== null) {
+      const end = current.content.findDiffEnd(doc.content)!;
+      const overlap = start - Math.min(end.a, end.b);
+      if (overlap > 0) {
+        end.a += overlap;
+        end.b += overlap;
+      }
+      tr = tr.replace(start, end.a, doc.slice(start, end.b));
+    }
 
     if (options.bookmarks) {
       tr = tr.setMeta(bookmarksPluginKey, options.bookmarks);

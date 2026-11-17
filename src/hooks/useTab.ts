@@ -278,9 +278,10 @@ async function saveTab(tab: Tab): Promise<boolean> {
     // 传递 fileTraits 给主进程，由主进程负责还原 BOM、换行符、末尾换行
     // toRaw 将 Vue Proxy 转为普通对象，避免 IPC 序列化失败
     const imageTarget = resolveImageSaveTarget(config.value.image);
+    const submittedContent = tab.content;
     const saved = await window.electronAPI.saveFile(
       tab.filePath,
-      tab.content,
+      submittedContent,
       toRaw(tab.fileTraits),
       imageTarget.targetPath,
       imageTarget.useFileNameFolder,
@@ -288,20 +289,21 @@ async function saveTab(tab: Tab): Promise<boolean> {
       config.value.image.addDotSlashPrefix
     );
     if (saved) {
-      const fileContent = await readAndProcessFile({
-        filePath: saved.filePath,
-        checkReadOnly: false,
-      });
-
-      const nextContent = fileContent?.content ?? saved.content;
+      // Saving acknowledges the in-memory document; do not read it back.
+      // Input may have continued while the disk operation was pending.
+      if (tab.content !== submittedContent) {
+        tab.filePath = saved.filePath;
+        tab.originalContent = saved.content;
+        tab.isModified = true;
+        return true;
+      }
+      const nextContent = saved.content;
       const mergedTab = mergeSavedTabIntoExisting(tab, saved.filePath, nextContent, {
-        fileTraits: fileContent?.fileTraits ?? tab.fileTraits,
-        readOnly: fileContent?.readOnly ?? tab.readOnly,
+        fileTraits: tab.fileTraits,
+        readOnly: tab.readOnly,
       });
       if (!mergedTab) {
         applySavedTabState(tab, saved.filePath, nextContent);
-        tab.fileTraits = fileContent?.fileTraits ?? tab.fileTraits;
-        tab.readOnly = fileContent?.readOnly ?? tab.readOnly;
       }
 
       // 不重建编辑器实例：保存只更新文件状态，重建会清空 ProseMirror history。
@@ -1212,6 +1214,12 @@ window.electronAPI.on?.("file:changed", async (paths) => {
     const fileContent = await readAndProcessFile({ filePath: paths });
     if (!fileContent) return;
 
+    if (
+      fileContent.content === tab.content ||
+      normalizeMarkdownForDirtyCheck(fileContent.content) ===
+        normalizeMarkdownForDirtyCheck(tab.content)
+    )
+      return;
     // 更新内容，标记为新加载让编辑器重新捕获 originalContent
     tab.content = fileContent.content;
     tab.originalContent = fileContent.content;

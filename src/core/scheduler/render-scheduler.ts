@@ -68,20 +68,33 @@ function nextFrame(callback: () => void): void {
 
 function flushFrameQueue(): void {
   frameScheduled = false;
-  const entries = frameQueue;
-  frameQueue = [];
-  for (const entry of entries) {
+  // Recheck busy at execution time: typing can start after enqueue.
+  frameQueue = frameQueue.filter((entry) => {
+    if (entry.controller.signal.aborted) {
+      removeFromQueued(entry);
+      return false;
+    }
+    if (busy && entry.task.kind === "background") {
+      heldBackground.push(entry);
+      return false;
+    }
+    return true;
+  });
+  const index = frameQueue.findIndex((entry) => entry.task.kind === "interactive");
+  const entry = frameQueue.splice(index < 0 ? 0 : index, 1)[0];
+  if (entry) {
     removeFromQueued(entry);
-    if (entry.controller.signal.aborted) continue;
     try {
-      const result = entry.task.run(entry.controller.signal);
-      // 异步任务的失败只记日志：渲染失败不允许击穿调度器或编辑器主流程
-      if (result instanceof Promise) {
-        result.catch((error) => console.error("[livemd-render-scheduler]", error));
-      }
+      Promise.resolve(entry.task.run(entry.controller.signal)).catch((error) =>
+        console.error("[livemd-render-scheduler]", error)
+      );
     } catch (error) {
       console.error("[livemd-render-scheduler]", error);
     }
+  }
+  if (frameQueue.length && !frameScheduled) {
+    frameScheduled = true;
+    nextFrame(flushFrameQueue);
   }
 }
 
@@ -163,7 +176,7 @@ export const renderScheduler = {
  */
 export function applyRenderPendingMask(el: HTMLElement): () => void {
   const height = el.getBoundingClientRect().height;
-  el.classList.add("livemd-render-pending");
+  // Keep the previous preview painted until its atomic replacement.
   if (height > 0) el.style.minHeight = `${Math.round(height)}px`;
   let released = false;
   return () => {

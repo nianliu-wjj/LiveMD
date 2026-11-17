@@ -950,41 +950,33 @@ async function mountEditorTwoPhase(): Promise<void> {
   }
 }
 
+let pendingContentSync = 0;
 function syncEditorFromTab(content: string) {
-  // 尚未注入内容的壳（极短窗口）不做同步：hydrate 会读取最新的 tab.content
   if (!editor || !hasHydrated) return;
-  const shouldShowLoading = props.isActive && isLargeMarkdown(content);
-  if (shouldShowLoading) {
-    isEditorInitializing.value = true;
-  }
-
-  requestAnimationFrame(async () => {
-    if (props.isActive) {
-      (window as any).__currentFilePath = props.tab.filePath || null;
-    }
-
-    try {
-      if (shouldShowLoading) {
-        await nextFrame();
-      }
-
-      const contentForRendering = preprocessContent(content);
-      // 外部内容更新（文件 watcher / 检查修复写回等）同样走单事务：内容 + 书签一次注入。
-      // 程序更新哨兵包裹（Z4）：期间 change 回声判假 + 结束后基线对齐——
-      // 外部回写不再被误判为用户编辑（脏标记误亮 / 保存回环）
-      programmaticGuard.runProgrammatic(() => {
-        editor?.restoreDoc(contentForRendering, {
-          bookmarks: bookmarkedIndices.value,
-        });
+  const revision = ++pendingContentSync;
+  const targetEditor = editor;
+  requestAnimationFrame(() => {
+    // A delayed watcher must never overwrite typing or a newer external update.
+    if (
+      isUnmounted ||
+      editor !== targetEditor ||
+      revision !== pendingContentSync ||
+      props.tab.content !== content ||
+      content === lastEmittedValue.value
+    )
+      return;
+    const contentForRendering = preprocessContent(content);
+    if (contentForRendering === targetEditor.getMarkdown()) return;
+    const scrollTop = scrollViewRef.value?.scrollTop;
+    const cursorOffset = targetEditor.view.state.selection.head;
+    programmaticGuard.runProgrammatic(() => {
+      targetEditor.restoreDoc(contentForRendering, {
+        bookmarks: bookmarkedIndices.value,
+        cursorOffset,
       });
-
-      // 写回后保持视口：按记录的滚动比例还原（修复写回后视口不跳）
-      restoreScrollPosition();
-    } finally {
-      if (shouldShowLoading) {
-        await nextFrame();
-        isEditorInitializing.value = false;
-      }
+    });
+    if (scrollTop !== undefined && scrollViewRef.value) {
+      scrollViewRef.value.scrollTop = scrollTop;
     }
   });
 }
