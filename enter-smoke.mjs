@@ -11,6 +11,8 @@
  *  3 行中闭标记后 Enter：split 正常完成，原文文本不丢
  *  4 行末行内代码闭标记 Enter：同断言 1 口径
  *  5 段首 Enter + 焦点移开：模型/DOM 健康基线（全部段落 visible）
+ *  6 行内图片无损往返（不拆块、序列化等原文）
+ *  7 纯图片行兼容（独立成图、roundtrip 等原文）
  *
  * 冒烟文档与探针全部 ASCII（vite-auto-i18n 会改写中文字面量，见坑 5）。
  */
@@ -320,6 +322,28 @@ async function runAssertions(cdp) {
           p.visibility === "visible" && p.display !== "none" && p.contentVisibility === "visible"
       ),
     `info=${JSON.stringify(info)} health=${JSON.stringify(paragraphHealth)}`
+  );
+
+  // 6 行内图片无损往返（不拆块）
+  await setDoc("second line with ![alt](x.png) tail");
+  info = await evaluate("window.__docInfo()");
+  check(
+    "6 行内图片无损往返：不拆块、序列化等原文",
+    info.childCount === 1 &&
+      info.children[0].type === "paragraph" &&
+      info.md.trimEnd() === "second line with ![alt](x.png) tail",
+    JSON.stringify(info)
+  );
+
+  // 7 纯图片行兼容（独立成图、roundtrip 等原文）
+  await setDoc("![alt](x.png)");
+  info = await evaluate("window.__docInfo()");
+  check(
+    "7 纯图片行兼容：独立成图、roundtrip 等原文",
+    info.childCount === 1 &&
+      info.children[0].type === "image" &&
+      info.md.trimEnd() === "![alt](x.png)",
+    JSON.stringify(info)
   );
 
   return results;

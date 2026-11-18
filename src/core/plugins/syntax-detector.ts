@@ -20,6 +20,24 @@ const IMAGE_TOKEN_PATTERNS = {
   normal: /!\[([^\]]*)\]\((.+?)(?:\s+"([^"]*)")?\)/y,
 };
 
+/**
+ * 纯图片行：trim 后整行恰好是一个链接图片或普通图片 token。
+ * 与 parser 的块级图片分支（BLOCK_PATTERNS.image 整行匹配）对齐；
+ * 混排行（`text ![img](x.png) text`）里的图片必须保持文本，
+ * 否则块级 image 节点的 replaceWith 会把所在段落劈成三块。
+ */
+const PURE_IMAGE_LINE_PATTERNS = {
+  linked: /^\[!\[([^\]]*)\]\((.+?)(?:\s+"([^"]*)")?\)\]\((.+?)(?:\s+"([^"]*)")?\)$/,
+  normal: /^!\[([^\]]*)\]\((.+?)(?:\s+"([^"]*)")?\)$/,
+};
+
+function isPureImageLine(text: string): boolean {
+  const trimmed = text.trim();
+  return (
+    PURE_IMAGE_LINE_PATTERNS.linked.test(trimmed) || PURE_IMAGE_LINE_PATTERNS.normal.test(trimmed)
+  );
+}
+
 function generateConsecutiveImageGroupId(): string {
   return `cig_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }
@@ -1208,6 +1226,10 @@ export function createSyntaxDetectorPlugin(): Plugin {
                 return false;
               }
             }
+
+            // 混合行中的图片保持原文：块级 image 节点不能替换段落内片段，
+            // 否则 ProseMirror 会把所在段落劈成「文字段 / 图片 / 文字段」。
+            if (!isPureImageLine(textContent)) return true;
 
             // 记录已处理的范围，避免链接图片和普通图片重复匹配
             const processedRanges: Array<{ start: number; end: number }> = [];
