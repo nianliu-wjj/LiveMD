@@ -49,6 +49,11 @@ function findSafeEnterPos($from: any): number | null {
   const before = $from.nodeBefore;
   if (!isSyntaxMarkerNode(before)) return null;
 
+  // 块末守卫：光标已在块内容末尾时，闭标记之后没有可分割的内容，
+  // 块末本身就是理想分割点。此时回拨会把闭标记甩进新行，随后 syntax-fixer
+  // 判定开标记不成对并剥掉整行 marks（见 enter-smoke 断言 1/2）。
+  if ($from.parentOffset >= $from.parent.content.size) return null;
+
   // 回拨到连续标记组之前的文本末尾
   let safe = head - before.nodeSize;
   while (safe > parentStart) {
