@@ -12,7 +12,7 @@ if (-not $Elevated) {
         if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath }
         exit $process.ExitCode
     } catch {
-        Write-Error ('管理员确认被取消或提权失败：' + $_.Exception.Message)
+        [Console]::Error.WriteLine('Administrator approval was cancelled or elevation failed: ' + $_.Exception.Message)
         exit 1
     }
 }
@@ -27,6 +27,7 @@ try {
     & $request.node @nodeArgs *> ($ResultPath + ".log")
     $exitCode = $LASTEXITCODE
 } catch {
+    [Console]::Error.WriteLine($_.Exception.Message)
     $exitCode = 1
 } finally {
     @{ exitCode = $exitCode } | ConvertTo-Json -Compress | Set-Content -LiteralPath $ResultPath -Encoding ASCII
