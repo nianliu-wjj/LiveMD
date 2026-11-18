@@ -67,9 +67,10 @@ struct Index {
   /** 从 rawfile 回源一段内容；命中失败返回 null（交由上层回落） */
   private serveRawfile(path: string): WebResourceResponse | null {
     try {
-      const content: Uint8Array = getContext().resourceManager.getRawFileContent(`www/${path}`);
-      const buffer: ArrayBuffer =
-        content.buffer.slice(content.byteOffset, content.byteOffset + content.byteLength) as ArrayBuffer;
+      const content: Uint8Array = getContext(this).resourceManager.getRawFileContent(`www/${path}`);
+      const buffer: ArrayBuffer = new ArrayBuffer(content.byteLength);
+      const view: Uint8Array = new Uint8Array(buffer);
+      view.set(content);
       const response: WebResourceResponse = new WebResourceResponse();
       response.setResponseData(buffer);
       response.setResponseEncoding('utf-8');

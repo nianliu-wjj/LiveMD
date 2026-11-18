@@ -1,9 +1,6 @@
 {
   "apiType": "stageMode",
-  "buildOption": {
-    "externalNativeOptions": {},
-    "napiLibFilterOption": {}
-  },
+  "buildOption": {},
   "buildOptionSet": [
     {
       "name": "release",

@@ -1,2 +1,4 @@
-# 混淆规则（release 默认关闭混淆，保留文件占位）
--enable-property-obfuscation false
+# 混淆规则（release 默认关闭混淆：build-profile.json5 中 ruleOptions.enable 为 false）
+# 如需开启，请在 build-profile.json5 打开 enable 后按需追加规则，例如：
+# -enable-property-obfuscation
+# -keep-global-name
