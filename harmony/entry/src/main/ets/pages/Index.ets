@@ -67,7 +67,8 @@ struct Index {
   /** 从 rawfile 回源一段内容；命中失败返回 null（交由上层回落） */
   private serveRawfile(path: string): WebResourceResponse | null {
     try {
-      const content: Uint8Array = getContext(this).resourceManager.getRawFileContent(`www/${path}`);
+      // resourceManager 的同步读 rawfile 接口（异步版 getRawFileContent 返回 Promise，无法在拦截器内同步使用）
+      const content: Uint8Array = getContext(this).resourceManager.getRawFileContentSync(`www/${path}`);
       const buffer: ArrayBuffer = new ArrayBuffer(content.byteLength);
       const view: Uint8Array = new Uint8Array(buffer);
       view.set(content);
