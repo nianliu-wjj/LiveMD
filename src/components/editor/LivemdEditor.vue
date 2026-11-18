@@ -1292,49 +1292,24 @@ defineExpose({
   }
 
   &.large-document-mode {
-    /* 注意：不要把 .livemd-editor li 加回本选择器列表——
-       content-visibility:auto 在 WKWebView 下对类名变化不恢复绘制（重绘 bug 家族），
-       是列表行“光标进可见、移开不可见”幽灵态的总根源（docs/BUGFIX-GUIDE.md 问题八）。
-       li 是单行高度级小元素，收益趋零；顶层大块规则已覆盖绝大部分滚动性能收益。 */
-    :deep(.livemd-editor > p),
-    :deep(.livemd-editor > h1),
-    :deep(.livemd-editor > h2),
-    :deep(.livemd-editor > h3),
-    :deep(.livemd-editor > h4),
-    :deep(.livemd-editor > h5),
-    :deep(.livemd-editor > h6),
-    :deep(.livemd-editor > blockquote),
-    :deep(.livemd-editor > ul),
-    :deep(.livemd-editor > ol),
-    :deep(.livemd-editor > table),
+    /* ⚠️ 不要把任何可承载光标的 textblock 宿主加回本选择器列表：
+       p / h1-h6 / blockquote / blockquote > * / li / ul / ol / table 都曾在
+       WKWebView 下出现“光标进可见、移开不可见”的幽灵态——content-visibility:auto
+       对子树内（甚至自身）的类名变化不会恢复绘制。列表与表格的编辑操作会把
+       livemd-focus-block 类增/摘发生在这些元素上或子树内，属于同一重绘 bug 家族。
+       本列表只保留无 ProseMirror 类变化交互的纯静态长块；代码块由独立
+       CodeMirror 结构承载。长文档滚动性能主要靠这些长块兜底。 */
     :deep(.livemd-editor > hr),
     :deep(.livemd-editor > .livemd-code-block),
     :deep(.livemd-editor > .livemd-image-block),
     :deep(.livemd-editor > .html-block),
-    :deep(.livemd-editor > .math-block),
-    :deep(.livemd-editor blockquote > *) {
+    :deep(.livemd-editor > .math-block) {
       content-visibility: auto;
       contain-intrinsic-size: auto 36px;
     }
 
-    /* 分级估高：按块类型给出接近真实渲染高度的占位尺寸。统一 36px 兜底与真实高度
-       （标题按字号、表格/图片几百像素）误差过大，快速滚动时会出现超过一帧的空白。
-       代码块由 NodeView 按行数写入精确的内联 contain-intrinsic-size，这里只是兜底。 */
-    :deep(.livemd-editor > h1) {
-      contain-intrinsic-size: auto 2.8em;
-    }
-    :deep(.livemd-editor > h2) {
-      contain-intrinsic-size: auto 2.4em;
-    }
-    :deep(.livemd-editor > h3) {
-      contain-intrinsic-size: auto 2em;
-    }
-    :deep(.livemd-editor > h4) {
-      contain-intrinsic-size: auto 1.8em;
-    }
-    :deep(.livemd-editor > table) {
-      contain-intrinsic-size: auto 120px;
-    }
+    /* 静态长块分级估高：代码块由 NodeView 按行数写入精确的内联
+       contain-intrinsic-size，这里只是快速滚动时的兜底。 */
     :deep(.livemd-editor > .livemd-image-block) {
       contain-intrinsic-size: auto 20px;
     }

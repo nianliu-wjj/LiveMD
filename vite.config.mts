@@ -80,6 +80,10 @@ export default defineConfig({
   // - mermaid 只在代码块渲染 Mermaid 图时动态 import；其依赖树庞大（dagre/cytoscape/elkjs 等），
   //   运行中冷发现会连续触发多轮重新优化，必须启动时一次预构建完成
   optimizeDeps: {
+    // 只扫描应用自身的 HTML 入口。默认的 **/*.html 会把 harmony/entry 下由
+    // build-harmony 复制的离线包（rawfile/www）也纳入依赖扫描，其中的大体积
+    // 构建产物会让扫描反复重启，最终导致 dev server 无法就绪（冒烟脚本超时）。
+    entries: ["index.html", "theme-editor.html", "image-preview.html", "debug-dom.html"],
     include: [
       // 语言包预构建，避免首次动态加载触发重新优化并使旧模块 URL 失效。
       "@codemirror/lang-javascript",

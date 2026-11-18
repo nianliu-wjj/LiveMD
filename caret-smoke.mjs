@@ -16,7 +16,7 @@
  *    （text wrapper 重建禁令 / 外改禁令的 DOM 证据）
  *  7 原文无损往返（getMarkdown 与注入内容一致）
  *  8 泄漏复检：bold/highlight 微区域交替 + 全部移出后 style 通道清空
- *  9 P4 回归：li 的 content-visibility 保持 visible（幽灵态纪律不破）
+ *  9b/9c P4 回归：li/ul/ol/table 与 p/h/blockquote 的 content-visibility 保持 visible
  *
  * 冒烟文档与探针全部 ASCII（vite-auto-i18n 会改写中文字面量，见坑 5）。
  */
@@ -216,6 +216,26 @@ window.__liContentVisibility = () => {
   const li = window.__debugEditor.view.dom.querySelector("li");
   return li ? getComputedStyle(li).contentVisibility : "missing";
 };
+window.__contentVisibilityFamily = () => {
+  const root = window.__debugEditor.view.dom;
+  const pick = (selector) => {
+    const el = root.querySelector(selector);
+    return el ? getComputedStyle(el).contentVisibility : "missing";
+  };
+  return {
+    li: pick("li"),
+    ul: pick("ul"),
+    ol: pick("ol"),
+    table: pick("table"),
+    p: pick("p"),
+    h1: pick("h1"),
+    h2: pick("h2"),
+    h3: pick("h3"),
+    h6: pick("h6"),
+    blockquote: pick("blockquote"),
+    "blockquoteChild": pick("blockquote > *")
+  };
+};
 true;
 `;
 
@@ -283,7 +303,7 @@ async function runAssertions(evaluate) {
   check(
     "5 标题焦点块显示 heading 前缀且区域集合为空",
     headingMeta.length > 0 &&
-      headingMeta.every((s) => s.display !== "none") &&
+      headingMeta.filter((s) => s.display !== "none").length === 1 &&
       caretState &&
       caretState.regionCount === 0,
     `metas=${JSON.stringify(headingMeta)} caret=${JSON.stringify(caretState)}`
@@ -336,9 +356,24 @@ async function runAssertions(evaluate) {
     `bold=${boldLit} hl=${hlLit} final=${JSON.stringify(finalState)}`
   );
 
-  // 9 P4 回归：li content-visibility 保持 visible
-  const liCv = await evaluate("window.__liContentVisibility()");
-  check("9 li content-visibility = visible", liCv === "visible", `value=${liCv}`);
+  // 9b/9c P4 回归：所有曾躺枪的 textblock 宿主保持 visible
+  const cv = await evaluate("window.__contentVisibilityFamily()");
+  const families = {
+    "9b li/ul/ol/table content-visibility = visible": ["li", "ul", "ol", "table"],
+    "9c p/h/blockquote content-visibility = visible": [
+      "p",
+      "h1",
+      "h2",
+      "h3",
+      "h6",
+      "blockquote",
+      "blockquoteChild",
+    ],
+  };
+  for (const [name, keys] of Object.entries(families)) {
+    const bad = keys.filter((key) => cv[key] !== "visible");
+    check(name, bad.length === 0, `bad=${bad.join(",") || "-"} values=${JSON.stringify(cv)}`);
+  }
 
   return results;
 }
