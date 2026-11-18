@@ -11622,5 +11622,13 @@
     "ru": "Не сохранять",
     "en": "Discard",
     "fr": "Abandonner"
+  },
+  "tnyxwiw": {
+    "zh-cn": "请选择 Markdown 文件（.md 或 .markdown）",
+    "ja": "Markdown ファイル（.md または .markdown）を選択してください",
+    "ko": "Markdown 파일(.md 또는 .markdown)을 선택하세요",
+    "ru": "Выберите файл Markdown (.md или .markdown)",
+    "en": "Please select a Markdown file (.md or .markdown)",
+    "fr": "Sélectionnez un fichier Markdown (.md ou .markdown)"
   }
 }
