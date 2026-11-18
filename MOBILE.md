@@ -154,3 +154,7 @@ Windows / macOS / Linux 生效，避免被拉入 Android 交叉编译。
 ### Windows 符号链接权限
 
 Tauri Android 构建会将 Rust .so 链接到 jniLibs。出现 Creation symbolic link is not allowed 时，需要在 Windows 设置中启用开发者模式，或使用管理员终端打包。复制 .so 不能替代 Tauri 后续的符号链接步骤。安卓脚本会在编译前检查权限，避免完成 Rust 编译后才失败。
+
+### 安卓构建自动提权
+
+`pnpm dist:android-apk`、`pnpm dist:android` 和 `pnpm android:dev` 会先检测符号链接权限。Windows 缺少权限时自动弹出 UAC 管理员确认窗口，确认后在管理员进程中执行原命令；取消则返回失败。已启用开发者模式、已有权限或非 Windows 系统会直接执行。管理员进程保留 SDK、JDK、Rust 和代理环境变量；完成后退出码返回原终端。
