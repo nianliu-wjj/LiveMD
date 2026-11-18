@@ -4,40 +4,40 @@
  */
 
 interface InertiaScrollConfig {
-  smoothTime: number
-  maxSpeed: number
-  velocityMultiplier: number
+  smoothTime: number;
+  maxSpeed: number;
+  velocityMultiplier: number;
 }
 
 interface ScrollState {
-  currentPosition: number
-  targetPosition: number
-  velocity: number
-  isAnimating: boolean
-  animationId: number | null
-  lastTime: number
+  currentPosition: number;
+  targetPosition: number;
+  velocity: number;
+  isAnimating: boolean;
+  animationId: number | null;
+  lastTime: number;
 }
 
 const DEFAULT_CONFIG: InertiaScrollConfig = {
   smoothTime: 0.15, // 默认平滑时间（秒）
   maxSpeed: 2000, // 默认最大速度限制
   velocityMultiplier: 0.3, // 速度到距离的转换系数
-}
+};
 
 const ANIMATION_THRESHOLDS = {
   distance: 0.1, // 距离阈值
   velocity: 0.01, // 速度阈值
   closeDistance: 0.7, // 接近目标的距离阈值
-} as const
+} as const;
 
 export class InertiaScroll {
-  private container: HTMLElement
-  private config: InertiaScrollConfig
-  private state: ScrollState
+  private container: HTMLElement;
+  private config: InertiaScrollConfig;
+  private state: ScrollState;
 
   constructor(container: HTMLElement, config: Partial<InertiaScrollConfig> = {}) {
-    this.container = container
-    this.config = { ...DEFAULT_CONFIG, ...config }
+    this.container = container;
+    this.config = { ...DEFAULT_CONFIG, ...config };
     this.state = {
       currentPosition: container.scrollLeft,
       targetPosition: container.scrollLeft,
@@ -45,15 +45,15 @@ export class InertiaScroll {
       isAnimating: false,
       animationId: null,
       lastTime: 0,
-    }
+    };
   }
 
   /**
    * 设置滚动目标位置
    */
   setTarget(target: number): void {
-    this.state.targetPosition = this.clampPosition(target)
-    this.startAnimation()
+    this.state.targetPosition = this.clampPosition(target);
+    this.startAnimation();
   }
 
   /**
@@ -63,9 +63,9 @@ export class InertiaScroll {
    */
   scrollTo(target: number, immediate: boolean = false): void {
     if (immediate) {
-      this.setPositionImmediate(target)
+      this.setPositionImmediate(target);
     } else {
-      this.setTarget(target)
+      this.setTarget(target);
     }
   }
 
@@ -73,51 +73,48 @@ export class InertiaScroll {
    * 添加速度（用于惯性滚动）
    */
   addVelocity(velocity: number): void {
-    this.state.velocity += velocity
-    this.calculateTargetFromVelocity()
-    this.startAnimation()
+    this.state.velocity += velocity;
+    this.calculateTargetFromVelocity();
+    this.startAnimation();
   }
 
   /**
    * 销毁实例，清理资源
    */
   destroy(): void {
-    this.stopAnimation()
+    this.stopAnimation();
   }
 
   /**
    * 限制位置在有效范围内
    */
   private clampPosition(position: number): number {
-    return Math.max(0, Math.min(position, this.getMaxScroll()))
+    return Math.max(0, Math.min(position, this.getMaxScroll()));
   }
 
   /**
    * 获取最大滚动距离
    */
   private getMaxScroll(): number {
-    return this.container.scrollWidth - this.container.clientWidth
+    return this.container.scrollWidth - this.container.clientWidth;
   }
 
   /**
    * 基于当前速度计算目标位置
    */
   private calculateTargetFromVelocity(): void {
-    const velocityMagnitude = Math.abs(this.state.velocity)
-    const estimatedDistance = velocityMagnitude * this.config.velocityMultiplier
+    const velocityMagnitude = Math.abs(this.state.velocity);
+    const estimatedDistance = velocityMagnitude * this.config.velocityMultiplier;
 
     if (this.state.velocity > 0) {
       // 向右滚动
       this.state.targetPosition = Math.min(
         this.state.currentPosition + estimatedDistance,
-        this.getMaxScroll(),
-      )
+        this.getMaxScroll()
+      );
     } else {
       // 向左滚动
-      this.state.targetPosition = Math.max(
-        this.state.currentPosition - estimatedDistance,
-        0,
-      )
+      this.state.targetPosition = Math.max(this.state.currentPosition - estimatedDistance, 0);
     }
   }
 
@@ -125,34 +122,33 @@ export class InertiaScroll {
    * 立即设置位置（不使用动画）
    */
   private setPositionImmediate(target: number): void {
-    this.state.currentPosition = this.clampPosition(target)
-    this.state.targetPosition = this.state.currentPosition
-    this.state.velocity = 0
-    this.container.scrollLeft = this.state.currentPosition
-    this.stopAnimation()
+    this.state.currentPosition = this.clampPosition(target);
+    this.state.targetPosition = this.state.currentPosition;
+    this.state.velocity = 0;
+    this.container.scrollLeft = this.state.currentPosition;
+    this.stopAnimation();
   }
 
   /**
    * 开始动画循环
    */
   private startAnimation(): void {
-    if (this.state.isAnimating)
-      return
+    if (this.state.isAnimating) return;
 
-    this.state.isAnimating = true
-    this.state.lastTime = performance.now()
-    this.animate()
+    this.state.isAnimating = true;
+    this.state.lastTime = performance.now();
+    this.animate();
   }
 
   /**
    * 停止动画
    */
   private stopAnimation(): void {
-    this.state.isAnimating = false
-    this.state.velocity = 0
+    this.state.isAnimating = false;
+    this.state.velocity = 0;
     if (this.state.animationId) {
-      cancelAnimationFrame(this.state.animationId)
-      this.state.animationId = null
+      cancelAnimationFrame(this.state.animationId);
+      this.state.animationId = null;
     }
   }
 
@@ -160,24 +156,23 @@ export class InertiaScroll {
    * 动画循环
    */
   private animate(): void {
-    if (!this.state.isAnimating)
-      return
+    if (!this.state.isAnimating) return;
 
-    const currentTime = performance.now()
-    const deltaTime = (currentTime - this.state.lastTime) / 1000
-    this.state.lastTime = currentTime
+    const currentTime = performance.now();
+    const deltaTime = (currentTime - this.state.lastTime) / 1000;
+    this.state.lastTime = currentTime;
 
     // 更新位置
-    this.updatePosition(deltaTime)
+    this.updatePosition(deltaTime);
 
     // 应用位置到DOM
-    this.container.scrollLeft = this.state.currentPosition
+    this.container.scrollLeft = this.state.currentPosition;
 
     // 检查是否需要继续动画
     if (this.shouldContinueAnimation()) {
-      this.state.animationId = requestAnimationFrame(() => this.animate())
+      this.state.animationId = requestAnimationFrame(() => this.animate());
     } else {
-      this.stopAnimation()
+      this.stopAnimation();
     }
   }
 
@@ -191,27 +186,27 @@ export class InertiaScroll {
       this.state.velocity,
       this.config.smoothTime,
       this.config.maxSpeed,
-      deltaTime,
-    )
+      deltaTime
+    );
   }
 
   /**
    * 检查是否应该继续动画
    */
   private shouldContinueAnimation(): boolean {
-    const distanceToTarget = Math.abs(this.state.currentPosition - this.state.targetPosition)
+    const distanceToTarget = Math.abs(this.state.currentPosition - this.state.targetPosition);
 
     // 如果距离目标太远，继续动画
     if (distanceToTarget > ANIMATION_THRESHOLDS.distance) {
-      return true
+      return true;
     }
 
     // 如果有明显速度，继续动画
     if (Math.abs(this.state.velocity) > ANIMATION_THRESHOLDS.velocity) {
-      return true
+      return true;
     }
 
-    return false
+    return false;
   }
 
   /**
@@ -224,51 +219,51 @@ export class InertiaScroll {
     currentVelocity: number,
     smoothTime: number,
     maxSpeed: number,
-    deltaTime: number,
+    deltaTime: number
   ): number {
-    smoothTime = Math.max(0.0001, smoothTime)
-    const omega = 2 / smoothTime
+    smoothTime = Math.max(0.0001, smoothTime);
+    const omega = 2 / smoothTime;
 
-    const x = omega * deltaTime
-    const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x)
+    const x = omega * deltaTime;
+    const exp = 1 / (1 + x + 0.48 * x * x + 0.235 * x * x * x);
 
-    let change = current - target
-    const originalTo = target
+    let change = current - target;
+    const originalTo = target;
 
     // 限制最大速度
-    const maxChange = maxSpeed * smoothTime
-    change = Math.max(-maxChange, Math.min(maxChange, change))
-    target = current - change
+    const maxChange = maxSpeed * smoothTime;
+    change = Math.max(-maxChange, Math.min(maxChange, change));
+    target = current - change;
 
-    const temp = (currentVelocity + omega * change) * deltaTime
-    this.state.velocity = (currentVelocity - omega * temp) * exp
-    let output = target + (change + temp) * exp
+    const temp = (currentVelocity + omega * change) * deltaTime;
+    this.state.velocity = (currentVelocity - omega * temp) * exp;
+    let output = target + (change + temp) * exp;
 
     // 防止超调
-    if ((originalTo - current > 0.0) === (output > originalTo)) {
-      output = originalTo
-      this.state.velocity = 0
+    if (originalTo - current > 0.0 === output > originalTo) {
+      output = originalTo;
+      this.state.velocity = 0;
     }
 
     // 接近目标时直接停止
-    const distanceToTarget = Math.abs(output - originalTo)
+    const distanceToTarget = Math.abs(output - originalTo);
     if (distanceToTarget < ANIMATION_THRESHOLDS.closeDistance) {
-      output = originalTo
-      this.state.velocity = 0
+      output = originalTo;
+      this.state.velocity = 0;
     }
 
     // 边界检查
-    return this.clampPosition(output)
+    return this.clampPosition(output);
   }
 
   /**
    * 处理鼠标滚轮事件，转换为惯性滚动
    */
   handleWheel(event: WheelEvent): void {
-    event.preventDefault()
+    event.preventDefault();
 
-    const scrollVelocity = event.deltaY // 调整滚动敏感度
-    this.addVelocity(scrollVelocity)
+    const scrollVelocity = event.deltaY; // 调整滚动敏感度
+    this.addVelocity(scrollVelocity);
   }
 }
 
@@ -277,7 +272,7 @@ export class InertiaScroll {
  */
 export function createInertiaScroll(
   container: HTMLElement,
-  config?: Partial<InertiaScrollConfig>,
+  config?: Partial<InertiaScrollConfig>
 ): InertiaScroll {
-  return new InertiaScroll(container, config)
+  return new InertiaScroll(container, config);
 }

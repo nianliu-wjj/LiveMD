@@ -7,10 +7,7 @@ import useOtherConfig from "@/hooks/useOtherConfig";
 import useHeadingAlign from "@/hooks/useHeadingAlign";
 import { isShowOutline, toggleShowOutline } from "@/hooks/useOutline";
 import { useSaveConfirmDialog } from "@/hooks/useSaveConfirmDialog";
-import {
-  createSidebarWidthController,
-  SIDEBAR_DEFAULT_CSS,
-} from "@/hooks/useSidebarWidth";
+import { createSidebarWidthController, SIDEBAR_DEFAULT_CSS } from "@/hooks/useSidebarWidth";
 import useSourceCode from "@/hooks/useSourceCode";
 import useSpellCheck from "@/hooks/useSpellCheck";
 import useTab from "@/hooks/useTab";
@@ -44,11 +41,7 @@ import WorkspaceSearchPanel from "./components/search/WorkspaceSearchPanel.vue";
 import HomePage from "./components/home/HomePage.vue";
 import LintResultPanel from "./components/lint/LintResultPanel.vue";
 import LoadingIcon from "./components/ui/LoadingIcon.vue";
-import {
-  readLastOpenedFile,
-  readLastWorkspaceDir,
-  trackLaunchState,
-} from "@/hooks/useLaunchState";
+import { readLastOpenedFile, readLastWorkspaceDir, trackLaunchState } from "@/hooks/useLaunchState";
 
 // ✅ 应用级事件协调器（仅负责事件监听和协调）
 useContext();

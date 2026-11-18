@@ -3,38 +3,24 @@ import test from "node:test";
 import { formatMarkdownTables } from "../src/utils/tableFormat.ts";
 
 test("aligns table columns and trims cell padding", () => {
-  const input = [
-    "| Name | Age |",
-    "|---|---|",
-    "|Alice|30|",
-    "|张三|7|",
-  ].join("\n");
+  const input = ["| Name | Age |", "|---|---|", "|Alice|30|", "|张三|7|"].join("\n");
 
   assert.equal(
     formatMarkdownTables(input),
-    [
-      "| Name  | Age |",
-      "| ----- | --- |",
-      "| Alice | 30  |",
-      "| 张三  | 7   |",
-    ].join("\n")
+    ["| Name  | Age |", "| ----- | --- |", "| Alice | 30  |", "| 张三  | 7   |"].join("\n")
   );
 });
 
 test("preserves GFM alignment markers", () => {
-  const input = [
-    "| left | center | right |",
-    "| :--- | :----: | ----: |",
-    "| a | b | c |",
-  ].join("\n");
+  const input = ["| left | center | right |", "| :--- | :----: | ----: |", "| a | b | c |"].join(
+    "\n"
+  );
 
   assert.equal(
     formatMarkdownTables(input),
-    [
-      "| left | center | right |",
-      "| :--- | :----: | ----: |",
-      "| a    |   b    |     c |",
-    ].join("\n")
+    ["| left | center | right |", "| :--- | :----: | ----: |", "| a    |   b    |     c |"].join(
+      "\n"
+    )
   );
 });
 
@@ -55,19 +41,11 @@ test("keeps fenced code blocks untouched", () => {
 });
 
 test("handles escaped pipes and pipes inside inline code", () => {
-  const input = [
-    "| a \\| b | `x|y` |",
-    "| --- | --- |",
-    "| 1 | 2 |",
-  ].join("\n");
+  const input = ["| a \\| b | `x|y` |", "| --- | --- |", "| 1 | 2 |"].join("\n");
 
   assert.equal(
     formatMarkdownTables(input),
-    [
-      "| a \\| b | `x|y` |",
-      "| ------ | ----- |",
-      "| 1      | 2     |",
-    ].join("\n")
+    ["| a \\| b | `x|y` |", "| ------ | ----- |", "| 1      | 2     |"].join("\n")
   );
 });
 
@@ -86,18 +64,11 @@ test("ignores text that is not a GFM table", () => {
 
 test("preserves CRLF line endings and trailing newline", () => {
   const input = "| a | b |\r\n| --- | --- |\r\n| 1 | 2 |\r\n";
-  assert.equal(
-    formatMarkdownTables(input),
-    "| a   | b   |\r\n| --- | --- |\r\n| 1   | 2   |\r\n"
-  );
+  assert.equal(formatMarkdownTables(input), "| a   | b   |\r\n| --- | --- |\r\n| 1   | 2   |\r\n");
 });
 
 test("leaves malformed row counts alone", () => {
-  const input = [
-    "| a | b |",
-    "| --- | --- |",
-    "| only-one |",
-  ].join("\n");
+  const input = ["| a | b |", "| --- | --- |", "| only-one |"].join("\n");
 
   assert.equal(formatMarkdownTables(input), input);
 });

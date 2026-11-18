@@ -5,10 +5,7 @@ import { runInNewContext } from "node:vm";
 import ts from "typescript";
 import * as vue from "vue";
 
-const hookSource = readFileSync(
-  new URL("../src/hooks/useTab.ts", import.meta.url),
-  "utf8"
-);
+const hookSource = readFileSync(new URL("../src/hooks/useTab.ts", import.meta.url), "utf8");
 const hookCode = ts.transpileModule(hookSource, {
   compilerOptions: {
     module: ts.ModuleKind.CommonJS,

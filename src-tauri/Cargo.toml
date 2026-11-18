@@ -26,7 +26,12 @@ notify = "8"
 tokio = { version = "1", features = ["time", "sync", "fs", "io-util", "rt"] }
 # TLS 按平台拆分：Android 走 rustls（native-tls 的 openssl 无法随 NDK 交叉编译），
 # 其余平台保持 native-tls（Windows schannel / macOS sectransport）不变
-reqwest = { version = "0.13", default-features = false, features = ["json", "stream", "charset", "http2"] }
+reqwest = { version = "0.13", default-features = false, features = [
+  "json",
+  "stream",
+  "charset",
+  "http2",
+] }
 futures-util = "0.3"
 fontdb = "0.24"
 regex = "1"
@@ -49,7 +54,11 @@ reqwest = { version = "0.13", default-features = false, features = ["rustls"] }
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6"
 objc2-foundation = "0.3"
-objc2-app-kit = { version = "0.3", features = ["NSPrintInfo", "NSPrintOperation", "objc2-core-foundation"] }
+objc2-app-kit = { version = "0.3", features = [
+  "NSPrintInfo",
+  "NSPrintOperation",
+  "objc2-core-foundation",
+] }
 objc2-web-kit = { version = "0.3", features = ["WKWebView", "objc2-app-kit"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]

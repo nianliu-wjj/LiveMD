@@ -221,8 +221,7 @@ function findHeadingMarker(node: ProsemirrorNode): HeadingMarker | null {
     if (
       child.isText &&
       child.marks.some(
-        (mark) =>
-          mark.type.name === "syntax_marker" && mark.attrs.syntaxType === "heading"
+        (mark) => mark.type.name === "syntax_marker" && mark.attrs.syntaxType === "heading"
       )
     ) {
       result = { from: offset, to: offset + child.nodeSize, marks: child.marks };
@@ -278,10 +277,7 @@ function convertHeadingToParagraph(
 
   let deleteTo = nodePos + 1 + marker.to;
   if (marker.to < node.content.size) {
-    const nextText = node.textBetween(
-      marker.to,
-      Math.min(marker.to + 1, node.content.size)
-    );
+    const nextText = node.textBetween(marker.to, Math.min(marker.to + 1, node.content.size));
     if (nextText === " ") deleteTo += 1;
   }
   tr.delete(nodePos + 1 + marker.from, deleteTo);
@@ -295,9 +291,7 @@ function convertHeadingToParagraph(
  * - demote（降低）：H1 → H2，H6 → 段落，段落不变
  * 选区覆盖多个块时批量处理，从后往前修改以避免位置偏移。
  */
-export function createChangeHeadingLevelCommand(
-  direction: "promote" | "demote"
-): Command {
+export function createChangeHeadingLevelCommand(direction: "promote" | "demote"): Command {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
     const schema = state.schema;
     if (!schema.nodes.heading || !schema.nodes.paragraph) return false;

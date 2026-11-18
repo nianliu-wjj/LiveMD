@@ -24,24 +24,44 @@
 // 大屏上限按用户值等比放大，用户值越大整体越宽松
 html[data-responsive-padding="true"] #fontRoot {
   @media (max-width: 640px) {
-    --livemd-editor-padding-effective: clamp(min(14px, var(--livemd-editor-padding, 120px)), 4vw, min(24px, var(--livemd-editor-padding, 120px)));
+    --livemd-editor-padding-effective: clamp(
+      min(14px, var(--livemd-editor-padding, 120px)),
+      4vw,
+      min(24px, var(--livemd-editor-padding, 120px))
+    );
   }
 
   @media (min-width: 641px) and (max-width: 1024px) {
-    --livemd-editor-padding-effective: clamp(min(24px, var(--livemd-editor-padding, 120px)), 6vw, min(64px, var(--livemd-editor-padding, 120px)));
+    --livemd-editor-padding-effective: clamp(
+      min(24px, var(--livemd-editor-padding, 120px)),
+      6vw,
+      min(64px, var(--livemd-editor-padding, 120px))
+    );
   }
 
   @media (min-width: 1025px) and (max-width: 1440px) {
-    --livemd-editor-padding-effective: clamp(min(40px, var(--livemd-editor-padding, 120px)), 8vw, var(--livemd-editor-padding, 120px));
+    --livemd-editor-padding-effective: clamp(
+      min(40px, var(--livemd-editor-padding, 120px)),
+      8vw,
+      var(--livemd-editor-padding, 120px)
+    );
   }
 
   @media (min-width: 1441px) and (max-width: 1999px) {
-    --livemd-editor-padding-effective: clamp(min(64px, var(--livemd-editor-padding, 120px)), 9vw, calc(var(--livemd-editor-padding, 120px) * 1.5));
+    --livemd-editor-padding-effective: clamp(
+      min(64px, var(--livemd-editor-padding, 120px)),
+      9vw,
+      calc(var(--livemd-editor-padding, 120px) * 1.5)
+    );
   }
 
   // 4K / 超宽屏：正文行宽过长会降低可读性，边距随视口放大
   @media (min-width: 2000px) {
-    --livemd-editor-padding-effective: clamp(min(120px, var(--livemd-editor-padding, 120px)), 16vw, calc(var(--livemd-editor-padding, 120px) * 4));
+    --livemd-editor-padding-effective: clamp(
+      min(120px, var(--livemd-editor-padding, 120px)),
+      16vw,
+      calc(var(--livemd-editor-padding, 120px) * 4)
+    );
   }
 }
 

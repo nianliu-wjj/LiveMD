@@ -100,10 +100,7 @@ function showRelative(offset: number): void {
 function applyPayload(payload: PreviewPayload | undefined): void {
   if (!payload?.items?.length) return;
   items = payload.items;
-  currentIndex = Math.min(
-    Math.max(payload.index || 0, 0),
-    Math.max(items.length - 1, 0),
-  );
+  currentIndex = Math.min(Math.max(payload.index || 0, 0), Math.max(items.length - 1, 0));
   const hasSwitcher = items.length > 1;
   prevButton.hidden = !hasSwitcher;
   nextButton.hidden = !hasSwitcher;
@@ -126,7 +123,7 @@ window.addEventListener(
     if (canDragImage()) clampOffsetToBounds();
     applyTransform();
   },
-  { passive: false },
+  { passive: false }
 );
 
 viewer.addEventListener("mousedown", (event) => {

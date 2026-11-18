@@ -17,13 +17,13 @@
 
 ### 1.1 环境要求
 
-| 工具 | 版本 / 说明 |
-| --- | --- |
-| Android Studio | 最新稳定版，安装 Android SDK Platform 与 Build-Tools |
-| Android NDK | 与 Tauri 2 当前要求匹配的 LTS 版本（安装后记录 `NDK_HOME`） |
-| JDK | 17（Tauri Android 构建要求） |
-| Rust | 最新稳定版，并安装 Android 交叉编译 target |
-| Node.js / pnpm | 见根目录 `README.md` |
+| 工具           | 版本 / 说明                                                 |
+| -------------- | ----------------------------------------------------------- |
+| Android Studio | 最新稳定版，安装 Android SDK Platform 与 Build-Tools        |
+| Android NDK    | 与 Tauri 2 当前要求匹配的 LTS 版本（安装后记录 `NDK_HOME`） |
+| JDK            | 17（Tauri Android 构建要求）                                |
+| Rust           | 最新稳定版，并安装 Android 交叉编译 target                  |
+| Node.js / pnpm | 见根目录 `README.md`                                        |
 
 安装 Rust target（按需二选一或都装）：
 
@@ -94,11 +94,11 @@ src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-rele
 
 ### 2.1 环境要求
 
-| 工具 | 版本 / 说明 |
-| --- | --- |
-| DevEco Studio | 5.0.5 及以上 |
+| 工具          | 版本 / 说明                                                               |
+| ------------- | ------------------------------------------------------------------------- |
+| DevEco Studio | 5.0.5 及以上                                                              |
 | HarmonyOS SDK | API 17（与 `harmony/build-profile.json5` 的 `compatibleSdkVersion` 对应） |
-| 华为账号 | 用于自动签名 |
+| 华为账号      | 用于自动签名                                                              |
 
 ### 2.2 同步 web 产物
 
@@ -116,7 +116,7 @@ pnpm dist:harmony
 1. 打开 `harmony/` 目录（不是仓库根目录）。
 2. 等待首次 hvigor Sync 完成（需要联网下载依赖）。
 3. `File > Project Structure > Signing Configs`，勾选
-   *Automatically generate signature information* 并登录华为账号。
+   _Automatically generate signature information_ 并登录华为账号。
 4. `Build > Build App(s)/Hap(s) > Build Hap(s)`。
 5. 产物：`harmony/entry/build/default/outputs/default/entry-default-signed.hap`。
 
@@ -129,13 +129,13 @@ hvigorw assembleHap --mode module -p product=default
 
 ### 2.4 构建问题排查
 
-| 报错 | 处理 |
-| --- | --- |
+| 报错                                          | 处理                                                                                                                                      |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | 资源缺失（`$media:app_icon`、`$string:*` 等） | 先确认已执行 `pnpm dist:harmony`；仓库已包含 `AppScope/resources/base/media/app_icon.png` 与 entry 资源，若仍缺失，检查文件是否被本地清理 |
-| hvigor Sync 卡住 / 依赖下载失败 | 首次 Sync 需要联网，配置内网代理或镜像后重试；删除 `harmony/.hvigor` 缓存再同步 |
-| `modelVersion` 相关异常 | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应为 `5.0.5`，并与 DevEco Studio 版本匹配 |
-| 构建 HAP 提示未签名 | 先完成 2.3 的自动签名配置；未签名只能运行预览，不能产出可安装 HAP |
-| ArkTS 编译报 `getContext` 废弃 | 使用 `getContext(this)`（仓库代码已修正，避免回退） |
+| hvigor Sync 卡住 / 依赖下载失败               | 首次 Sync 需要联网，配置内网代理或镜像后重试；删除 `harmony/.hvigor` 缓存再同步                                                           |
+| `modelVersion` 相关异常                       | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应为 `5.0.5`，并与 DevEco Studio 版本匹配                                         |
+| 构建 HAP 提示未签名                           | 先完成 2.3 的自动签名配置；未签名只能运行预览，不能产出可安装 HAP                                                                         |
+| ArkTS 编译报 `getContext` 废弃                | 使用 `getContext(this)`（仓库代码已修正，避免回退）                                                                                       |
 
 ## 三、验证基线
 

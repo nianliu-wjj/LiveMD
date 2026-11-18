@@ -10,10 +10,7 @@ import AppIcon from "@/components/ui/AppIcon.vue";
 import emitter from "@/events";
 import useTab from "@/hooks/useTab";
 import useWorkSpace from "@/hooks/useWorkSpace";
-import {
-  closeWorkspaceSearch,
-  isWorkspaceSearchVisible,
-} from "@/hooks/useWorkspaceSearch";
+import { closeWorkspaceSearch, isWorkspaceSearchVisible } from "@/hooks/useWorkspaceSearch";
 
 interface SearchMatch {
   path: string;
@@ -285,7 +282,10 @@ async function openMatch(item: SearchMatch | undefined): Promise<void> {
 
           <div ref="listRef" class="ws-search-results">
             <template v-if="matches.length > 0">
-              <template v-for="(item, index) in matches" :key="`${item.path}:${item.line}:${item.column}`">
+              <template
+                v-for="(item, index) in matches"
+                :key="`${item.path}:${item.line}:${item.column}`"
+              >
                 <div
                   v-if="index === 0 || matches[index - 1].path !== item.path"
                   class="ws-file-header"

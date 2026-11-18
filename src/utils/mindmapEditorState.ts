@@ -19,5 +19,7 @@ export function setMindMapEditorOpen(open: boolean): void {
 
 /** 思维导图编辑器是否打开 */
 export function isMindMapEditorOpen(): boolean {
-  return typeof document !== "undefined" && document.documentElement.dataset.mindmapEditing === "true";
+  return (
+    typeof document !== "undefined" && document.documentElement.dataset.mindmapEditing === "true"
+  );
 }

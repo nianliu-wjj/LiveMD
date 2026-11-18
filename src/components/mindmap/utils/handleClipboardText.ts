@@ -29,7 +29,9 @@ interface ConvertedNode {
 }
 
 /** 知犀节点数据 → simple-mind-map 节点数据（图片转为 data URL，保证离线可用） */
-async function handleZhixi(raw: unknown): Promise<{ simpleMindMap: true; data: ConvertedNode[] } | ""> {
+async function handleZhixi(
+  raw: unknown
+): Promise<{ simpleMindMap: true; data: ConvertedNode[] } | ""> {
   try {
     let list = raw;
     if (!Array.isArray(list)) {

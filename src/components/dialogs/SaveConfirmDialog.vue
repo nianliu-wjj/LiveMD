@@ -1,37 +1,37 @@
 <script setup lang="ts">
-type DialogType = 'close' | 'overwrite' | 'file-changed'
+type DialogType = "close" | "overwrite" | "file-changed";
 
 interface Props {
-  visible: boolean
-  tabName?: string
-  type?: DialogType
-  fileName?: string
+  visible: boolean;
+  tabName?: string;
+  type?: DialogType;
+  fileName?: string;
 }
 
 interface Emits {
-  (e: 'save'): void
-  (e: 'discard'): void
-  (e: 'cancel'): void
-  (e: 'overwrite'): void
+  (e: "save"): void;
+  (e: "discard"): void;
+  (e: "cancel"): void;
+  (e: "overwrite"): void;
 }
 
-const { visible, tabName, type = 'close', fileName } = defineProps<Props>()
-const emit = defineEmits<Emits>()
+const { visible, tabName, type = "close", fileName } = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 function handleSave() {
-  emit('save')
+  emit("save");
 }
 
 function handleDiscard() {
-  emit('discard')
+  emit("discard");
 }
 
 function handleCancel() {
-  emit('cancel')
+  emit("cancel");
 }
 
 function handleOverwrite() {
-  emit('overwrite')
+  emit("overwrite");
 }
 </script>
 
@@ -40,76 +40,42 @@ function handleOverwrite() {
     <div v-if="visible" class="dialog-overlay">
       <div class="dialog-content" @click.stop>
         <div class="dialog-header">
-          <h3 v-if="type === 'close'">
-            确认关闭
-          </h3>
-          <h3 v-else-if="type === 'overwrite'">
-            文件已存在
-          </h3>
-          <h3 v-else-if="type === 'file-changed'">
-            文件已变动
-          </h3>
+          <h3 v-if="type === 'close'">确认关闭</h3>
+          <h3 v-else-if="type === 'overwrite'">文件已存在</h3>
+          <h3 v-else-if="type === 'file-changed'">文件已变动</h3>
         </div>
         <div class="dialog-body">
           <template v-if="type === 'close'">
-            <p v-if="tabName">
-              文档 "{{ tabName }}" 有未保存的修改，请选择操作：
-            </p>
-            <p v-else>
-              当前文档有未保存的修改，请选择操作：
-            </p>
+            <p v-if="tabName">文档 "{{ tabName }}" 有未保存的修改，请选择操作：</p>
+            <p v-else>当前文档有未保存的修改，请选择操作：</p>
           </template>
           <template v-else-if="type === 'overwrite'">
-            <p v-if="fileName">
-              文件 "{{ fileName }}" 已存在，是否要覆盖当前内容？
-            </p>
-            <p v-else>
-              文件已存在，是否要覆盖当前内容？
-            </p>
-            <p class="dialog-detail">
-              选择"保存"将先保存当前内容，然后打开新文件。
-            </p>
+            <p v-if="fileName">文件 "{{ fileName }}" 已存在，是否要覆盖当前内容？</p>
+            <p v-else>文件已存在，是否要覆盖当前内容？</p>
+            <p class="dialog-detail">选择"保存"将先保存当前内容，然后打开新文件。</p>
           </template>
           <template v-else-if="type === 'file-changed'">
-            <p v-if="fileName">
-              文件 "{{ fileName }}" 已经变动，是否覆盖当前编辑的内容？
-            </p>
-            <p v-else>
-              文件已经变动，是否覆盖当前编辑的内容？
-            </p>
+            <p v-if="fileName">文件 "{{ fileName }}" 已经变动，是否覆盖当前编辑的内容？</p>
+            <p v-else>文件已经变动，是否覆盖当前编辑的内容？</p>
           </template>
         </div>
         <div class="dialog-footer">
           <template v-if="type === 'close'">
-            <button class="btn btn-secondary" @click="handleDiscard">
-              丢弃
-            </button>
+            <button class="btn btn-secondary" @click="handleDiscard">丢弃</button>
             <div>
-              <button class="btn btn-save" @click="handleSave">
-                保存
-              </button>
-              <button class="btn btn-secondary" @click="handleCancel">
-                取消
-              </button>
+              <button class="btn btn-save" @click="handleSave">保存</button>
+              <button class="btn btn-secondary" @click="handleCancel">取消</button>
             </div>
           </template>
           <template v-else-if="type === 'overwrite'">
-            <button class="btn btn-secondary" @click="handleCancel">
-              取消
-            </button>
+            <button class="btn btn-secondary" @click="handleCancel">取消</button>
             <div>
-              <button class="btn btn-save" @click="handleSave">
-                保存
-              </button>
-              <button class="btn btn-overwrite" @click="handleOverwrite">
-                覆盖
-              </button>
+              <button class="btn btn-save" @click="handleSave">保存</button>
+              <button class="btn btn-overwrite" @click="handleOverwrite">覆盖</button>
             </div>
           </template>
           <template v-else-if="type === 'file-changed'">
-            <button class="btn btn-secondary" @click="handleCancel">
-              取消
-            </button>
+            <button class="btn btn-secondary" @click="handleCancel">取消</button>
             <button class="btn btn-overwrite file-changed-overwrite" @click="handleOverwrite">
               覆盖
             </button>

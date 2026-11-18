@@ -62,10 +62,7 @@ test("demotes headings and turns heading 6 back into a paragraph", () => {
   const result = run(state, "demote");
 
   assert.equal(result.applied, true);
-  assert.equal(
-    serializeMarkdown(result.state.doc),
-    "## 一级标题\n\n普通段落\n\n六级标题\n"
-  );
+  assert.equal(serializeMarkdown(result.state.doc), "## 一级标题\n\n普通段落\n\n六级标题\n");
 });
 
 test("only changes the block under a collapsed selection", () => {

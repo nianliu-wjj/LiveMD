@@ -4,10 +4,10 @@
  */
 
 export interface TransitionConfig {
-  duration?: number
-  blurAmount?: number
-  scaleAmount?: number
-  translateY?: number
+  duration?: number;
+  blurAmount?: number;
+  scaleAmount?: number;
+  translateY?: number;
 }
 
 /**
@@ -18,7 +18,7 @@ const defaultConfig: Required<TransitionConfig> = {
   blurAmount: 20,
   scaleAmount: 0.95,
   translateY: 20,
-}
+};
 
 /**
  * 创建过渡动画钩子函数
@@ -26,79 +26,79 @@ const defaultConfig: Required<TransitionConfig> = {
  * @returns 过渡钩子函数对象
  */
 export function createHeightTransition(config: TransitionConfig = {}) {
-  const finalConfig = { ...defaultConfig, ...config }
-  const { duration, blurAmount, scaleAmount, translateY } = finalConfig
+  const finalConfig = { ...defaultConfig, ...config };
+  const { duration, blurAmount, scaleAmount, translateY } = finalConfig;
 
   return {
     onBeforeEnter(el: Element) {
-      const element = el as HTMLElement
-      element.style.height = '0px'
-      element.style.overflow = 'hidden'
-      element.style.filter = `blur(${blurAmount}px)`
-      element.style.transform = `scale(${scaleAmount}) translateY(${translateY}px)`
-      element.style.opacity = '0'
+      const element = el as HTMLElement;
+      element.style.height = "0px";
+      element.style.overflow = "hidden";
+      element.style.filter = `blur(${blurAmount}px)`;
+      element.style.transform = `scale(${scaleAmount}) translateY(${translateY}px)`;
+      element.style.opacity = "0";
     },
 
     onEnter(el: Element, done: () => void) {
-      const element = el as HTMLElement
-      const targetHeight = element.scrollHeight
+      const element = el as HTMLElement;
+      const targetHeight = element.scrollHeight;
 
       // 强制重排
-      void element.offsetHeight
+      void element.offsetHeight;
 
       // 设置过渡动画
-      element.style.height = `${targetHeight}px`
-      element.style.filter = 'blur(0px)'
-      element.style.transform = 'scale(1) translateY(0px)'
-      element.style.opacity = '1'
+      element.style.height = `${targetHeight}px`;
+      element.style.filter = "blur(0px)";
+      element.style.transform = "scale(1) translateY(0px)";
+      element.style.opacity = "1";
 
       // 动画完成后调用done
-      setTimeout(done, duration)
+      setTimeout(done, duration);
     },
 
     onAfterEnter(el: Element) {
-      const element = el as HTMLElement
-      element.style.height = ''
-      element.style.overflow = ''
-      element.style.filter = ''
-      element.style.opacity = ''
-      element.style.transition = ''
+      const element = el as HTMLElement;
+      element.style.height = "";
+      element.style.overflow = "";
+      element.style.filter = "";
+      element.style.opacity = "";
+      element.style.transition = "";
     },
 
     onBeforeLeave(el: Element) {
-      const element = el as HTMLElement
-      element.style.height = `${element.scrollHeight}px`
-      element.style.overflow = 'hidden'
-      element.style.filter = 'blur(0px)'
-      element.style.transform = 'scale(1) translateY(0px)'
-      element.style.opacity = '1'
+      const element = el as HTMLElement;
+      element.style.height = `${element.scrollHeight}px`;
+      element.style.overflow = "hidden";
+      element.style.filter = "blur(0px)";
+      element.style.transform = "scale(1) translateY(0px)";
+      element.style.opacity = "1";
 
       // 强制重排
-      void element.offsetHeight
+      void element.offsetHeight;
     },
 
     onLeave(el: Element, done: () => void) {
-      const element = el as HTMLElement
+      const element = el as HTMLElement;
 
       // 设置过渡动画
-      element.style.height = '0px'
-      element.style.filter = `blur(${blurAmount}px)`
-      element.style.transform = `scale(${scaleAmount}) translateY(${translateY}px)`
-      element.style.opacity = '0'
+      element.style.height = "0px";
+      element.style.filter = `blur(${blurAmount}px)`;
+      element.style.transform = `scale(${scaleAmount}) translateY(${translateY}px)`;
+      element.style.opacity = "0";
 
       // 动画完成后调用done
-      setTimeout(done, duration)
+      setTimeout(done, duration);
     },
 
     onAfterLeave(el: Element) {
-      const element = el as HTMLElement
-      element.style.height = ''
-      element.style.overflow = ''
-      element.style.filter = ''
-      element.style.opacity = ''
-      element.style.transition = ''
+      const element = el as HTMLElement;
+      element.style.height = "";
+      element.style.overflow = "";
+      element.style.filter = "";
+      element.style.opacity = "";
+      element.style.transition = "";
     },
-  }
+  };
 }
 
 /**
@@ -128,6 +128,6 @@ export const transitionEffects = {
     scaleAmount: 1,
     translateY: 0,
   }),
-}
+};
 
-export type TransitionEffect = ReturnType<typeof createHeightTransition>
+export type TransitionEffect = ReturnType<typeof createHeightTransition>;

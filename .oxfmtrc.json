@@ -1,5 +1,11 @@
 {
   "$schema": "./node_modules/oxfmt/configuration_schema.json",
   "trailingComma": "es5",
-  "ignorePatterns": ["src/core/mindmap-engine/**"]
+  "ignorePatterns": [
+    "src/core/mindmap-engine/**",
+    "harmony/**",
+    "public/typora-themes/**",
+    "src/assets/iconfont/**",
+    "src/components/mindmap/assets/icon-font/**"
+  ]
 }

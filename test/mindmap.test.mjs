@@ -75,7 +75,12 @@ test("serializeMindMapDocument：与解析往返一致，模板可直接解析",
 
 test("countMindMap：统计节点数与去掉富文本标签后的字数", () => {
   const doc = parseMindMapDocument(
-    JSON.stringify({ root: { data: { text: "<p><strong>根</strong>节点</p>" }, children: [{ data: { text: "子 一" }, children: [] }] } })
+    JSON.stringify({
+      root: {
+        data: { text: "<p><strong>根</strong>节点</p>" },
+        children: [{ data: { text: "子 一" }, children: [] }],
+      },
+    })
   );
   assert.deepEqual(countMindMap(doc.root), { nodes: 2, words: 5 });
 });

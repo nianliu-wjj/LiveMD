@@ -117,9 +117,7 @@ export function removeBookmarkFromMap(
 }
 
 /** 展平为可展示的行 */
-export function listBookmarks(
-  map: BookmarkMap
-): Array<{ filePath: string; entry: BookmarkEntry }> {
+export function listBookmarks(map: BookmarkMap): Array<{ filePath: string; entry: BookmarkEntry }> {
   return Object.entries(map).flatMap(([filePath, entries]) =>
     entries.map((entry) => ({ filePath, entry }))
   );

@@ -1,3 +1,3 @@
-export { default as Tree } from './Tree.vue'
+export { default as Tree } from "./Tree.vue";
 
-export * from './types'
+export * from "./types";

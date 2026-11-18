@@ -158,8 +158,11 @@
     "commit-msg": "node scripts/verify-commit.js"
   },
   "lint-staged": {
-    "*.{js,ts,tsx,vue,json}": [
+    "*.{js,ts,tsx,vue}": [
       "oxlint --fix",
+      "oxfmt"
+    ],
+    "*.json": [
       "oxfmt"
     ]
   },

@@ -1,22 +1,22 @@
-<script setup lang='ts'>
-import { ref } from 'vue'
+<script setup lang="ts">
+import { ref } from "vue";
 
 const props = defineProps<{
-  modelValue: string
-  placeholder?: string
-  label?: string
-  required?: boolean
-  type?: 'text' | 'number'
-}>()
+  modelValue: string;
+  placeholder?: string;
+  label?: string;
+  required?: boolean;
+  type?: "text" | "number";
+}>();
 const emit = defineEmits<{
-  (e: 'update:modelValue', modelValue: string): void
-  (e: 'change'): void
-}>()
-const modelValue = ref<string>(props.modelValue)
+  (e: "update:modelValue", modelValue: string): void;
+  (e: "change"): void;
+}>();
+const modelValue = ref<string>(props.modelValue);
 
 function handleChange() {
-  emit('update:modelValue', modelValue.value)
-  emit('change')
+  emit("update:modelValue", modelValue.value);
+  emit("change");
 }
 </script>
 
@@ -29,7 +29,7 @@ function handleChange() {
   </div>
 </template>
 
-<style lang='less' scoped>
+<style lang="less" scoped>
 .input-container {
   display: flex;
   align-items: center;
@@ -42,7 +42,7 @@ function handleChange() {
 
     &.required {
       &::after {
-        content: '*';
+        content: "*";
         color: rgba(233, 83, 83, 0.829);
       }
     }

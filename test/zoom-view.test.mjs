@@ -55,28 +55,44 @@ test("scaleAtPoint respects limits and ignores invalid current scale", () => {
 });
 
 test("clampPan centers small content and clamps oversized content", () => {
-  const centered = clampPan({ scale: 1, x: 999, y: -999 }, { width: 100, height: 50 }, {
-    width: 400,
-    height: 300,
-  });
+  const centered = clampPan(
+    { scale: 1, x: 999, y: -999 },
+    { width: 100, height: 50 },
+    {
+      width: 400,
+      height: 300,
+    }
+  );
   assert.deepEqual(centered, { scale: 1, x: 150, y: 125 });
 
-  const left = clampPan({ scale: 1, x: -100, y: -100 }, { width: 1000, height: 1000 }, {
-    width: 400,
-    height: 300,
-  });
+  const left = clampPan(
+    { scale: 1, x: -100, y: -100 },
+    { width: 1000, height: 1000 },
+    {
+      width: 400,
+      height: 300,
+    }
+  );
   assert.deepEqual(left, { scale: 1, x: -100, y: -100 });
 
-  const tooFar = clampPan({ scale: 1, x: 100, y: 100 }, { width: 1000, height: 1000 }, {
-    width: 400,
-    height: 300,
-  });
+  const tooFar = clampPan(
+    { scale: 1, x: 100, y: 100 },
+    { width: 1000, height: 1000 },
+    {
+      width: 400,
+      height: 300,
+    }
+  );
   assert.deepEqual(tooFar, { scale: 1, x: 0, y: 0 });
 
-  const negative = clampPan({ scale: 1, x: -900, y: -900 }, { width: 1000, height: 1000 }, {
-    width: 400,
-    height: 300,
-  });
+  const negative = clampPan(
+    { scale: 1, x: -900, y: -900 },
+    { width: 1000, height: 1000 },
+    {
+      width: 400,
+      height: 300,
+    }
+  );
   assert.deepEqual(negative, { scale: 1, x: -600, y: -700 });
 });
 

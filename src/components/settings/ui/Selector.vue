@@ -1,32 +1,32 @@
-<script setup lang='ts'>
-import { nextTick, ref } from 'vue'
+<script setup lang="ts">
+import { nextTick, ref } from "vue";
 
 const props = defineProps<{
-  modelValue: string
-  placeholder?: string
-  items: { label: string, value: any }[]
-  label?: string
-  required?: boolean
-}>()
+  modelValue: string;
+  placeholder?: string;
+  items: { label: string; value: any }[];
+  label?: string;
+  required?: boolean;
+}>();
 const emit = defineEmits<{
-  (e: 'update:modelValue', modelValue: string): void
-  (e: 'change', modelValue: string): void
-}>()
-const modelValue = ref<string>(props.modelValue)
-const isActive = ref(false)
+  (e: "update:modelValue", modelValue: string): void;
+  (e: "change", modelValue: string): void;
+}>();
+const modelValue = ref<string>(props.modelValue);
+const isActive = ref(false);
 function handleCheckItem(item: string) {
-  modelValue.value = item
+  modelValue.value = item;
 
-  emit('update:modelValue', modelValue.value)
-  emit('change', modelValue.value)
-  isActive.value = false
+  emit("update:modelValue", modelValue.value);
+  emit("change", modelValue.value);
+  isActive.value = false;
 }
 function handleBlur() {
   setTimeout(() => {
     nextTick(() => {
-      isActive.value = false
-    })
-  }, 150)
+      isActive.value = false;
+    });
+  }, 150);
 }
 </script>
 
@@ -35,11 +35,20 @@ function handleBlur() {
     <span v-if="label" class="label" :class="{ required }"> {{ label }}</span>
     <div>
       <input
-        v-model="items.find(item => item.value === modelValue)!.label" class="selector-container" readonly
-        :placeholder="placeholder" @focus="isActive = true" @blur="handleBlur"
+        v-model="items.find((item) => item.value === modelValue)!.label"
+        class="selector-container"
+        readonly
+        :placeholder="placeholder"
+        @focus="isActive = true"
+        @blur="handleBlur"
       />
       <div v-if="isActive" class="selector-items">
-        <div v-for="item in items" :key="item.value" class="selector-item" @click="handleCheckItem(item.value)">
+        <div
+          v-for="item in items"
+          :key="item.value"
+          class="selector-item"
+          @click="handleCheckItem(item.value)"
+        >
           {{ item.label }}
         </div>
       </div>
@@ -47,7 +56,7 @@ function handleBlur() {
   </div>
 </template>
 
-<style lang='less' scoped>
+<style lang="less" scoped>
 .Selector {
   position: relative;
   cursor: pointer;
@@ -62,13 +71,13 @@ function handleBlur() {
 
     &.required {
       &::after {
-        content: '*';
+        content: "*";
         color: rgba(233, 83, 83, 0.829);
       }
     }
   }
 
-  >div {
+  > div {
     position: relative;
   }
 

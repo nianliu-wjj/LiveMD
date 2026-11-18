@@ -2,10 +2,10 @@
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["unicorn", "typescript", "oxc", "vue"],
   "ignorePatterns": [
-    "iconfont/**",
-    "icons/**",
+    "src/assets/iconfont/**",
+    "src/assets/icons/**",
     "patches/**",
-    "lang/**",
+    "lang/index.js",
     "src/core/mindmap-engine/**"
   ],
   "rules": {}

@@ -207,7 +207,10 @@ test("rendered flow content does not inline the editor's full computed style", (
     const rendered = getRenderedSelectionRoot({ dom: editorDom });
     const payload = buildClipboardPayload("flow text\ncell", rendered);
     const parsed = new window.DOMParser().parseFromString(payload.html, "text/html");
-    assert.ok(payload.html.length < 10_000, `clipboard HTML expanded to ${payload.html.length} characters`);
+    assert.ok(
+      payload.html.length < 10_000,
+      `clipboard HTML expanded to ${payload.html.length} characters`
+    );
     assert.doesNotMatch(payload.html, /--editor-internal-/);
     assert.equal(parsed.querySelector("p")?.style.color, "");
     assert.equal(parsed.querySelector("p")?.style.cursor, "");

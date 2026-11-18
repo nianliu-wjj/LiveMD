@@ -41,9 +41,7 @@ const listRef = ref<HTMLElement | null>(null);
 
 const modeLabel = computed(() => (quickOpenMode.value === "files" ? "快速打开" : "命令面板"));
 const placeholder = computed(() =>
-  quickOpenMode.value === "files"
-    ? "输入文件名搜索工作区文件、最近文件…"
-    : "输入命令名称或关键词…"
+  quickOpenMode.value === "files" ? "输入文件名搜索工作区文件、最近文件…" : "输入命令名称或关键词…"
 );
 
 function getDirname(filePath: string): string {
@@ -107,7 +105,9 @@ const fileItems = computed<PaletteItem[]>(() => {
   }
 
   // 工作区文件
-  const walk = (nodes: Array<{ name: string; path: string; isDirectory: boolean; children?: any[] }>) => {
+  const walk = (
+    nodes: Array<{ name: string; path: string; isDirectory: boolean; children?: any[] }>
+  ) => {
     if (!nodes || items.length > 5000) return;
     for (const node of nodes) {
       if (node.isDirectory) {
@@ -136,7 +136,12 @@ const filteredItems = computed<DisplayItem[]>(() => {
 
   const filtered = source.filter((item) => {
     if (!query) return true;
-    const haystack = [item.title, item.subtitle ?? "", item.category ?? "", ...(item.keywords ?? [])]
+    const haystack = [
+      item.title,
+      item.subtitle ?? "",
+      item.category ?? "",
+      ...(item.keywords ?? []),
+    ]
       .join("\n")
       .toLowerCase();
     return query.split(/\s+/).every((part) => haystack.includes(part));

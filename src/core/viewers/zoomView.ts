@@ -112,9 +112,14 @@ export function fitScale(content: Size, viewport: Size, options: FitOptions = {}
   const padding = Math.max(0, options.padding ?? DEFAULT_FIT_PADDING);
   const availableWidth = Math.max(1, viewport.width - padding * 2);
   const availableHeight = Math.max(1, viewport.height - padding * 2);
-  const raw = Math.min(availableWidth / Math.max(1, content.width), availableHeight / Math.max(1, content.height));
+  const raw = Math.min(
+    availableWidth / Math.max(1, content.width),
+    availableHeight / Math.max(1, content.height)
+  );
   const max = options.allowUpscale
-    ? (isPositiveFinite(options.max) ? options.max : DEFAULT_MAX_SCALE)
+    ? isPositiveFinite(options.max)
+      ? options.max
+      : DEFAULT_MAX_SCALE
     : Math.min(1, isPositiveFinite(options.max) ? options.max : 1);
   const min = isPositiveFinite(options.min) ? options.min : DEFAULT_MIN_SCALE;
   return clamp(raw, min, Math.max(min, max));
@@ -129,7 +134,11 @@ export function centerTransform(content: Size, viewport: Size, scale: number): Z
   };
 }
 
-export function fitTransform(content: Size, viewport: Size, options: FitOptions = {}): ZoomTransform {
+export function fitTransform(
+  content: Size,
+  viewport: Size,
+  options: FitOptions = {}
+): ZoomTransform {
   return centerTransform(content, viewport, fitScale(content, viewport, options));
 }
 
@@ -151,7 +160,10 @@ export function modeScale(
   const availableWidth = Math.max(1, viewport.width - padding * 2);
   switch (mode) {
     case "readable":
-      return clampScale(Math.max(0.85, Math.min(1, availableWidth / Math.max(1, content.width))), options);
+      return clampScale(
+        Math.max(0.85, Math.min(1, availableWidth / Math.max(1, content.width))),
+        options
+      );
     case "fit":
       return fitScale(content, viewport, options);
     case "original":

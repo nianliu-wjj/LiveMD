@@ -162,12 +162,7 @@ test("relocation searches inside the original block when offsets are out of rang
 });
 
 test("relocation spreads to neighbor blocks (radius 3, left first) when the block is gone", () => {
-  const blocks = [
-    block("第一段"),
-    block("第二段"),
-    block("第三段"),
-    block("目标文字搬到了邻块"),
-  ];
+  const blocks = [block("第一段"), block("第二段"), block("第三段"), block("目标文字搬到了邻块")];
   const anchor = {
     startBlockIndex: 6, // 原块已不存在（越界索引）
     endBlockIndex: 6,

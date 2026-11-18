@@ -144,9 +144,7 @@ export function formatCjkSpacing(markdown: string, options: CjkSpacingOptions = 
   }
   protectedText += markdown.slice(cursor);
 
-  const padded = protectedText
-    .replace(CJK_TO_LATIN_RE, "$1 $2")
-    .replace(LATIN_TO_CJK_RE, "$1 $2");
+  const padded = protectedText.replace(CJK_TO_LATIN_RE, "$1 $2").replace(LATIN_TO_CJK_RE, "$1 $2");
 
   return padded.replace(PLACEHOLDER_RE, (_, index: string) => placeholders[Number(index)] ?? "");
 }

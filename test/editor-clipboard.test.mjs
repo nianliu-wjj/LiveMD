@@ -9,9 +9,17 @@ import { createServer } from "vite";
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const window = new Window({ url: "http://localhost" });
 const previousGlobals = new Map(
-  ["window", "document", "Node", "NodeFilter", "HTMLElement", "localStorage", "getComputedStyle", "requestAnimationFrame", "cancelAnimationFrame"].map(
-    (key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)]
-  )
+  [
+    "window",
+    "document",
+    "Node",
+    "NodeFilter",
+    "HTMLElement",
+    "localStorage",
+    "getComputedStyle",
+    "requestAnimationFrame",
+    "cancelAnimationFrame",
+  ].map((key) => [key, Object.getOwnPropertyDescriptor(globalThis, key)])
 );
 
 Object.assign(globalThis, {
@@ -68,7 +76,9 @@ test("mixed editor copy writes reflowable HTML without viewport geometry", () =>
   });
 
   try {
-    editor.view.dispatch(editor.view.state.tr.setSelection(new AllSelection(editor.view.state.doc)));
+    editor.view.dispatch(
+      editor.view.state.tr.setSelection(new AllSelection(editor.view.state.doc))
+    );
     const writes = new Map();
     const event = new window.Event("copy", { bubbles: true, cancelable: true });
     Object.defineProperty(event, "clipboardData", {

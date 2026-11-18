@@ -45,11 +45,11 @@ LiveMD 基于 Tauri 2 + Vue 3 构建，编辑内核为自研的 LiveMD 引擎（
 
 ### 环境要求
 
-| 工具 | 版本 |
-| --- | --- |
-| Node.js | ≥ 20.17.0 |
-| pnpm | ≥ 10.0.0 |
-| Rust | 最新稳定版（Tauri 2 要求） |
+| 工具     | 版本                                                                                         |
+| -------- | -------------------------------------------------------------------------------------------- |
+| Node.js  | ≥ 20.17.0                                                                                    |
+| pnpm     | ≥ 10.0.0                                                                                     |
+| Rust     | 最新稳定版（Tauri 2 要求）                                                                   |
 | 系统依赖 | Windows：WebView2；Linux：`libgtk-3` `libwebkit2gtk-4.1` 等；macOS：Xcode Command Line Tools |
 
 ### 开发运行
@@ -85,13 +85,13 @@ pnpm dist:linux-arm64
 
 ### 内置主题
 
-| 主题族 | 亮色 | 暗色 |
-| --- | --- | --- |
-| 经典 | normal / crepe / frame | normal-dark / crepe-dark / frame-dark |
-| Dracula | dracula | dracula-dark |
-| Atom One | one | one-dark |
-| Solarized | solarized | solarized-dark |
-| Typora 官方 | github / newsprint / pixyll / whitey | night |
+| 主题族      | 亮色                                 | 暗色                                  |
+| ----------- | ------------------------------------ | ------------------------------------- |
+| 经典        | normal / crepe / frame               | normal-dark / crepe-dark / frame-dark |
+| Dracula     | dracula                              | dracula-dark                          |
+| Atom One    | one                                  | one-dark                              |
+| Solarized   | solarized                            | solarized-dark                        |
+| Typora 官方 | github / newsprint / pixyll / whitey | night                                 |
 
 ### 导入 Typora 官方主题
 
@@ -131,16 +131,16 @@ pnpm import:typora-themes <主题目录>
 
 ## 🛠 开发命令
 
-| 命令 | 说明 |
-| --- | --- |
-| `pnpm dev` | 桌面端开发（Tauri + Vite 热更新） |
-| `pnpm dev:web` | 仅前端 Web 预览 |
-| `pnpm test` | 运行 `test/` 全部单元测试 |
-| `pnpm lint` | oxlint 静态检查 + oxfmt 格式校验 |
-| `pnpm format` | 自动修复 lint 问题并统一格式 |
-| `pnpm build` | 当前平台构建 |
-| `pnpm import:typora-themes` | 重新生成 Typora 主题产物 |
-| `pnpm generate-icons` / `pnpm generate-tauri-icons` | 由 SVG 生成应用图标 |
+| 命令                                                | 说明                              |
+| --------------------------------------------------- | --------------------------------- |
+| `pnpm dev`                                          | 桌面端开发（Tauri + Vite 热更新） |
+| `pnpm dev:web`                                      | 仅前端 Web 预览                   |
+| `pnpm test`                                         | 运行 `test/` 全部单元测试         |
+| `pnpm lint`                                         | oxlint 静态检查 + oxfmt 格式校验  |
+| `pnpm format`                                       | 自动修复 lint 问题并统一格式      |
+| `pnpm build`                                        | 当前平台构建                      |
+| `pnpm import:typora-themes`                         | 重新生成 Typora 主题产物          |
+| `pnpm generate-icons` / `pnpm generate-tauri-icons` | 由 SVG 生成应用图标               |
 
 ## 📖 提交规范
 
