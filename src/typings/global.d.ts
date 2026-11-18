@@ -166,7 +166,8 @@ interface Window {
     openThemeEditor: (theme?: any) => void;
     themeEditorWindowControl: (action: "minimize" | "maximize" | "close") => void;
     saveCustomTheme: (theme: any) => void;
-    platform: NodeJS.Platform;
+    platform: "win32" | "darwin" | "linux" | "android";
+    isMobile: boolean;
     rendererReady: () => void;
     // Tab 拖拽分离
     tearOffTabStart: (

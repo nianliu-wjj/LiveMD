@@ -19,8 +19,6 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = ["protocol-asset"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-opener = "2"
-# 单实例插件仅桌面可用（Android 构建经 lib.rs 的 cfg(desktop) 门控不参与编译）
-tauri-plugin-single-instance = "2"
 tauri-plugin-clipboard-manager = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -36,6 +34,11 @@ url = "2"
 percent-encoding = "2"
 base64 = "0.23"
 uuid = { version = "1", features = ["v4"] }
+
+# 单实例插件仅桌面可用。不要写成 cfg(desktop)：desktop 是 tauri-build 在
+# rustc 编译期注入的 cfg，Cargo 依赖解析阶段尚未运行 build script，会求值为 false。
+[target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "2"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "system-proxy"] }

@@ -8,6 +8,8 @@ import { isMindMapEditorOpen } from "@/utils/mindmapEditorState";
 
 type Listener = (...args: any[]) => void;
 
+type LivePlatform = "win32" | "darwin" | "linux" | "android";
+
 type Registration = {
   channel: string;
   listener: Listener;
@@ -18,11 +20,17 @@ const registrations = new Map<Listener, Map<string, Registration>>();
 const droppedFilePaths = new WeakMap<File, string>();
 const pendingSubscriptions = new Set<Promise<unknown>>();
 
-const platform: NodeJS.Platform = /Mac/i.test(navigator.userAgent)
-  ? "darwin"
-  : /Linux/i.test(navigator.userAgent)
-    ? "linux"
-    : "win32";
+function detectPlatform(): LivePlatform {
+  const ua = navigator.userAgent;
+  // Android WebView 的 UA 同时包含 "Android" 与 "Linux"，必须先判断 Android。
+  if (/Android/i.test(ua)) return "android";
+  if (/Mac/i.test(ua)) return "darwin";
+  if (/Linux/i.test(ua)) return "linux";
+  return "win32";
+}
+
+const platform: LivePlatform = detectPlatform();
+const isMobile = platform === "android";
 
 function subscribe(channel: string, listener: Listener): void {
   let disposed = false;
@@ -581,6 +589,7 @@ const electronAPI = {
     fire("theme_editor_window_control", { action }),
   saveCustomTheme: (theme: any) => fire("save_custom_theme", { theme }),
   platform,
+  isMobile,
   rendererReady: async () => {
     await Promise.allSettled(pendingSubscriptions);
     return invoke("renderer_ready");
