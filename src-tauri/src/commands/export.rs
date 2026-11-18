@@ -253,9 +253,10 @@ unsafe fn print_pdf_macos_sync(
 ) -> Result<(), String> {
     use objc2::msg_send;
     use objc2_app_kit::{
-        NSPaperOrientation, NSPrintInfo, NSPrintSaveJob, NSPrintSavePath, NSPrintingPaginationMode,
+        NSPaperOrientation, NSPrintInfo, NSPrintJobSavingURL, NSPrintSaveJob,
+        NSPrintingPaginationMode,
     };
-    use objc2_foundation::{NSSize, NSString};
+    use objc2_foundation::{NSSize, NSString, NSURL};
     use objc2_web_kit::WKWebView;
 
     let webview = webview
@@ -287,7 +288,8 @@ unsafe fn print_pdf_macos_sync(
 
     let dictionary = print_info.dictionary();
     let ns_path = NSString::from_str(path);
-    let _: () = msg_send![&*dictionary, setObject: &*ns_path, forKey: NSPrintSavePath];
+    let ns_url = NSURL::fileURLWithPath(&ns_path);
+    let _: () = msg_send![&*dictionary, setObject: &*ns_url, forKey: NSPrintJobSavingURL];
 
     let operation = webview.printOperationWithPrintInfo(&print_info);
     operation.setShowsPrintPanel(false);
