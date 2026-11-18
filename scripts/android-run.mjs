@@ -79,6 +79,14 @@ if (process.platform === "win32" && !canSymlink()) {
       { cwd: root, stdio: "inherit" }
     );
     if (result.error) throw result.error;
+    const logPath = resultPath + ".log";
+    try {
+      const savedLog = join(tmpdir(), "livemd-android-build.log");
+      writeFileSync(savedLog, readFileSync(logPath));
+      console.log(`完整构建日志：${savedLog}`);
+    } catch {
+      /* UAC cancellation may produce no build log. */
+    }
     process.exitCode =
       result.status === 0
         ? JSON.parse(readFileSync(resultPath, "utf8")).exitCode
