@@ -1,5 +1,6 @@
 #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
-use std::path::{Path, PathBuf};
+use std::path::Path;
+use std::path::PathBuf;
 #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use std::time::Duration;
 
@@ -7,7 +8,6 @@ use serde::Deserialize;
 #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use serde_json::Value;
 use tauri::{AppHandle, Runtime, WebviewWindow};
-#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use tauri_plugin_dialog::{DialogExt, FilePath};
 
 #[derive(Deserialize, Debug, Default)]
@@ -21,12 +21,10 @@ pub struct ExportPdfOptions {
     scale: Option<f64>,
 }
 
-#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 fn file_path_to_buf(path: FilePath) -> Option<PathBuf> {
     path.into_path().ok()
 }
 
-#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 fn ensure_extension(mut path: PathBuf, extension: &str) -> PathBuf {
     if path.extension().is_none() {
         path.set_extension(extension);
