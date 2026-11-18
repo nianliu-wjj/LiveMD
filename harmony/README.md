@@ -53,6 +53,16 @@ cd harmony
 hvigorw assembleHap --mode module -p product=default
 ```
 
+## 构建问题排查
+
+| 现象 | 处理 |
+| --- | --- |
+| 资源缺失（`$media:app_icon`、`$string:*`、`$color:*`） | 先确认已执行 `pnpm dist:harmony` 生成 `entry/src/main/resources/rawfile/www`；仓库已包含 `AppScope/resources/base/media/app_icon.png` 与 entry 侧资源，若仍报缺失，检查本地是否误删文件 |
+| 首次 hvigor Sync 卡住或依赖下载失败 | Sync 需要联网，配置内网代理或镜像后重试；可删除 `harmony/.hvigor` 缓存后重新打开工程 |
+| `modelVersion` 相关异常 | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应保持 `5.0.5`，且与 DevEco Studio 版本匹配 |
+| 构建 HAP 提示未签名 | 先完成上文的自动签名配置；未签名工程只能预览，无法产出可安装 HAP |
+| ArkTS 报 `getContext` 已废弃 | 页面内应使用 `getContext(this)`；仓库代码已修正，避免回退为无参调用 |
+
 ## 版本对应
 
 - `compatibleSdkVersion`: 5.0.5(17) —— HarmonyOS NEXT 5.0.5 / API 17
