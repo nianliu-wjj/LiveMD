@@ -15,6 +15,8 @@ const LATIN_TO_CJK_RE = new RegExp(`([${LATIN_CHAR}])([${CJK_CHAR}])`, "g");
 /** 受保护片段的占位符（NUL 不会出现在正常 Markdown 文本中） */
 const PLACEHOLDER_START = "\u0000";
 const PLACEHOLDER_END = "\u0000";
+// NUL 占位符是内部约定，正常 Markdown 文本不会包含控制字符。
+// oxlint-disable-next-line no-control-regex
 const PLACEHOLDER_RE = /\u0000(\d+)\u0000/g;
 
 interface ProtectedSpan {

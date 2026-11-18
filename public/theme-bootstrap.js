@@ -30,7 +30,7 @@
   try {
     name = localStorage.getItem("theme-name") || name;
     customs = JSON.parse(localStorage.getItem("custom-themes") || "[]");
-  } catch (_) {}
+  } catch {}
   if (!Array.isArray(customs)) customs = [];
   name = legacy[name] || name;
   var custom = customs.find(function (t) {

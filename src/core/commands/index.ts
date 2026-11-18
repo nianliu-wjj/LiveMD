@@ -5,7 +5,7 @@
  */
 
 import { EditorState, Transaction, TextSelection } from "prosemirror-state";
-import { Fragment, Node, Mark, MarkType, NodeType } from "prosemirror-model";
+import { Fragment, Node } from "prosemirror-model";
 import { toggleMark, setBlockType, wrapIn, lift } from "prosemirror-commands";
 
 type Command = (state: EditorState, dispatch?: (tr: Transaction) => void) => boolean;
@@ -220,7 +220,7 @@ export function removeLink(state: EditorState, dispatch?: (tr: Transaction) => v
  */
 export function insertTable(rows = 3, cols = 3): Command {
   return (state, dispatch) => {
-    const { table, table_row, table_header, table_cell, paragraph } = state.schema.nodes;
+    const { table, table_row, table_header, table_cell } = state.schema.nodes;
     if (!table || !table_row || !table_header || !table_cell) return false;
 
     if (dispatch) {
@@ -289,7 +289,7 @@ function findTableContext(state: EditorState) {
  * 创建一行新的 cells
  */
 function createRow(state: EditorState, colCount: number, useHeader: boolean): Node {
-  const { table_row, table_header, table_cell, paragraph } = state.schema.nodes;
+  const { table_row, table_header, table_cell } = state.schema.nodes;
   const cellType = useHeader ? table_header : table_cell;
   const cells: Node[] = [];
   for (let i = 0; i < colCount; i++) {
@@ -488,7 +488,7 @@ export function resizeTable(
   if (rows === currentRows && cols === currentCols) return false;
 
   if (dispatch) {
-    const { table_row, table_header, table_cell, paragraph } = state.schema.nodes;
+    const { table_row, table_header, table_cell } = state.schema.nodes;
     const newRows: Node[] = [];
     for (let rowIndex = 0; rowIndex < rows; rowIndex += 1) {
       const cellType = rowIndex === 0 ? table_header : table_cell;

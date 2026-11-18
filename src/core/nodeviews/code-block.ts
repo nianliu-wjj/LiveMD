@@ -1018,7 +1018,7 @@ export class CodeBlockView implements NodeView {
   /**
    * 初始化源码模式
    */
-  private initSourceViewMode(language: string): void {
+  private initSourceViewMode(_language: string): void {
     // 订阅源码模式状态变化
     this.sourceViewUnsubscribe = sourceViewManager.subscribe((sourceView) => {
       this.setSourceViewMode(sourceView);
@@ -1301,7 +1301,7 @@ export class CodeBlockView implements NodeView {
               selection.removeAllRanges();
               selection.addRange(range);
             }
-          } catch (e) {
+          } catch {
             // 忽略光标恢复错误
           }
         }
@@ -2969,7 +2969,7 @@ export class CodeBlockView implements NodeView {
                 selection.removeAllRanges();
                 selection.addRange(range);
               }
-            } catch (e) {
+            } catch {
               // 忽略光标恢复错误
             }
           });

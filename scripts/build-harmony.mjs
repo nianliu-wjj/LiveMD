@@ -6,7 +6,6 @@
  */
 
 import { cpSync, existsSync, mkdirSync, rmSync } from "node:fs";
-import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 
 const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");

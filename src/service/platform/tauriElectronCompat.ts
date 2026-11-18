@@ -116,41 +116,6 @@ function toTauriAssetUrl(path: string): string {
   }
 }
 
-function fileUrlToPath(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    if (parsed.protocol !== "file:") return null;
-    let path = decodeURIComponent(parsed.pathname);
-    if (parsed.host) {
-      path = `\\\\${parsed.host}${path.replace(/\//g, "\\")}`;
-    } else if (/^\/[a-zA-Z]:/.test(path)) {
-      path = path.slice(1);
-    }
-    return path;
-  } catch {
-    return null;
-  }
-}
-
-function resolveLivemdUrl(src: string): string | null {
-  let raw = src.slice("livemd://".length);
-  if (raw.startsWith("/")) raw = raw.slice(1);
-  const slash = raw.indexOf("/");
-  if (slash === -1) return null;
-
-  const encodedMarkdownPath = raw.slice(0, slash);
-  const relativePath = raw.slice(slash + 1);
-  try {
-    const bytes = Uint8Array.from(atob(encodedMarkdownPath), (char) => char.charCodeAt(0));
-    const markdownPath = new TextDecoder().decode(bytes);
-    const absolutePath = joinPath(dirname(markdownPath), decodeURIComponent(relativePath));
-    return toTauriAssetUrl(absolutePath);
-  } catch (error) {
-    console.error("[tauri] 解析 livemd:// 图片地址失败:", src, error);
-    return null;
-  }
-}
-
 function resolveLocalImagePath(markdownFilePath: string, imagePath: string): string {
   return joinPath(dirname(markdownFilePath), imagePath);
 }

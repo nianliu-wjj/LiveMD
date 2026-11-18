@@ -5,8 +5,7 @@
  * 例如：删除 **a** 的后两个 ** 后，应该移除 strong mark
  */
 
-import { Plugin, PluginKey, Transaction } from "prosemirror-state";
-import { Node, Mark } from "prosemirror-model";
+import { Plugin, PluginKey } from "prosemirror-state";
 import { forEachNodeInRanges, getAffectedBlockRanges } from "./changed-ranges";
 
 /** 语法定义 */

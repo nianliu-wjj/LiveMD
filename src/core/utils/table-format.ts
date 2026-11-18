@@ -97,10 +97,6 @@ function isTableRow(line: string): boolean {
   return trimmed.startsWith("|") && trimmed.endsWith("|");
 }
 
-function isFenceLine(line: string): boolean {
-  return /^\s{0,3}(`{3,}|~{3,})/.test(line);
-}
-
 function padCell(value: string, width: number, alignment: Alignment | undefined): string {
   const padding = Math.max(0, width - displayWidth(value));
   if (alignment?.left && alignment?.right) {

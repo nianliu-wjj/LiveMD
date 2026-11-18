@@ -29,7 +29,7 @@ import {
   writeClipboardPayload,
   type ClipboardPayload,
 } from "./clipboard";
-import { parseMarkdown, MarkdownParser } from "./parser";
+import { MarkdownParser } from "./parser";
 import { serializeMarkdown, MarkdownSerializer } from "./serializer";
 import { createInstantRenderPlugin } from "./plugins/instant-render";
 import { createInputRulesPlugin } from "./plugins/input-rules";
@@ -1122,7 +1122,6 @@ export class LivemdEditor implements ILivemdEditor {
     }
 
     // 检查是否点击在最后一个节点下方
-    const lastNodePos = doc.content.size - lastChild.nodeSize;
     const lastNodeEndPos = doc.content.size;
     const lastNodeCoords = view.coordsAtPos(lastNodeEndPos);
     if (clickY > lastNodeCoords.bottom) {
@@ -1265,7 +1264,7 @@ export class LivemdEditor implements ILivemdEditor {
 
     dom.addEventListener(
       "mouseup",
-      (e: Event) => {
+      () => {
         this.recordMouseupSelectionSnapshot();
         queueMicrotask(() => this.correctSelectionFromHiddenSyntaxMarker());
         setTimeout(() => this.correctSelectionFromHiddenSyntaxMarker(), 0);

@@ -26,6 +26,8 @@ interface SegmentData {
 }
 
 /** 依附在前一个字符上的码点：组合附标、变体选择符、ZWJ 本身、肤色修饰符 */
+// 正则带 u 标志，按码点解析无歧义；此处需要把组合序列整体识别为 Extend。
+// oxlint-disable-next-line no-misleading-character-class
 const EXTEND_RE = /[\p{M}\u200D\uFE00-\uFE0F\u{1F3FB}-\u{1F3FF}\u{E0020}-\u{E007F}]/u;
 /** 区域指示符（两两组成国旗） */
 const REGIONAL_INDICATOR_RE = /[\u{1F1E6}-\u{1F1FF}]/u;

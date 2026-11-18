@@ -273,7 +273,7 @@ watch(isShowOutline, async (val) => {
     // 先瞬间切回 transform 定位（视觉位置不变，无动画）
     outlineState.value = "closing-prep";
     await nextTick();
-    editorAreaRef.value?.offsetHeight; // 强制浏览器应用样式
+    void editorAreaRef.value?.offsetHeight; // 强制浏览器应用样式
     outlineState.value = "closing";
   }
 });

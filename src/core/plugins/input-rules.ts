@@ -520,7 +520,7 @@ function inlineCodeRule(markType: MarkType): InputRule {
  */
 function strongRule(markType: MarkType): InputRule {
   return createInlineRuleWithSyntax(
-    /(?<!\*)(\*\*)(?!\*)(.+?)(?<!\*)\1(?!\*)$|(?<!_)(__)(?!_)(.+?)(?<!_)\1(?!_)$/,
+    /(?<!\*)(\*\*)(?!\*)(.+?)(?<!\*)\1(?!\*)$|(?<!_)(__)(?!_)(.+?)(?<!_)\3(?!_)$/,
     markType,
     (m) => m[1] || m[3],
     (m) => m[1] || m[3],

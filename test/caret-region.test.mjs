@@ -10,7 +10,6 @@ const server = await createServer({
   server: { middlewareMode: true },
 });
 
-const { livemdSchema } = await server.ssrLoadModule("/src/core/schema/index.ts");
 const { defaultParser } = await server.ssrLoadModule("/src/core/parser/index.ts");
 const { computeCaretRegions } = await server.ssrLoadModule("/src/core/decorations/caret-style.ts");
 
