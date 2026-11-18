@@ -67,3 +67,12 @@ hvigorw assembleHap --mode module -p product=default
 
 - `compatibleSdkVersion`: 5.0.5(17) —— HarmonyOS NEXT 5.0.5 / API 17
 - 设备类型：phone / tablet
+
+
+## DevEco 直接运行的前端资源同步
+
+entry/hvigorfile.ts 在构建配置加载时调用 scripts/build-harmony.mjs --prepare。
+脚本对 src/、public/、lang/ 和前端构建配置计算 SHA-256；指纹变化时先运行 Vite 构建，再同步 dist 到 rawfile/www。
+指纹缓存位于 harmony/.hvigor/，不纳入版本管理。安装 JavaScript 依赖后即可从 DevEco 直接运行，避免将旧前端资源打入 HAP。
+
+2026-11-18 模拟器排查确认：原安装包仍使用旧资源，点击打开文件触发缺失的 Tauri invoke；同步最新资源、重新构建安装后，按钮已弹出 DocumentViewPicker 原生文件选择器。HAP 编译、模拟器安装及选择器弹出均验证通过；模拟器暂无 Markdown 文件，选中文件后的完整读取仍待验证。

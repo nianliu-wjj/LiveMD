@@ -569,3 +569,9 @@ large-document-mode 块）；caret-smoke 新增断言 **9b**：li 与其宿主 u
 移动打开文件失败的原因：安卓原生选择器返回 content URI，原 open_file 用 into_path 转换并静默丢弃失败结果；鸿蒙没有 Tauri 后端却调用 Rust 命令。移动端改用文件输入读取 File 内容，鸿蒙 ArkWeb 增加 DocumentViewPicker 回调。内容直接创建标签，不再按路径重读，保留 BOM/换行信息。导入作为未保存副本，原文件不会直接覆盖；保存能力与相对图片访问仍需要平台文件系统支持。
 
 验证：移动 UI 4 项、移动文件解码 2 项回归；前端构建与静态检查。Android/HarmonyOS 文件选择器及 macOS 光标场景仍需真机验证，母语翻译校对仍需语言使用者反馈。当前 pnpm 12 与旧 pnpm 配置不兼容，使用已安装工具直接运行验证。
+
+## 九、鸿蒙模拟器打开文件按钮复验
+
+2026-11-18 使用 DevEco SDK hdc 连接 127.0.0.1:5555。旧 rawfile 资源没有 ignoreBOM 移动导入代码，点击按钮的 ArkWeb 日志为 Cannot read properties of undefined (reading invoke)。最新 dist 含移动导入逻辑，之前仅重新编译 ArkTS 不会同步它。
+
+同步资源后以 DevEco 内置 Node 与 SDK 构建 HAP，安装到模拟器，点击首页打开文件已成功弹出 DocumentViewPicker（含首次安全访问文件管理提示）。新增 entry/hvigorfile.ts 前端准备步骤，按源码指纹重建并同步，防止 DevEco 直接运行继续打包旧资源。构建成功；选择器弹出已验证；模拟器无 Markdown 样本，选中后完整读取尚未验证。
