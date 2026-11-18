@@ -1,3 +1,4 @@
+import { pickMobileMarkdown, decodeMobileMarkdown } from "@/service/mobileFile";
 import type { Tab } from "@/typings/tab";
 // useFile.ts
 import { nextTick } from "vue";
@@ -30,6 +31,28 @@ async function onOpen(result?: { filePath: string; content: string } | null) {
   const { markdown, filePath, originalContent } = useContent();
   const { openFile } = useTab();
 
+  if (!result && window.electronAPI.isMobile) {
+    const file = await pickMobileMarkdown();
+    if (!file) return;
+    const decoded = decodeMobileMarkdown(
+      file.name,
+      new TextDecoder("utf-8", { ignoreBOM: true }).decode(await file.arrayBuffer())
+    );
+    const { createTabFromFile, switchToTab } = useTab();
+    const tab = await createTabFromFile(file.name, decoded.content, decoded.fileTraits, {
+      readOnly: false,
+    });
+    tab.filePath = null;
+    tab.isModified = true;
+    tab.isNewlyLoaded = false;
+    await switchToTab(tab.id);
+    markdown.value = tab.content;
+    filePath.value = "";
+    originalContent.value = tab.originalContent;
+    updateTitle();
+    emitter.emit("file:Change");
+    return;
+  }
   if (!result) {
     result = await window.electronAPI.openFile();
   }

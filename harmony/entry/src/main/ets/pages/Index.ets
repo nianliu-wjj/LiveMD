@@ -1,3 +1,4 @@
+import { picker } from '@kit.CoreFileKit';
 import { webview } from '@kit.ArkWeb';
 
 /**
@@ -96,6 +97,18 @@ struct Index {
         .onlineImageAccess(true)
         .zoomAccess(false)
         .multiWindowAccess(false)
+        .onShowFileSelector((event) => {
+          if (!event) return false;
+          const options = new picker.DocumentSelectOptions();
+          options.maxSelectNumber = 1;
+          const selector = new picker.DocumentViewPicker(getContext(this));
+          selector.select(options).then((uris: Array<string>) => {
+            event.result.handleFileList(uris);
+          }).catch(() => {
+            event.result.handleFileList([]);
+          });
+          return true;
+        })
         .onInterceptRequest((event) => {
           if (!event) {
             return null;

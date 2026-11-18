@@ -30,7 +30,10 @@ function detectPlatform(): LivePlatform {
 }
 
 const platform: LivePlatform = detectPlatform();
-const isMobile = platform === "android";
+const isMobile =
+  platform === "android" ||
+  /HarmonyOS|OpenHarmony/i.test(navigator.userAgent) ||
+  window.location.hostname === "livemd.local";
 
 function subscribe(channel: string, listener: Listener): void {
   let disposed = false;
