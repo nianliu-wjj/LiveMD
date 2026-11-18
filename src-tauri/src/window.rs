@@ -161,9 +161,15 @@ pub fn attach_window<R: Runtime>(app: &AppHandle<R>, window: &WebviewWindow<R>, 
             if let Some(next_label) = remaining.first() {
                 focus_window(&app_handle, next_label);
             } else if !cfg!(target_os = "macos")
-                || app_handle.state::<AppState>().quitting.load(Ordering::SeqCst)
+                || app_handle
+                    .state::<AppState>()
+                    .quitting
+                    .load(Ordering::SeqCst)
             {
-                app_handle.state::<AppState>().quitting.store(true, Ordering::SeqCst);
+                app_handle
+                    .state::<AppState>()
+                    .quitting
+                    .store(true, Ordering::SeqCst);
                 app_handle.exit(0);
             }
         }
@@ -206,8 +212,7 @@ pub fn create_editor_window<R: Runtime>(
     let id = state.next_window_id.fetch_add(1, Ordering::SeqCst) + 1;
     let label = format!("editor-{id}");
 
-    let (width, height, min_width, min_height) =
-        adaptive_size(app, options.width, options.height);
+    let (width, height, min_width, min_height) = adaptive_size(app, options.width, options.height);
 
     let mut x = options.x;
     let mut y = options.y;
@@ -263,7 +268,13 @@ pub fn create_editor_window<R: Runtime>(
     };
 
     attach_window(app, &window, false);
-    if let Some(tab_data) = app.state::<AppState>().pending_tabs.lock().unwrap().get(&label) {
+    if let Some(tab_data) = app
+        .state::<AppState>()
+        .pending_tabs
+        .lock()
+        .unwrap()
+        .get(&label)
+    {
         let is_modified = tab_data
             .get("isModified")
             .and_then(Value::as_bool)
@@ -532,7 +543,9 @@ pub fn find_window_at<R: Runtime>(
         windows
             .iter()
             .filter(|(label, meta)| {
-                (meta.is_main || label.starts_with("editor-")) && !meta.closing && !exclude.contains(label)
+                (meta.is_main || label.starts_with("editor-"))
+                    && !meta.closing
+                    && !exclude.contains(label)
             })
             .map(|(label, _)| label.clone())
             .collect()
@@ -571,6 +584,7 @@ pub fn result_merge(action: &str) -> MergeResult {
     }
 }
 
+#[cfg(desktop)]
 pub fn ensure_main_visible<R: Runtime>(app: &AppHandle<R>) {
     let main_label = app.state::<AppState>().main_label.lock().unwrap().clone();
     if let Some(label) = main_label {
@@ -645,4 +659,3 @@ pub fn mark_quitting<R: Runtime>(app: &AppHandle<R>) {
         .quitting
         .store(true, Ordering::SeqCst);
 }
-

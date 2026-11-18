@@ -16,8 +16,7 @@ use crate::models::UpdateInfo;
 use crate::state::AppState;
 use crate::window;
 
-const LATEST_RELEASE_API: &str =
-    "https://api.github.com/repos/nianliu-wjj/LiveMD/releases/latest";
+const LATEST_RELEASE_API: &str = "https://api.github.com/repos/nianliu-wjj/LiveMD/releases/latest";
 const USER_AGENT: &str = "LiveMD";
 
 #[derive(Debug, Clone, Deserialize)]
@@ -39,6 +38,7 @@ struct GitHubRelease {
     #[serde(default)]
     html_url: Option<String>,
     #[serde(default)]
+    #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
     assets: Vec<GitHubAsset>,
 }
 
@@ -58,9 +58,7 @@ fn prefix_regex() -> &'static Regex {
 
 fn build_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| {
-        Regex::new(r"[-+]([a-zA-Z][a-zA-Z0-9-]*?)$").expect("build metadata regex")
-    })
+    RE.get_or_init(|| Regex::new(r"[-+]([a-zA-Z][a-zA-Z0-9-]*?)$").expect("build metadata regex"))
 }
 
 fn prerelease_regex() -> &'static Regex {
@@ -94,9 +92,7 @@ fn parse_version(version: &str) -> Option<ParsedVersion> {
             .get(2)
             .and_then(|value| value.as_str().parse::<u64>().ok())
             .unwrap_or(0);
-        cleaned = prerelease_cleanup_regex()
-            .replace(&cleaned, "")
-            .to_string();
+        cleaned = prerelease_cleanup_regex().replace(&cleaned, "").to_string();
     }
 
     let parts: Vec<u64> = cleaned
@@ -209,8 +205,11 @@ fn select_asset(release: &GitHubRelease) -> Option<&GitHubAsset> {
             .find(|asset| asset.name.to_ascii_lowercase().ends_with(".appimage"));
     }
 
-    #[allow(unreachable_code)]
-    None
+    #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+    {
+        let _ = release;
+        None
+    }
 }
 
 fn update_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
@@ -309,11 +308,15 @@ pub async fn download_update<R: Runtime>(app: AppHandle<R>) -> Result<Option<Str
                 let state = app.state::<AppState>();
                 state.update.lock().unwrap().downloaded_path = Some(path.clone());
             }
-            broadcast_editor_args(&app, "update:download-progress", vec![json!({
-                "percent": 100.0,
-                "total": expected_size,
-                "transferred": expected_size,
-            })]);
+            broadcast_editor_args(
+                &app,
+                "update:download-progress",
+                vec![json!({
+                    "percent": 100.0,
+                    "total": expected_size,
+                    "transferred": expected_size,
+                })],
+            );
             broadcast_status(&app, json!({ "status": "downloaded", "info": info }));
             Ok(Some(path.to_string_lossy().to_string()))
         }
@@ -372,9 +375,9 @@ async fn download_to_file<R: Runtime>(
         start_byte = 0;
     }
 
-    let content_length = response.content_length().unwrap_or_else(|| {
-        expected_size.saturating_sub(start_byte)
-    });
+    let content_length = response
+        .content_length()
+        .unwrap_or_else(|| expected_size.saturating_sub(start_byte));
     let total_bytes = start_byte + content_length;
 
     let mut options = tokio::fs::OpenOptions::new();
@@ -393,11 +396,7 @@ async fn download_to_file<R: Runtime>(
     let mut stream = response.bytes_stream();
 
     while let Some(chunk) = stream.next().await {
-        if app
-            .state::<AppState>()
-            .update_cancel
-            .load(Ordering::SeqCst)
-        {
+        if app.state::<AppState>().update_cancel.load(Ordering::SeqCst) {
             let _ = file.flush().await;
             return Ok(None);
         }
@@ -408,11 +407,15 @@ async fn download_to_file<R: Runtime>(
         downloaded += chunk.len() as u64;
 
         if total_bytes > 0 {
-            broadcast_editor_args(app, "update:download-progress", vec![json!({
-                "percent": (downloaded as f64 / total_bytes as f64) * 100.0,
-                "total": total_bytes,
-                "transferred": downloaded,
-            })]);
+            broadcast_editor_args(
+                app,
+                "update:download-progress",
+                vec![json!({
+                    "percent": (downloaded as f64 / total_bytes as f64) * 100.0,
+                    "total": total_bytes,
+                    "transferred": downloaded,
+                })],
+            );
         }
     }
 

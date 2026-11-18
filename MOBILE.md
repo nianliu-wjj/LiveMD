@@ -150,3 +150,7 @@ cd src-tauri && cargo check
 
 桌面端 `cargo check` 必须 0 error；`tauri-plugin-single-instance` 仅对
 Windows / macOS / Linux 生效，避免被拉入 Android 交叉编译。
+
+### Windows 符号链接权限
+
+Tauri Android 构建会将 Rust .so 链接到 jniLibs。出现 Creation symbolic link is not allowed 时，需要在 Windows 设置中启用开发者模式，或使用管理员终端打包。复制 .so 不能替代 Tauri 后续的符号链接步骤。安卓脚本会在编译前检查权限，避免完成 Rust 编译后才失败。

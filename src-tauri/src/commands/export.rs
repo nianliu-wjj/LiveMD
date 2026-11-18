@@ -1,24 +1,32 @@
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use std::path::{Path, PathBuf};
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use std::time::Duration;
 
 use serde::Deserialize;
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use serde_json::Value;
 use tauri::{AppHandle, Runtime, WebviewWindow};
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 use tauri_plugin_dialog::{DialogExt, FilePath};
 
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct ExportPdfOptions {
+    #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
     #[serde(default)]
     page_size: Option<Value>,
+    #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
     #[serde(default)]
     scale: Option<f64>,
 }
 
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 fn file_path_to_buf(path: FilePath) -> Option<PathBuf> {
     path.into_path().ok()
 }
 
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 fn ensure_extension(mut path: PathBuf, extension: &str) -> PathBuf {
     if path.extension().is_none() {
         path.set_extension(extension);
@@ -26,6 +34,7 @@ fn ensure_extension(mut path: PathBuf, extension: &str) -> PathBuf {
     path
 }
 
+#[cfg(any(windows, target_os = "macos", target_os = "linux"))]
 fn page_dimensions(page_size: &Option<Value>) -> (f64, f64) {
     match page_size {
         Some(Value::String(value)) if value.eq_ignore_ascii_case("Letter") => (8.5, 11.0),
@@ -54,60 +63,62 @@ pub async fn export_pdf<R: Runtime>(
     output_name: String,
     options: Option<ExportPdfOptions>,
 ) -> Result<(), String> {
-    let _ = element_selector;
-    let options = options.unwrap_or_default();
-    let (width, height) = page_dimensions(&options.page_size);
-    let scale = options.scale.unwrap_or(1.0).clamp(0.1, 5.0);
-
-    let file_name = if output_name.is_empty() {
-        "导出的文档.pdf".to_string()
-    } else {
-        output_name
-    };
-
-    // 对话框父窗口仅桌面有意义
-    #[cfg(desktop)]
-    let dialog = app.dialog().file().set_parent(&window);
-    #[cfg(mobile)]
-    let dialog = app.dialog().file();
-    #[cfg(mobile)]
-    let _ = &window;
-    let selected = dialog
-        .set_title("导出为 PDF")
-        .set_file_name(&file_name)
-        .add_filter("PDF 文档", &["pdf"])
-        .blocking_save_file()
-        .and_then(file_path_to_buf);
-
-    let Some(path) = selected.map(|path| ensure_extension(path, "pdf")) else {
-        return Err("用户取消了导出".to_string());
-    };
-
-    #[cfg(windows)]
-    {
-        print_pdf_windows(&window, &path, width, height, scale).await?;
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        print_pdf_macos(&window, &path, width, height, scale).await?;
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        print_pdf_linux(&window, &path, width, height, scale).await?;
-    }
-
     #[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
     {
-        let _ = (width, height, scale);
-        return Err("当前平台暂不支持直接导出 PDF".to_string());
+        let _ = (app, window, element_selector, output_name, options);
+        Err("当前平台暂不支持直接导出 PDF".to_string())
     }
+    #[cfg(any(windows, target_os = "macos", target_os = "linux"))]
+    {
+        let _ = element_selector;
+        let options = options.unwrap_or_default();
+        let (width, height) = page_dimensions(&options.page_size);
+        let scale = options.scale.unwrap_or(1.0).clamp(0.1, 5.0);
 
-    if !path.exists() {
-        return Err("PDF 文件生成失败".to_string());
+        let file_name = if output_name.is_empty() {
+            "导出的文档.pdf".to_string()
+        } else {
+            output_name
+        };
+
+        // 对话框父窗口仅桌面有意义
+        #[cfg(desktop)]
+        let dialog = app.dialog().file().set_parent(&window);
+        #[cfg(mobile)]
+        let dialog = app.dialog().file();
+        #[cfg(mobile)]
+        let _ = &window;
+        let selected = dialog
+            .set_title("导出为 PDF")
+            .set_file_name(&file_name)
+            .add_filter("PDF 文档", &["pdf"])
+            .blocking_save_file()
+            .and_then(file_path_to_buf);
+
+        let Some(path) = selected.map(|path| ensure_extension(path, "pdf")) else {
+            return Err("用户取消了导出".to_string());
+        };
+
+        #[cfg(windows)]
+        {
+            print_pdf_windows(&window, &path, width, height, scale).await?;
+        }
+
+        #[cfg(target_os = "macos")]
+        {
+            print_pdf_macos(&window, &path, width, height, scale).await?;
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            print_pdf_linux(&window, &path, width, height, scale).await?;
+        }
+
+        if !path.exists() {
+            return Err("PDF 文件生成失败".to_string());
+        }
+        Ok(())
     }
-    Ok(())
 }
 
 #[cfg(windows)]
