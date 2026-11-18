@@ -21,6 +21,11 @@ import { join } from "node:path";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
+execFileSync(process.execPath, [join(root, "scripts", "generate-mobile-icons.mjs")], {
+  cwd: root,
+  stdio: "inherit",
+});
+
 const dist = join(root, "dist");
 const stamp = join(root, "harmony", ".hvigor", "livemd-web.sha256");
 function fingerprint() {
