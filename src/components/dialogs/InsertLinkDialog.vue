@@ -205,4 +205,36 @@ function handleKeydown(event: KeyboardEvent) {
     opacity: 0.88;
   }
 }
+
+@media (max-width: 640px) {
+  .link-dialog {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .link-dialog-header {
+    padding: 18px 18px 0;
+  }
+
+  .link-dialog-body {
+    padding: 14px 18px 6px;
+  }
+
+  .link-dialog-footer {
+    padding: 12px 18px 18px;
+  }
+
+  .link-dialog-footer .btn {
+    flex: 1;
+    min-height: 44px;
+  }
+}
+
+@media (pointer: coarse) {
+  .link-field input {
+    height: 44px;
+    font-size: 16px;
+  }
+}
 </style>

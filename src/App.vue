@@ -46,6 +46,9 @@ import { readLastOpenedFile, readLastWorkspaceDir, trackLaunchState } from "@/ho
 // ✅ 应用级事件协调器（仅负责事件监听和协调）
 useContext();
 
+/** 移动端（Android WebView）：没有应用内更新通道，所有更新入口/事件都关闭 */
+const isMobile = window.electronAPI.isMobile;
+
 // ✅ 直接使用各个hooks（而不是通过useContext转发）
 const { init: initTheme } = useTheme();
 const { isLoading, loadingMessage } = useUiLoading();
@@ -138,6 +141,8 @@ const handleTabCloseConfirm = async (payload: any) => {
 emitter.on("tab:close-confirm", handleTabCloseConfirm);
 
 const onUpdateAvailable = (payload: any) => {
+  if (isMobile) return;
+
   const info = payload || {};
 
   localStorage.setItem("updateInfo", JSON.stringify(info));
@@ -149,7 +154,9 @@ const onUpdateAvailable = (payload: any) => {
 };
 
 // 监听主进程的更新可用事件 (Auto Update)
-window.electronAPI.on("update:available", onUpdateAvailable);
+if (!isMobile) {
+  window.electronAPI.on("update:available", onUpdateAvailable);
+}
 
 // 监听手动检查的更新可用事件 (Manual Check from About)
 import { onMounted, onUnmounted, ref, watch, nextTick, computed } from "vue";
@@ -392,7 +399,7 @@ onMounted(() => {
   initSpellCheck();
   trackLaunchState();
   void restoreLaunchSession();
-  emitter.on("update:available", onUpdateAvailable);
+  if (!isMobile) emitter.on("update:available", onUpdateAvailable);
   emitter.on("workspace:open-path", handleWorkspaceOpenPath);
 });
 watch(
@@ -532,6 +539,7 @@ const handleInstall = async () => {
     @overwrite="handleOverwrite"
   />
   <UpdateConfirmDialog
+    v-if="!isMobile"
     :visible="isUpdateDialogVisible"
     :status="updateStatus"
     :progress="downloadProgress"

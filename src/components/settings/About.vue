@@ -12,9 +12,11 @@ import { maintainer, repositoryUrl } from "@/shared/project";
 function openByDefaultBrowser(url: string) {
   window.electronAPI.openExternal(url);
 }
+const isMobile = window.electronAPI.isMobile;
 const storedUpdateInfo = JSON.parse(localStorage.getItem("updateInfo") || "{}");
-// 只有当存储的版本号比当前版本更新时才显示 "new" 徽标
-const hasNewVersion = storedUpdateInfo.version && isNewerVersion(storedUpdateInfo.version, version);
+// 移动端没有应用内更新通道：不展示更新徽标，版本号也不作为检查入口
+const hasNewVersion =
+  !isMobile && storedUpdateInfo.version && isNewerVersion(storedUpdateInfo.version, version);
 
 function isNewerVersion(stored: string, current: string): boolean {
   const s = stored.replace(/^v/, "").split(".").map(Number);
@@ -30,6 +32,7 @@ function isNewerVersion(stored: string, current: string): boolean {
 const isChecking = ref(false);
 
 function handleCheckUpdate() {
+  if (isMobile) return;
   if (isChecking.value) {
     console.log("[About] Already checking for updates, skipping...");
     return;
@@ -72,12 +75,12 @@ function handleCheckUpdate() {
       <img :src="logoSvg" class="logo" /> LiveMD
     </h1>
     <p>
-      <span class="link version" @click="handleCheckUpdate">
+      <span class="version" :class="{ link: !isMobile }" @click="handleCheckUpdate">
         <span>version: v{{ version }} </span>
-        <span v-if="isChecking" class="updateTip loading">
+        <span v-if="!isMobile && isChecking" class="updateTip loading">
           <LoadingIcon />
         </span>
-        <span v-else-if="hasNewVersion" class="updateTip">new</span>
+        <span v-else-if="!isMobile && hasNewVersion" class="updateTip">new</span>
       </span>
     </p>
     <p>维护者：{{ maintainer.name }} &lt;{{ maintainer.email }}&gt;</p>
@@ -181,6 +184,32 @@ function handleCheckUpdate() {
   p {
     font-size: 14px;
     color: var(--text-color-2);
+  }
+}
+
+@media (max-width: 640px) {
+  .AboutBox {
+    justify-content: flex-start;
+    padding: 32px 16px 72px;
+    overflow-y: auto;
+
+    .tip {
+      position: static;
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    h1 .logo {
+      width: 52px;
+      height: 52px;
+    }
+
+    p {
+      max-width: 100%;
+      text-align: center;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
   }
 }
 </style>

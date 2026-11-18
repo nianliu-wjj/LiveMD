@@ -9,6 +9,7 @@ import emitter from "@/events";
 import { checkUpdate } from "@/service/api/update.js";
 
 const activeTab = ref<"settings" | "about" | "appearance" | "shortcut">("settings");
+const isMobile = window.electronAPI.isMobile;
 const MenuComponents = {
   settings: SettingBase,
   about: About,
@@ -36,15 +37,17 @@ const MenuOptions = [
   },
   { label: "关于", action: () => (activeTab.value = "about"), icon: "github", value: "about" },
 ];
-checkUpdate()
-  .then((updateInfo) => {
-    if (updateInfo) {
-      emitter.emit("update:available", updateInfo);
-    }
-  })
-  .catch((error) => {
-    console.warn("[MenuBar] Auto update check failed silently:", error);
-  });
+if (!isMobile) {
+  checkUpdate()
+    .then((updateInfo) => {
+      if (updateInfo) {
+        emitter.emit("update:available", updateInfo);
+      }
+    })
+    .catch((error) => {
+      console.warn("[MenuBar] Auto update check failed silently:", error);
+    });
+}
 </script>
 
 <template>
@@ -134,6 +137,59 @@ checkUpdate()
       &.active {
         background: var(--active-color);
         font-weight: bold;
+      }
+    }
+  }
+}
+
+/* 触屏：设置/外观/快捷键/关于 入口保持足够大的点按区域 */
+@media (pointer: coarse) {
+  .MenubarBox .optionsContainer .menu-option {
+    min-height: 48px;
+  }
+}
+
+/* 手机竖屏：左侧竖排导航改为顶部横向标签栏，内容区占满剩余高度 */
+@media (max-width: 640px) {
+  .MenubarBox {
+    flex-direction: column;
+
+    .optionsContainer {
+      flex-direction: row;
+      align-items: center;
+      width: 100%;
+      gap: 2px;
+      padding: 6px 56px 6px 8px;
+      overflow-x: auto;
+      border-bottom: 1px solid var(--border-color-1);
+      background: var(--background-color-2);
+      -webkit-app-region: no-drag;
+      scrollbar-width: none;
+
+      &::-webkit-scrollbar {
+        display: none;
+      }
+
+      .menu-option {
+        flex: 0 0 auto;
+        width: auto;
+        min-height: 44px;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+    }
+
+    .detailContainer {
+      min-height: 0;
+      padding: 8px;
+      padding-top: 0;
+
+      .components {
+        height: auto;
+        min-height: 100%;
+        padding-top: 8px;
       }
     }
   }

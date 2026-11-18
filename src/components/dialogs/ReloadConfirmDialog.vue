@@ -164,13 +164,48 @@ function handleReloadLater() {
   margin-left: 12px;
   background: #f56565;
   color: white;
-
   &:hover {
     background: #e53e3e;
   }
 
   &:active {
     background: #c53030;
+  }
+}
+
+@media (max-width: 640px) {
+  .dialog-content {
+    width: min(100%, 500px);
+    min-width: 0;
+    max-width: 100%;
+    border-radius: 14px;
+  }
+
+  .dialog-header {
+    padding: 18px 18px 0;
+  }
+
+  .dialog-body {
+    padding: 0 18px;
+    max-height: 50dvh;
+  }
+
+  .dialog-footer {
+    padding: 0 18px 18px;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .btn-ignore,
+  .btn-overwrite {
+    margin-right: 0;
+    margin-left: 0;
   }
 }
 </style>

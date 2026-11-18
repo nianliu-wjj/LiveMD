@@ -92,7 +92,7 @@ onUnmounted(() => {
 <style lang="less" scoped>
 .TitleBarBox {
   -webkit-app-region: drag;
-  height: 40px;
+  height: var(--titlebar-height, 40px);
   padding-left: 6px;
   background: linear-gradient(
     180deg,
@@ -155,6 +155,21 @@ onUnmounted(() => {
         background: #c42b1c;
         color: #ffffff;
       }
+    }
+  }
+}
+
+@media (max-width: 640px) {
+  .TitleBarBox {
+    gap: 4px;
+    padding-left: 2px;
+
+    .menu-host {
+      margin-right: 2px;
+    }
+
+    .window-controls .window-control-btn {
+      width: 44px;
     }
   }
 }

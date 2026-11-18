@@ -1,5 +1,9 @@
 // 通过兼容层调用 Tauri 侧的更新命令
 export async function checkUpdate() {
+  // 移动端没有应用内更新通道（Android 资产选择分支不命中），直接跳过，
+  // 避免调用后只拿到 not-available 却触发“已是最新版本”等误导提示。
+  if (window.electronAPI?.isMobile) return null;
+
   const result = await window.electronAPI.checkForUpdates();
   // result.updateInfo 包含版本信息
   if (result && result.updateInfo) {

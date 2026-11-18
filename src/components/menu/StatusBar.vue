@@ -28,6 +28,9 @@ const emit = defineEmits<{
 
 const { isShowSource, toggleSourceCode } = useSourceCode();
 
+/** 移动端没有应用内更新通道，状态栏不展示更新进度/安装入口 */
+const isMobile = window.electronAPI.isMobile;
+
 // ============ 只读模式（状态栏右侧锁形按钮）============
 const { isReadOnlyMode, toggleReadOnlyMode } = useReadOnlyMode();
 const readOnlyTitle = computed(() =>
@@ -197,14 +200,14 @@ window.electronAPI.on("view:toggleView", () => {
         <span class="status-icon-btn" @click="toggleShowOutline()">
           <AppIcon name="List-outlined" />
         </span>
-        <span class="status-icon-btn" @click.stop="toggleSourceCode()">
+        <span class="status-icon-btn source-toggle-btn" @click.stop="toggleSourceCode()">
           <AppIcon :name="isShowSource ? 'input' : 'markdown'" />
         </span>
       </div>
 
       <!-- Update Progress (Centered-ish or just after icons) -->
       <div
-        v-if="updateStatus === 'downloading' && !isUpdateDialogVisible"
+        v-if="!isMobile && updateStatus === 'downloading' && !isUpdateDialogVisible"
         class="update-progress-bar"
         @click="handleRestore"
         title="点击恢复下载弹窗"
@@ -216,7 +219,7 @@ window.electronAPI.on("view:toggleView", () => {
         </div>
       </div>
       <div
-        v-else-if="updateStatus === 'downloaded' && !isUpdateDialogVisible"
+        v-else-if="!isMobile && updateStatus === 'downloaded' && !isUpdateDialogVisible"
         class="update-progress-bar success"
         @click="handleRestore"
       >
@@ -287,7 +290,7 @@ window.electronAPI.on("view:toggleView", () => {
         </Transition>
       </div>
       <span
-        class="status-icon-btn"
+        class="status-icon-btn pangu-btn"
         title="排版规范化（中英文之间插入空格）"
         @click.stop="handlePanguSpacing()"
       >
@@ -569,5 +572,84 @@ window.electronAPI.on("view:toggleView", () => {
 .stats-fade-leave-to {
   opacity: 0;
   transform: translateY(4px);
+}
+
+/* 触屏：状态栏按钮放大到 40×40，避免手指点不中 */
+@media (pointer: coarse) {
+  .StatusBarBox {
+    .status-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 40px;
+      height: 40px;
+      padding: 0 8px;
+    }
+
+    .save-status,
+    .statusBarText {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      padding: 0 8px;
+    }
+  }
+}
+
+/* 手机竖屏：压缩文案、统计弹层改为贴底浮层 */
+@media (max-width: 640px) {
+  .StatusBarBox {
+    .left-section,
+    .right-section {
+      gap: 0;
+    }
+
+    .save-status {
+      min-width: 40px;
+      font-size: 0;
+      gap: 0;
+    }
+
+    .save-status__dot {
+      width: 8px;
+      height: 8px;
+    }
+
+    .statusBarText {
+      min-width: auto;
+      padding: 0 6px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .stats-popup {
+      position: fixed;
+      left: 8px;
+      right: 8px;
+      bottom: calc(var(--statusbar-height, 44px) + 8px);
+      width: auto;
+      max-height: 70dvh;
+      overflow-y: auto;
+    }
+
+    .stats-mode-btn {
+      min-height: 40px;
+    }
+  }
+}
+
+/* 极窄屏：隐藏低频的盘古排版入口，保证核心状态项不换行 */
+@media (max-width: 380px) {
+  .StatusBarBox {
+    .pangu-btn {
+      display: none;
+    }
+
+    .statusBarText {
+      font-size: 11px;
+      padding: 0 4px;
+    }
+  }
 }
 </style>

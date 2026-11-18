@@ -348,4 +348,41 @@ watch(
     background: #c53030;
   }
 }
+
+@media (max-width: 640px) {
+  .dialog-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .dialog-content {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    border-radius: 14px;
+  }
+
+  .dialog-header {
+    padding: 18px 18px 10px;
+  }
+
+  .progress-section {
+    padding: 12px 18px;
+  }
+
+  .dialog-body {
+    padding: 14px 18px;
+    min-height: 120px;
+  }
+
+  .dialog-footer {
+    padding: 14px 18px;
+    flex-wrap: wrap;
+  }
+
+  .dialog-footer .btn {
+    min-height: 44px;
+    flex: 1 0 auto;
+  }
+}
 </style>

@@ -20,6 +20,14 @@
   --livemd-editor-padding-effective: var(--livemd-editor-padding, 120px);
 }
 
+// 触屏/手机：标题栏与状态栏加高，右缘三栏等依赖变量的浮层同步下移
+@media (pointer: coarse), (max-width: 640px) {
+  #app {
+    --titlebar-height: 44px;
+    --statusbar-height: 44px;
+  }
+}
+
 // 每档下限取 min(档位下限, 用户值)，保证用户把边距设得很小时不会被强行撑大；
 // 大屏上限按用户值等比放大，用户值越大整体越宽松
 html[data-responsive-padding="true"] #fontRoot {
@@ -74,8 +82,8 @@ html[data-responsive-padding="true"] #fontRoot {
 // 触屏设备（iPad / Android）：加大可点目标，hover 才显示的控件改为常显
 @media (pointer: coarse) {
   .right-edge-bar__header-actions button {
-    width: 32px;
-    height: 32px;
+    width: 40px;
+    height: 40px;
   }
 
   .livemd-code-block .livemd-code-block-header {
@@ -84,13 +92,35 @@ html[data-responsive-padding="true"] #fontRoot {
   }
 
   .livemd-custom-select-item {
-    min-height: 36px;
+    min-height: 44px;
   }
 
   // 触屏拖拽把手加宽，便于手指命中
   .right-edge-bar__resize-handle {
     left: -8px;
     width: 16px;
+  }
+
+  // 菜单/设置类可点元素统一禁止双击缩放
+  .menu-option,
+  .project-menu__item,
+  .status-icon-btn,
+  .right-edge-tab,
+  .dialog-content .btn {
+    touch-action: manipulation;
+  }
+
+  // 16px 以避开移动端浏览器聚焦输入框时的自动放大
+  .dialog-content input,
+  .dialog-content textarea,
+  .dialog-content select,
+  .SettingBaseBox input,
+  .SettingBaseBox textarea,
+  .SettingBaseBox select,
+  .appearance input,
+  .appearance textarea,
+  .appearance select {
+    font-size: 16px;
   }
 }
 

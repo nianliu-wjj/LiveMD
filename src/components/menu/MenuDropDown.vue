@@ -60,6 +60,17 @@ const panelStyle = ref<Record<string, string>>({});
 type SubmenuKind = "export" | "theme" | "recent";
 const openSubmenu = ref<SubmenuKind | null>(null);
 
+/** 无 hover 的触屏设备：点击父项切换二级菜单；桌面仍以悬停为主 */
+const isHoverlessPointer = window.matchMedia?.("(hover: none)").matches ?? false;
+
+function handleSubmenuTap(kind: SubmenuKind): void {
+  if (isHoverlessPointer) {
+    openSubmenu.value = openSubmenu.value === kind ? null : kind;
+    return;
+  }
+  openSubmenu.value = kind;
+}
+
 const autoSaveEnabled = computed(() => Boolean(config.value.other.autoSave));
 
 /** 最近文件（最多 10 份，供「打开最近文件」子菜单） */
@@ -358,14 +369,15 @@ onUnmounted(() => {
           <!-- 打开最近文件（最多 10 份；打开后工作区切到该文件所在目录） -->
           <div
             class="project-menu__item"
-            @mouseenter="openSubmenu = 'recent'"
-            @mouseleave="openSubmenu = null"
+            @mouseenter="!isHoverlessPointer && (openSubmenu = 'recent')"
+            @mouseleave="!isHoverlessPointer && (openSubmenu = null)"
+            @click.stop="handleSubmenuTap('recent')"
           >
             <span class="project-menu__check" />
             <AppIcon name="refresh" class="project-menu__icon" />
             <span class="project-menu__label">打开最近文件</span>
             <AppIcon name="arrow-right" class="project-menu__arrow" />
-            <div v-if="openSubmenu === 'recent'" class="project-menu__submenu">
+            <div v-if="openSubmenu === 'recent'" class="project-menu__submenu" @click.stop>
               <div
                 v-for="item in recentFileItems"
                 :key="item.path"
@@ -420,14 +432,15 @@ onUnmounted(() => {
 
           <div
             class="project-menu__item"
-            @mouseenter="openSubmenu = 'export'"
-            @mouseleave="openSubmenu = null"
+            @mouseenter="!isHoverlessPointer && (openSubmenu = 'export')"
+            @mouseleave="!isHoverlessPointer && (openSubmenu = null)"
+            @click.stop="handleSubmenuTap('export')"
           >
             <span class="project-menu__check" />
             <AppIcon name="export-file" class="project-menu__icon" />
             <span class="project-menu__label">导出为…</span>
             <AppIcon name="arrow-right" class="project-menu__arrow" />
-            <div v-if="openSubmenu === 'export'" class="project-menu__submenu">
+            <div v-if="openSubmenu === 'export'" class="project-menu__submenu" @click.stop>
               <div class="project-menu__item" @click="handleExport('pdf')">
                 <span class="project-menu__check" />
                 <AppIcon name="pdf" class="project-menu__icon" />
@@ -458,8 +471,9 @@ onUnmounted(() => {
 
           <div
             class="project-menu__item"
-            @mouseenter="openSubmenu = 'theme'"
-            @mouseleave="openSubmenu = null"
+            @mouseenter="!isHoverlessPointer && (openSubmenu = 'theme')"
+            @mouseleave="!isHoverlessPointer && (openSubmenu = null)"
+            @click.stop="handleSubmenuTap('theme')"
           >
             <span class="project-menu__check" />
             <AppIcon name="waiguan" class="project-menu__icon" />
@@ -468,6 +482,7 @@ onUnmounted(() => {
             <div
               v-if="openSubmenu === 'theme'"
               class="project-menu__submenu project-menu__submenu--themes"
+              @click.stop
             >
               <div
                 v-for="theme in themes"
@@ -725,6 +740,84 @@ onUnmounted(() => {
 
   &:hover {
     background: transparent;
+  }
+}
+
+/* 触屏：菜单入口与菜单项满足手指点按尺寸 */
+@media (pointer: coarse) {
+  .MenuDropDownBox .dropdown-header {
+    min-width: 44px;
+    height: 44px;
+  }
+
+  .project-menu__item {
+    min-height: 44px;
+  }
+}
+
+/* 手机竖屏：项目菜单改为贴边下拉，二级菜单就地展开（无 hover 也能操作） */
+@media (max-width: 640px) {
+  .project-menu {
+    top: calc(var(--titlebar-height, 44px) + 4px) !important;
+    left: 8px !important;
+    right: 8px !important;
+    min-width: 0;
+    max-height: calc(100dvh - var(--titlebar-height, 44px) - 12px);
+    padding: 8px;
+    overflow-y: auto;
+    border-radius: 14px;
+    font-size: 15px;
+
+    &__item {
+      min-height: 46px;
+      padding: 10px 12px;
+    }
+
+    &__arrow {
+      transform: rotate(90deg);
+    }
+
+    &__submenu {
+      position: static;
+      min-width: 0;
+      max-height: none;
+      margin: 4px 0 2px 22px;
+      padding: 0 0 0 8px;
+      overflow: visible;
+      border: none;
+      border-left: 2px solid var(--border-color-1);
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
+
+      &--themes {
+        min-width: 0;
+      }
+    }
+
+    &--right {
+      .project-menu__submenu {
+        left: auto;
+        right: auto;
+      }
+    }
+  }
+
+  .menu-overlay {
+    padding-top: 0;
+    align-items: stretch;
+  }
+
+  .menu-close-button {
+    top: max(8px, env(safe-area-inset-top));
+    right: 8px;
+    width: 42px;
+    height: 42px;
+  }
+
+  .dropdown-content {
+    border: none;
+    border-radius: 0;
   }
 }
 

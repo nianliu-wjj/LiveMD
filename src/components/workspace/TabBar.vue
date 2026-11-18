@@ -922,6 +922,33 @@ onUnmounted(() => {
   transition: none;
 }
 
+/* 触屏：标签页与关闭按钮加大，便于手指点按 */
+@media (pointer: coarse) {
+  .tabBarContarner {
+    padding: 0 4px;
+
+    .tabBar {
+      height: 36px;
+
+      .tabItem {
+        width: 132px;
+        min-width: 132px;
+        padding: 0 8px;
+        touch-action: manipulation;
+
+        .closeIcon {
+          min-width: 28px;
+          min-height: 34px;
+        }
+
+        .closeIcon span {
+          line-height: 34px;
+        }
+      }
+    }
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

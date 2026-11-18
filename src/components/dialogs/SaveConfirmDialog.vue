@@ -219,4 +219,51 @@ function handleOverwrite() {
     margin-left: 0;
   }
 }
+
+@media (max-width: 640px) {
+  .dialog-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .dialog-content {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    border-radius: 14px;
+  }
+
+  .dialog-header {
+    padding: 18px 18px 0;
+  }
+
+  .dialog-body {
+    padding: 14px 18px;
+  }
+
+  .dialog-footer {
+    padding: 0 18px 18px;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    > div {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+    }
+  }
+
+  .btn {
+    min-height: 44px;
+    flex: 1 0 auto;
+  }
+
+  .btn-save,
+  .btn-overwrite {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
 </style>
