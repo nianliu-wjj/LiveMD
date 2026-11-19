@@ -53,7 +53,11 @@ export function createEnhancedToggleSyntax(prefix: string, suffix: string): Comm
         const textBefore = state.doc.textBetween(beforeFrom, from);
         const textAfter = state.doc.textBetween(to, afterTo);
 
-        if (textBefore === prefix && textAfter === suffix) {
+        if (
+          textBefore === prefix &&
+          textAfter === suffix &&
+          (prefix !== "**" || state.doc.rangeHasMark(from, to, state.schema.marks.strong))
+        ) {
           // 移除外侧语法标记（先删后面的，再删前面的，避免位置偏移）
           tr.delete(to, afterTo);
           tr.delete(beforeFrom, from);
@@ -78,6 +82,31 @@ export function createEnhancedToggleSyntax(prefix: string, suffix: string): Comm
         }
 
         // 情况3：未包裹，在选区两端插入语法标记
+        // 同一文本块内，选区紧贴已有 strong 边界时合并区域，避免 **** 重新配对。
+        if (
+          prefix === "**" &&
+          suffix === "**" &&
+          state.selection.$from.sameParent(state.selection.$to)
+        ) {
+          const before = state.doc.resolve(from).nodeBefore;
+          const after = state.doc.resolve(to).nodeAfter;
+          const isStrongMarker = (node: ProsemirrorNode | null) =>
+            !!node?.marks.some(
+              (mark) => mark.type.name === "syntax_marker" && mark.attrs.syntaxType === "strong"
+            );
+          const mergeLeft = textBefore === suffix && isStrongMarker(before);
+          const mergeRight = textAfter === prefix && isStrongMarker(after);
+          if (mergeLeft || mergeRight) {
+            if (mergeRight) tr.delete(to, afterTo);
+            else tr.insertText(suffix, to);
+            if (mergeLeft) tr.delete(beforeFrom, from);
+            else tr.insertText(prefix, from);
+            const shift = mergeLeft ? -prefixLen : prefixLen;
+            tr.setSelection(TextSelection.create(tr.doc, from + shift, to + shift));
+            dispatch(tr);
+            return true;
+          }
+        }
         tr.insertText(suffix, to);
         tr.insertText(prefix, from);
         tr.setSelection(TextSelection.create(tr.doc, from + prefixLen, to + prefixLen));
