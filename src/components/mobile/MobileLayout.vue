@@ -7,7 +7,7 @@ import useSourceCode from "@/hooks/useSourceCode";
 import emitter from "@/events";
 import useAnnotations from "@/hooks/useAnnotations";
 import { hideOtherEdgeBars } from "@/utils/rightEdgeBars";
-import MenuBar from "@/components/menu/MenuBar.vue";
+import MobileSettings from "./MobileSettings.vue";
 import AppIcon from "@/components/ui/AppIcon.vue";
 defineProps<{ browsing: boolean }>();
 const emit = defineEmits<{ (e: "browse", value: boolean): void }>();
@@ -148,13 +148,7 @@ onUnmounted(() => {
       <button @click="settings = true">设置</button>
     </nav>
   </div>
-  <div v-if="settings" class="mobile-settings">
-    <header>
-      <button aria-label="关闭设置" @click="settings = false">‹ 返回</button>
-      <h2>设置</h2>
-    </header>
-    <MenuBar />
-  </div>
+  <MobileSettings v-if="settings" @close="settings = false" />
 </template>
 <style scoped lang="less">
 .mobile-header {
