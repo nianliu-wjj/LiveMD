@@ -169,3 +169,29 @@ html[data-responsive-padding="true"] #fontRoot {
     padding-bottom: 80px;
   }
 }
+
+// 移动端以底部面板呈现大纲/批注/书签，沿用现有栏状态与关闭逻辑。
+html.mobile-layout {
+  .right-edge-tab {
+    display: none;
+  }
+  .right-edge-bar {
+    top: auto;
+    bottom: 0;
+    width: 100% !important;
+    max-height: 60dvh;
+    min-height: 35dvh;
+    border-radius: 20px 20px 0 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -12px 40px #0004;
+  }
+  .right-edge-bar__resize-handle {
+    display: none;
+  }
+  .right-edge-bar__header {
+    min-height: 56px;
+  }
+  .mobile-editor-root {
+    padding-bottom: 108px;
+  }
+}

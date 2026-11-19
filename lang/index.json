@@ -11630,5 +11630,141 @@
     "ru": "Выберите файл Markdown (.md или .markdown)",
     "en": "Please select a Markdown file (.md or .markdown)",
     "fr": "Sélectionnez un fichier Markdown (.md ou .markdown)"
+  },
+  "fqferf4": {
+    "zh-cn": "移动导航",
+    "ja": "モバイルナビゲーション",
+    "ko": "모바일 탐색",
+    "ru": "Мобильная навигация",
+    "en": "Mobile navigation",
+    "fr": "Navigation mobile"
+  },
+  "d8qqjy4": {
+    "zh-cn": "文档工具",
+    "ja": "文書ツール",
+    "ko": "문서 도구",
+    "ru": "Инструменты документа",
+    "en": "Document tools",
+    "fr": "Outils du document"
+  },
+  "ddqaf44": {
+    "zh-cn": "本地文档",
+    "ja": "ローカル文書",
+    "ko": "로컬 문서",
+    "ru": "Локальные документы",
+    "en": "Local documents",
+    "fr": "Documents locaux"
+  },
+  "sd6dsa6": {
+    "zh-cn": "返回文件列表",
+    "ja": "ファイル一覧に戻る",
+    "ko": "파일 목록으로 돌아가기",
+    "ru": "Вернуться к списку файлов",
+    "en": "Back to files",
+    "fr": "Retour aux fichiers"
+  },
+  "it32": {
+    "zh-cn": " 字",
+    "ja": " 文字",
+    "ko": " 자",
+    "ru": " символов",
+    "en": " characters",
+    "fr": " caractères"
+  },
+  "aghzmy4": {
+    "zh-cn": "保存文件",
+    "ja": "ファイルを保存",
+    "ko": "파일 저장",
+    "ru": "Сохранить файл",
+    "en": "Save file",
+    "fr": "Enregistrer le fichier"
+  },
+  "d51txa4": {
+    "zh-cn": "文件操作",
+    "ja": "ファイル操作",
+    "ko": "파일 작업",
+    "ru": "Действия с файлами",
+    "en": "File actions",
+    "fr": "Actions sur les fichiers"
+  },
+  "jdu7krb": {
+    "zh-cn": "新建 Markdown",
+    "ja": "Markdown を新規作成",
+    "ko": "새 Markdown",
+    "ru": "Новый Markdown",
+    "en": "New Markdown",
+    "fr": "Nouveau Markdown"
+  },
+  "by2vaw4": {
+    "zh-cn": "导入文件",
+    "ja": "ファイルをインポート",
+    "ko": "파일 가져오기",
+    "ru": "Импортировать файл",
+    "en": "Import file",
+    "fr": "Importer un fichier"
+  },
+  "ijxajs5": {
+    "zh-cn": "搜索文件名",
+    "ja": "ファイル名を検索",
+    "ko": "파일 이름 검색",
+    "ru": "Поиск по имени файла",
+    "en": "Search file names",
+    "fr": "Rechercher par nom"
+  },
+  "e8m7z3": {
+    "zh-cn": "已打开",
+    "ja": "開いているファイル",
+    "ko": "열린 파일",
+    "ru": "Открытые файлы",
+    "en": "Open files",
+    "fr": "Fichiers ouverts"
+  },
+  "ccwpgu4": {
+    "zh-cn": "开始写作",
+    "ja": "書き始める",
+    "ko": "글쓰기 시작",
+    "ru": "Начните писать",
+    "en": "Start writing",
+    "fr": "Commencer à écrire"
+  },
+  "96jg9nm": {
+    "zh-cn": "创建文档，或导入已有 Markdown 文件",
+    "ja": "文書を作成するか、Markdown ファイルをインポート",
+    "ko": "문서를 만들거나 기존 Markdown 파일 가져오기",
+    "ru": "Создайте документ или импортируйте файл Markdown",
+    "en": "Create a document or import an existing Markdown file",
+    "fr": "Créez un document ou importez un fichier Markdown"
+  },
+  "aydr0k4": {
+    "zh-cn": "即时渲染",
+    "ja": "ライブ表示",
+    "ko": "실시간 렌더링",
+    "ru": "Мгновенный просмотр",
+    "en": "Live rendering",
+    "fr": "Rendu instantané"
+  },
+  "jgq92": {
+    "zh-cn": "源码",
+    "ja": "ソース",
+    "ko": "소스",
+    "ru": "Исходный текст",
+    "en": "Source",
+    "fr": "Source"
+  },
+  "awgwcq4": {
+    "zh-cn": "关闭设置",
+    "ja": "設定を閉じる",
+    "ko": "설정 닫기",
+    "ru": "Закрыть настройки",
+    "en": "Close settings",
+    "fr": "Fermer les paramètres"
+  },
+  "430sep4": {
+    "zh-cn": "‹ 返回",
+    "ja": "‹ 戻る",
+    "ko": "‹ 돌아가기",
+    "ru": "‹ Назад",
+    "en": "‹ Back",
+    "fr": "‹ Retour"
   }
 }

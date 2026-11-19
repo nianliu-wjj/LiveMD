@@ -38,6 +38,7 @@ import AnnotationBar from "./components/annotations/AnnotationBar.vue";
 import AnnotationEditorDialog from "./components/annotations/AnnotationEditorDialog.vue";
 import CommandPalette from "./components/palette/CommandPalette.vue";
 import WorkspaceSearchPanel from "./components/search/WorkspaceSearchPanel.vue";
+import MobileLayout from "./components/mobile/MobileLayout.vue";
 import HomePage from "./components/home/HomePage.vue";
 import LintResultPanel from "./components/lint/LintResultPanel.vue";
 import LoadingIcon from "./components/ui/LoadingIcon.vue";
@@ -48,6 +49,7 @@ useContext();
 
 /** 移动端（Android WebView）：没有应用内更新通道，所有更新入口/事件都关闭 */
 const isMobile = window.electronAPI.isMobile;
+const mobileBrowsing = ref(true);
 
 // ✅ 直接使用各个hooks（而不是通过useContext转发）
 const { init: initTheme } = useTheme();
@@ -493,8 +495,17 @@ const handleInstall = async () => {
 </script>
 
 <template>
-  <TitleBar />
-  <div id="fontRoot">
+  <TitleBar v-if="!isMobile" />
+  <MobileLayout
+    v-if="isMobile"
+    :browsing="mobileBrowsing || !currentTab"
+    @browse="mobileBrowsing = $event"
+  />
+  <div
+    id="fontRoot"
+    v-show="!isMobile || (!mobileBrowsing && currentTab)"
+    :class="{ 'mobile-editor-root': isMobile }"
+  >
     <!-- ✅ 多编辑器实例：每个 tab 拥有独立的编辑器，v-show 保持 DOM 存活 -->
     <div ref="editorAreaRef" class="editorArea" :class="outlineClass" :style="editorAreaStyle">
       <div class="outlineBox">
@@ -511,7 +522,7 @@ const handleInstall = async () => {
           :key="tab.id"
           v-show="tab.id === activeTabId"
           :tab="tab"
-          :is-active="tab.id === activeTabId"
+          :is-active="tab.id === activeTabId && (!isMobile || !mobileBrowsing)"
         />
       </div>
     </div>
@@ -522,6 +533,7 @@ const handleInstall = async () => {
   <BookmarkBar />
   <AnnotationEditorDialog />
   <StatusBar
+    v-if="!isMobile"
     :content="currentTab?.content ?? ''"
     :update-status="updateStatus"
     :download-progress="downloadProgress"
