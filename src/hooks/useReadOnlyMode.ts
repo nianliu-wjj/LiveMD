@@ -1,7 +1,7 @@
 /**
  * 只读模式（窗口级开关）
  *
- * - 由状态栏右侧的锁形按钮切换，不持久化：每次启动默认可编辑，避免忘记开关后"怎么都打不了字"；
+ * - 由状态栏右侧的锁形按钮切换，不持久化：桌面默认可编辑、移动端默认只读，避免忘记开关后"怎么都打不了字"；
  * - 生效范围：
  *   1. 所有标签页的编辑器实例——LivemdEditor 把它与文件系统只读（tab.readOnly）合并为 effectiveReadOnly；
  *   2. 核心编辑器 dispatchTransaction 拦截一切改动文档的事务（键入、右键菜单、命令面板的程序化修改）；
@@ -11,7 +11,7 @@
 import { ref } from "vue";
 
 /** 当前窗口是否处于只读模式 */
-const isReadOnlyMode = ref(false);
+const isReadOnlyMode = ref(Boolean(globalThis.window?.electronAPI?.isMobile));
 
 /**
  * 切换只读模式

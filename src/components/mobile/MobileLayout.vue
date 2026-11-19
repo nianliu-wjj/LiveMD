@@ -3,6 +3,7 @@ import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import useTab from "@/hooks/useTab";
 import useFile from "@/hooks/useFile";
 import useRecentFiles from "@/hooks/useRecentFiles";
+import useReadOnlyMode from "@/hooks/useReadOnlyMode";
 import useSourceCode from "@/hooks/useSourceCode";
 import emitter from "@/events";
 import useAnnotations from "@/hooks/useAnnotations";
@@ -15,6 +16,19 @@ const { tabs, currentTab, switchToTab, openFile } = useTab();
 const { onOpen, createNewFile, onSave } = useFile();
 const { recentFiles } = useRecentFiles();
 const { isShowSource, toggleSourceCode } = useSourceCode();
+const { isReadOnlyMode, toggleReadOnlyMode } = useReadOnlyMode();
+const reading = computed(() => isReadOnlyMode.value || Boolean(currentTab.value?.readOnly));
+function toggleEditing() {
+  if (currentTab.value?.readOnly) return;
+  toggleReadOnlyMode();
+  if (isReadOnlyMode.value) {
+    (document.activeElement as HTMLElement | null)?.blur();
+    if (isShowSource.value) toggleSourceCode();
+  }
+}
+watch(reading, (value) => document.documentElement.classList.toggle("mobile-reading", value), {
+  immediate: true,
+});
 const { setBarVisible } = useAnnotations();
 function annotations() {
   hideOtherEdgeBars("annotations");
@@ -52,7 +66,7 @@ async function openRecent(path: string) {
   if (await openFile(path)) emit("browse", false);
 }
 function command(id: string) {
-  emitter.emit("editor:command", { id });
+  if (!reading.value) emitter.emit("editor:command", { id });
 }
 function viewport() {
   const view = window.visualViewport;
@@ -70,7 +84,7 @@ onMounted(() => {
   viewport();
 });
 onUnmounted(() => {
-  document.documentElement.classList.remove("mobile-layout");
+  document.documentElement.classList.remove("mobile-layout", "mobile-reading");
   window.visualViewport?.removeEventListener("resize", viewport);
   window.visualViewport?.removeEventListener("scroll", viewport);
   document.documentElement.style.removeProperty("--mobile-keyboard-offset");
@@ -86,7 +100,8 @@ onUnmounted(() => {
       ><button aria-label="返回文件列表" @click="emit('browse', true)">‹</button
       ><span class="mobile-document-name">{{ currentTab?.name || "文档" }}</span
       ><span class="mobile-subtitle">{{ currentTab?.content.length ?? 0 }} 字</span
-      ><button aria-label="保存文件" @click="onSave()"><AppIcon name="save" /></button
+      ><button v-if="!reading" aria-label="保存文件" @click="onSave()">
+        <AppIcon name="save" /></button
     ></template>
     <button v-if="browsing" aria-label="文件操作" :aria-expanded="menu" @click="menu = !menu">
       ＋
@@ -131,8 +146,12 @@ onUnmounted(() => {
     ><button @click="emitter.emit('bookmarks:show-bar')"><AppIcon name="bookmark" />书签</button
     ><button @click="settings = true"><AppIcon name="config-props" />设置</button>
   </nav>
-  <div v-else class="mobile-editor-tools" :class="{ 'keyboard-open': keyboard }">
-    <div class="mobile-format-tools" @pointerdown.prevent>
+  <div
+    v-else
+    class="mobile-editor-tools"
+    :class="{ 'keyboard-open': keyboard && !reading, 'reading-tools': reading }"
+  >
+    <div v-if="!reading" class="mobile-format-tools" @pointerdown.prevent>
       <button aria-label="撤销" @click="command('undo')">↶</button
       ><button aria-label="重做" @click="command('redo')">↷</button
       ><button aria-label="加粗" @click="command('toggleStrong')"><b>B</b></button
@@ -141,10 +160,18 @@ onUnmounted(() => {
       ><button aria-label="删除线" @click="command('toggleStrikethrough')"><s>S</s></button>
     </div>
     <nav aria-label="文档工具">
+      <button
+        :disabled="Boolean(currentTab?.readOnly)"
+        :aria-pressed="!reading"
+        @click="toggleEditing"
+      >
+        {{ reading ? "编辑" : "只读" }}
+      </button>
       <button @click="emitter.emit('outline:show-bar')">大纲</button
-      ><button @click="toggleSourceCode()">{{ isShowSource ? "即时渲染" : "源码" }}</button
+      ><button v-if="!reading" @click="toggleSourceCode()">
+        {{ isShowSource ? "即时渲染" : "源码" }}</button
       ><button @click="emitter.emit('bookmarks:show-bar')">书签</button
-      ><button @click="annotations">批注</button>
+      ><button v-if="!reading" @click="annotations">批注</button>
       <button @click="settings = true">设置</button>
     </nav>
   </div>
@@ -360,5 +387,16 @@ button {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
+}
+</style>
+
+<style scoped>
+.reading-tools {
+  max-width: 340px;
+  margin-inline: auto;
+}
+button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 </style>
