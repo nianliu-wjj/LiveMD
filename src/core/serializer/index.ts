@@ -4,7 +4,7 @@
  * 将 ProseMirror 文档序列化为 Markdown 文本
  */
 
-import { Node, Mark, Fragment } from "prosemirror-model";
+import { Node, Mark, Fragment, type Schema, type Slice } from "prosemirror-model";
 import { buildTableDelimiterRow } from "../utils/table.ts";
 import { parsePositionsAttr, serializeMermaidPositions } from "../utils/diagram-meta.ts";
 
@@ -466,4 +466,26 @@ export const defaultSerializer = new MarkdownSerializer();
 export function serializeMarkdown(doc: Node, options?: SerializeOptions): string {
   const serializer = options ? new MarkdownSerializer(options) : defaultSerializer;
   return serializer.serialize(doc);
+}
+
+/** 同一 textblock 内复制只输出内容；跨块复制保留结构。 */
+export function serializeSliceToMarkdownText(schema: Schema, slice: Slice): string {
+  const original = slice.content;
+  let fragment = original;
+  for (let depth = 0; depth < Math.min(slice.openStart, slice.openEnd); depth++) {
+    if (fragment.childCount !== 1 || fragment.firstChild!.isLeaf) {
+      fragment = original;
+      break;
+    }
+    fragment = fragment.firstChild!.content;
+  }
+  let inline = true;
+  fragment.forEach((node) => {
+    if (!node.isInline) inline = false;
+  });
+  if (inline) {
+    const paragraph = schema.nodes.paragraph.create(null, fragment);
+    return serializeMarkdown(schema.topNodeType.create(null, paragraph)).trim();
+  }
+  return serializeMarkdown(schema.topNodeType.create(null, original)).trimEnd();
 }

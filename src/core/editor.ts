@@ -30,7 +30,7 @@ import {
   type ClipboardPayload,
 } from "./clipboard";
 import { MarkdownParser } from "./parser";
-import { serializeMarkdown, MarkdownSerializer } from "./serializer";
+import { serializeSliceToMarkdownText, serializeMarkdown, MarkdownSerializer } from "./serializer";
 import { createInstantRenderPlugin } from "./plugins/instant-render";
 import { createInputRulesPlugin } from "./plugins/input-rules";
 import { createAutoPairPlugin } from "./plugins/auto-pair";
@@ -2902,23 +2902,7 @@ export class LivemdEditor implements ILivemdEditor {
    * 将 Slice 序列化为 Markdown 文本
    */
   private serializeSliceToMarkdown(slice: Slice): string {
-    const fragment = slice.content;
-    if (fragment.childCount === 0) return "";
-
-    // 检查是否全部为行内节点（段落内部分选区）
-    let allInline = true;
-    fragment.forEach((node) => {
-      if (!node.isInline) allInline = false;
-    });
-
-    if (allInline) {
-      const para = this.schema.nodes.paragraph.create(null, fragment);
-      const doc = this.schema.topNodeType.create(null, para);
-      return serializeMarkdown(doc).trim();
-    }
-
-    const doc = this.schema.topNodeType.create(null, fragment);
-    return serializeMarkdown(doc).trimEnd();
+    return serializeSliceToMarkdownText(this.schema, slice);
   }
 
   /**
