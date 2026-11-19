@@ -1,3 +1,4 @@
+import { renderMarkdownWithinHtmlFragment } from "./html-markdown-preview";
 /**
  * Livemd HTML 块 NodeView
  *
@@ -258,6 +259,8 @@ export class HtmlBlockView implements NodeView {
     this.preview.innerHTML = "";
     if (content.trim()) {
       const fragment = sanitizeHtml(content);
+      renderMarkdownWithinHtmlFragment(fragment);
+      sanitizeNode(fragment);
       this.preview.appendChild(fragment);
     } else {
       this.preview.innerHTML = '<span class="html-placeholder">输入 HTML...</span>';

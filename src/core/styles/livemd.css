@@ -2642,3 +2642,13 @@ body.livemd-fullscreen-open {
   visibility: hidden;
   contain: paint;
 }
+
+.livemd-html-block-preview pre {
+  padding: 1em;
+  overflow-x: auto;
+  white-space: pre;
+}
+.livemd-html-block-preview pre code {
+  font-family: monospace;
+  white-space: pre;
+}
