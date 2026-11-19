@@ -175,6 +175,9 @@ function buildSelector(view: EditorView, target: HTMLElement, scopeClass: string
   let el: HTMLElement | null = target;
   let depth = 0;
   while (el && el !== view.dom) {
+    if (el.classList.contains("livemd-focus-block") && parts.length > 0) {
+      return `.${scopeClass} .livemd-focus-block > ${parts.join(" > ")}`;
+    }
     if (++depth > SHELL_MAX_DEPTH) return null;
     const tag = el.tagName.toLowerCase();
     let nth = 1;
