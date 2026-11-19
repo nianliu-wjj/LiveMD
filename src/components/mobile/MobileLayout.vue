@@ -215,10 +215,10 @@ onUnmounted(() => {
         :disabled="Boolean(currentTab?.readOnly)"
         @click="readingAction(toggleEditing)"
       >
-        <span aria-hidden="true">✎</span><small>编辑</small>
+        <AppIcon name="edit" /><small>编辑</small>
       </button>
       <button aria-label="打开大纲" @click="readingAction(() => emitter.emit('outline:show-bar'))">
-        <span aria-hidden="true">☷</span><small>大纲</small>
+        <AppIcon name="List-outlined" /><small>大纲</small>
       </button>
       <button
         aria-label="打开书签"
@@ -244,7 +244,7 @@ onUnmounted(() => {
       aria-controls="mobile-reading-actions"
       @click="readingToolsOpen = !readingToolsOpen"
     >
-      <span aria-hidden="true">{{ readingToolsOpen ? "⌄" : "☷" }}</span>
+      <AppIcon :name="readingToolsOpen ? 'chevron-down' : 'List-outlined'" />
     </button>
   </div>
   <MobileSettings v-if="settings" @close="settings = false" />
@@ -539,5 +539,22 @@ button:disabled {
 }
 .mobile-save-button:active {
   color: var(--primary-color);
+}
+</style>
+
+<style scoped>
+.mobile-reading-toggle :deep(svg) {
+  width: 24px;
+  height: 24px;
+  stroke-width: 1.8;
+}
+.mobile-reading-actions :deep(svg) {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.8;
+}
+.mobile-reading-toggle,
+.mobile-reading-actions {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
 }
 </style>
