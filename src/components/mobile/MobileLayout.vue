@@ -10,7 +10,7 @@ import useAnnotations from "@/hooks/useAnnotations";
 import { hideOtherEdgeBars } from "@/utils/rightEdgeBars";
 import MobileSettings from "./MobileSettings.vue";
 import AppIcon from "@/components/ui/AppIcon.vue";
-defineProps<{ browsing: boolean }>();
+const props = defineProps<{ browsing: boolean }>();
 const emit = defineEmits<{ (e: "browse", value: boolean): void }>();
 const { tabs, currentTab, switchToTab, openFile } = useTab();
 const { onOpen, createNewFile, onSave } = useFile();
@@ -38,6 +38,14 @@ const query = ref("");
 const menu = ref(false);
 const settings = ref(false);
 const keyboard = ref(false);
+const readingToolsOpen = ref(false);
+watch([reading, () => props.browsing, () => currentTab.value?.id], () => {
+  readingToolsOpen.value = false;
+});
+function readingAction(action: () => void) {
+  readingToolsOpen.value = false;
+  action();
+}
 const files = computed(() =>
   tabs.value.filter((tab) => tab.name.toLowerCase().includes(query.value.toLowerCase()))
 );
@@ -100,8 +108,28 @@ onUnmounted(() => {
       ><button aria-label="返回文件列表" @click="emit('browse', true)">‹</button
       ><span class="mobile-document-name">{{ currentTab?.name || "文档" }}</span
       ><span class="mobile-subtitle">{{ currentTab?.content.length ?? 0 }} 字</span
-      ><button v-if="!reading" aria-label="保存文件" @click="onSave()">
-        <AppIcon name="save" /></button
+      ><button
+        v-if="!reading"
+        class="mobile-save-button"
+        aria-label="保存文件"
+        title="保存文件"
+        @click="onSave()"
+      >
+        <svg
+          class="mobile-save-icon"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.6"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M4 2.5h13l4.5 4.5v13a1.5 1.5 0 0 1-1.5 1.5H4A1.5 1.5 0 0 1 2.5 20V4A1.5 1.5 0 0 1 4 2.5Z"
+          />
+          <path d="M7 2.5v7h10v-7M7 21.5v-8h10v8M14 5v2" />
+        </svg></button
     ></template>
     <button v-if="browsing" aria-label="文件操作" :aria-expanded="menu" @click="menu = !menu">
       ＋
@@ -147,7 +175,7 @@ onUnmounted(() => {
     ><button @click="settings = true"><AppIcon name="config-props" />设置</button>
   </nav>
   <div
-    v-else
+    v-else-if="!reading"
     class="mobile-editor-tools"
     :class="{ 'keyboard-open': keyboard && !reading, 'reading-tools': reading }"
   >
@@ -174,6 +202,50 @@ onUnmounted(() => {
       ><button v-if="!reading" @click="annotations">批注</button>
       <button @click="settings = true">设置</button>
     </nav>
+  </div>
+  <div v-if="!browsing && reading" class="mobile-reading-float">
+    <nav
+      v-if="readingToolsOpen"
+      id="mobile-reading-actions"
+      aria-label="阅读工具"
+      class="mobile-reading-actions"
+    >
+      <button
+        aria-label="编辑文档"
+        :disabled="Boolean(currentTab?.readOnly)"
+        @click="readingAction(toggleEditing)"
+      >
+        <span aria-hidden="true">✎</span><small>编辑</small>
+      </button>
+      <button aria-label="打开大纲" @click="readingAction(() => emitter.emit('outline:show-bar'))">
+        <span aria-hidden="true">☷</span><small>大纲</small>
+      </button>
+      <button
+        aria-label="打开书签"
+        @click="readingAction(() => emitter.emit('bookmarks:show-bar'))"
+      >
+        <AppIcon name="bookmark" /><small>书签</small>
+      </button>
+      <button
+        aria-label="打开设置"
+        @click="
+          readingAction(() => {
+            settings = true;
+          })
+        "
+      >
+        <AppIcon name="config-props" /><small>设置</small>
+      </button>
+    </nav>
+    <button
+      class="mobile-reading-toggle"
+      :aria-label="readingToolsOpen ? '收起阅读工具' : '展开阅读工具'"
+      :aria-expanded="readingToolsOpen"
+      aria-controls="mobile-reading-actions"
+      @click="readingToolsOpen = !readingToolsOpen"
+    >
+      <span aria-hidden="true">{{ readingToolsOpen ? "⌄" : "☷" }}</span>
+    </button>
   </div>
   <MobileSettings v-if="settings" @close="settings = false" />
 </template>
@@ -398,5 +470,74 @@ button {
 button:disabled {
   opacity: 0.45;
   cursor: default;
+}
+</style>
+
+<style scoped lang="less">
+.mobile-reading-float {
+  position: fixed;
+  left: calc(16px + env(safe-area-inset-left, 0px));
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.mobile-reading-toggle,
+.mobile-reading-actions {
+  background: color-mix(in srgb, var(--background-color-2) 88%, transparent);
+  border: 1px solid var(--border-color-1);
+  box-shadow: 0 6px 24px #0003;
+  backdrop-filter: blur(16px);
+}
+.mobile-reading-toggle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 28px;
+  display: grid;
+  place-items: center;
+}
+.mobile-reading-actions {
+  border-radius: 28px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  button {
+    width: 52px;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    span {
+      font-size: 24px;
+    }
+    small {
+      font-size: 10px;
+    }
+    svg {
+      width: 22px;
+      height: 22px;
+    }
+  }
+}
+</style>
+
+<style scoped>
+.mobile-save-button {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: var(--text-color-2);
+}
+.mobile-save-button .mobile-save-icon {
+  width: 28px;
+  height: 28px;
+}
+.mobile-save-button:active {
+  color: var(--primary-color);
 }
 </style>
