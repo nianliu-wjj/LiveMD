@@ -8,8 +8,8 @@
 - Android 走 Tauri 2 官方移动端工程（`tauri android`），Rust 后端与桌面端共用。
 - HarmonyOS NEXT 没有官方 Tauri 支持，仓库内 `harmony/` 是 ArkTS（Stage 模型）壳工程：
   用 ArkWeb 以虚拟主机 + rawfile 回源承载 `dist/` 的 web 构建产物。
-- 鸿蒙壳内的能力边界：依赖 Tauri Rust 后端的功能（本地文件树、文件 watcher、
-  原生对话框、系统剪贴板等）不可用，前端会走降级路径。
+- 鸿蒙壳通过 ArkTS 桥接实现 Markdown 文件导入和应用文档目录的读写、列表、删除；
+  依赖 Tauri Rust 后端的桌面文件树、文件 watcher、系统剪贴板等仍走前端降级路径。
 - 移动端的安全降级已内置：更新检查在 Android 上返回 not-available，
   标题栏在 `platform === "android"` 时不渲染窗口控制按钮。
 
@@ -21,7 +21,7 @@
 | -------------- | ----------------------------------------------------------- |
 | Android Studio | 最新稳定版，安装 Android SDK Platform 与 Build-Tools        |
 | Android NDK    | 与 Tauri 2 当前要求匹配的 LTS 版本（安装后记录 `NDK_HOME`） |
-| JDK            | 17（Tauri Android 构建要求）                                |
+| JDK            | 17 及以上；本项目已使用 JDK 21 验证构建                      |
 | Rust           | 最新稳定版，并安装 Android 交叉编译 target                  |
 | Node.js / pnpm | 见根目录 `README.md`                                        |
 
@@ -46,7 +46,7 @@ $env:PATH = "$env:JAVA_HOME\bin;$env:ANDROID_HOME\platform-tools;$env:PATH"
 确认环境：
 
 ```bash
-java -version          # 17.x
+java -version          # 17 或更高版本
 adb version
 ```
 
@@ -79,7 +79,7 @@ APK 产物路径：
 src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
 ```
 
-> 未配置签名时 Tauri 会使用调试签名；正式分发前请在
+> 调试构建可使用 Android 默认调试签名；发布构建需要在
 > `src-tauri/gen/android/app/build.gradle.kts` 中配置 release keystore。
 
 ### 1.5 常见问题
@@ -88,7 +88,7 @@ src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-rele
 - **NDK / OpenSSL 相关链接错误**：Android 的 `reqwest` 已切到 `rustls`；
   若仍报错，确认没有手工把依赖改回 `native-tls`。
 - **Gradle 下载缓慢**：为 Gradle 配置国内镜像或代理，首次构建需要联网。
-- **`JAVA_HOME` 指向 JRE 而非 JDK**：必须使用 JDK 17（Android Studio 自带 `jbr` 可用）。
+- **`JAVA_HOME` 指向 JRE 而非 JDK**：使用 JDK 17 及以上（Android Studio 自带 `jbr` 可用）。
 
 ## 二、HarmonyOS NEXT
 
@@ -96,8 +96,9 @@ src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-rele
 
 | 工具          | 版本 / 说明                                                               |
 | ------------- | ------------------------------------------------------------------------- |
-| DevEco Studio | 5.0.5 及以上                                                              |
-| HarmonyOS SDK | API 17（与 `harmony/build-profile.json5` 的 `compatibleSdkVersion` 对应） |
+| DevEco Studio | 26.0；与工程配置及本地 SDK 保持一致                                         |
+| HarmonyOS SDK | 26.0.1 / API 26，以 `harmony/build-profile.json5` 为准                         |
+| JDK           | 21 及以上（DevEco Studio 自带 `jbr` 可用）                                   |
 | 华为账号      | 用于自动签名                                                              |
 
 ### 2.2 同步 web 产物
@@ -109,7 +110,8 @@ pnpm dist:harmony
 ```
 
 该命令等价于 `pnpm build:web` 后把 `dist/` 复制到
-`harmony/entry/src/main/resources/rawfile/www/`。**rawfile/www 不入库，打开工程前必须先生成。**
+`harmony/entry/src/main/resources/rawfile/www/`。**rawfile/www 不入库。**
+DevEco 构建时也会检查前端源码指纹，变化时自动重新构建并同步资源。
 
 ### 2.3 用 DevEco Studio 构建
 
@@ -124,8 +126,12 @@ pnpm dist:harmony
 
 ```bash
 cd harmony
-hvigorw assembleHap --mode module -p product=default
+hvigorw assembleHap --mode module -p product=default -p module=entry@default
 ```
+
+未配置 `signingConfigs` 时仍可完成编译和打包，产物为
+`harmony/entry/build/default/outputs/default/entry-default-unsigned.hap`。
+安装到设备前需要按上面的步骤配置签名并重新构建。
 
 ### 2.4 构建问题排查
 
@@ -134,7 +140,8 @@ hvigorw assembleHap --mode module -p product=default
 | 资源缺失（`$media:app_icon`、`$string:*` 等） | 先确认已执行 `pnpm dist:harmony`；仓库已包含 `AppScope/resources/base/media/app_icon.png` 与 entry 资源，若仍缺失，检查文件是否被本地清理 |
 | hvigor Sync 卡住 / 依赖下载失败               | 首次 Sync 需要联网，配置内网代理或镜像后重试；删除 `harmony/.hvigor` 缓存再同步                                                           |
 | `modelVersion` 相关异常                       | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应为 `5.0.5`，并与 DevEco Studio 版本匹配                                         |
-| 构建 HAP 提示未签名                           | 先完成 2.3 的自动签名配置；未签名只能运行预览，不能产出可安装 HAP                                                                         |
+| 构建 HAP 提示未签名                           | 未签名 HAP 可用于编译验证；安装前完成 2.3 的自动签名配置并重新构建                                                                       |
+| SDK 版本号校验失败                            | 当前 SDK 使用纯点分字符串 `"26.0.1"`，不要改成 `"26.0.1(26)"`；兼容版本和目标版本都须在本地 SDK 可用列表中                                |
 | ArkTS 编译报 `getContext` 废弃                | 使用 `getContext(this)`（仓库代码已修正，避免回退）                                                                                       |
 
 ## 三、验证基线
@@ -158,3 +165,10 @@ Tauri Android 构建会将 Rust .so 链接到 jniLibs。出现 Creation symbolic
 ### 安卓构建自动提权
 
 `pnpm dist:android-apk`、`pnpm dist:android` 和 `pnpm android:dev` 会先检测符号链接权限。Windows 缺少权限时自动弹出 UAC 管理员确认窗口，确认后在管理员进程中执行原命令；取消则返回失败。已启用开发者模式、已有权限或非 Windows 系统会直接执行。管理员进程保留 SDK、JDK、Rust 和代理环境变量；完成后退出码返回原终端。
+
+## 四、移动端文档保存
+
+- Android 文档保存到 Tauri 的应用文档目录，鸿蒙保存到应用 `filesDir/documents`。
+- 新文档首次保存时输入文件名；已有文档直接覆盖保存。导入文件复制到应用文档目录。
+- 文档列表从磁盘加载，重启后可继续打开；卸载应用会清除应用目录中的文档。
+- 浏览器 `?mobile=1` 预览使用 localStorage，原生保存链路需在设备或模拟器上验证。
