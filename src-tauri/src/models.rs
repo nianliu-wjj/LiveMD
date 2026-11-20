@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FileTraits {
+    #[serde(rename = "hasBOM", alias = "hasBom")]
     pub has_bom: bool,
     pub line_ending: String,
     pub has_trailing_newline: bool,
@@ -21,6 +22,16 @@ pub struct LoadedFile {
 pub struct SaveResult {
     pub file_path: String,
     pub content: String,
+}
+
+/// 移动端应用文档目录中的文档元信息（文件列表展示用）
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MobileDocumentInfo {
+    pub name: String,
+    pub size: u64,
+    /// 最后修改时间（Unix 毫秒）
+    pub modified_at: u64,
 }
 
 #[derive(Deserialize, Debug)]

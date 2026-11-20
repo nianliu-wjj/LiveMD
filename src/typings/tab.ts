@@ -15,4 +15,6 @@ export interface Tab {
   /** 合并预览中的临时 Tab */
   isMergePreview?: boolean;
   fileTraits?: FileTraitsDTO;
+  /** 移动端应用文档库中的文件名（保存走移动文档命令，filePath 保持 null） */
+  mobileDocName?: string;
 }
