@@ -34,6 +34,7 @@ type Events = {
   "sourceView:changed": boolean; // Triggered when source view mode state changes
   "editor:reload": void; // Triggered when active editor should reload its internal ProseMirror instance
   "editor:command": { id: string }; // Triggered when a shortcut action command should run on the active editor
+  "instantRender:set": boolean; // 设置即时渲染开关（移动端视图模式）
   "editor:search": { replace?: boolean; query?: string }; // Triggered when the active editor should open find/replace
   "editor:reveal-block": { index: number; text?: string }; // Triggered when the active editor should reveal a bookmarked block
   "editor:toggle-bookmark": void; // Triggered when the active editor should toggle a bookmark on the current block

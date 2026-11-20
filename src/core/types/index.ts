@@ -15,6 +15,8 @@ export interface LivemdConfig {
   readonly?: boolean;
   /** 是否启用源码视图（显示所有语法标记） */
   sourceView?: boolean;
+  /** 是否在光标附近显示 Markdown 语法标记（默认开启） */
+  instantRender?: boolean;
   /** 视图模式（专注模式 / 打字机模式） */
   viewModes?: Partial<ViewModesState>;
   /** 占位符文本 */
@@ -54,6 +56,8 @@ export interface LivemdEditor {
   getConfig: () => LivemdConfig;
   /** 更新配置 */
   updateConfig: (config: Partial<LivemdConfig>) => void;
+  /** 设置光标附近的 Markdown 语法标记显隐 */
+  setInstantRenderEnabled: (enabled: boolean) => void;
   /** 销毁编辑器 */
   destroy: () => void;
   /** 聚焦编辑器 */

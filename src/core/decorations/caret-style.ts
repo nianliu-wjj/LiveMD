@@ -287,7 +287,11 @@ let scopeCounter = 0;
 export function attachCaretStyle(
   view: EditorView,
   getPluginState: () =>
-    | { sourceView: boolean; cachedSyntaxRegions?: SyntaxMarkerRegion[] }
+    | {
+        sourceView: boolean;
+        instantRenderEnabled?: boolean;
+        cachedSyntaxRegions?: SyntaxMarkerRegion[];
+      }
     | undefined
 ): CaretStyleController {
   if (!view.dom || view.dom.nodeType !== Node.ELEMENT_NODE) {
@@ -304,7 +308,10 @@ export function attachCaretStyle(
     try {
       const pluginState = getPluginState();
       let regions: CaretRegion[] = [];
-      const active = pluginState?.sourceView !== true && view.state.selection.empty;
+      const active =
+        pluginState?.sourceView !== true &&
+        pluginState?.instantRenderEnabled !== false &&
+        view.state.selection.empty;
       if (active) {
         regions = computeCaretRegions(
           view.state.doc,

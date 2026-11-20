@@ -26,6 +26,7 @@ import { undo, redo } from "prosemirror-history";
 import { uploadImage } from "@/service/api";
 import useEditorZoom from "@/hooks/useEditorZoom";
 import useReadOnlyMode from "@/hooks/useReadOnlyMode";
+import useMobileViewMode from "@/hooks/useMobileViewMode";
 import {
   formatInsertedImagePath,
   isCopyAction,
@@ -69,6 +70,7 @@ const LARGE_DOCUMENT_LINE_THRESHOLD = 4_000;
 
 const { config: appConfig, watchConf } = useConfig();
 const { isReadOnlyMode } = useReadOnlyMode();
+const { mobileInstantRenderEnabled } = useMobileViewMode();
 /** 有效只读态 = 文件系统只读（tab.readOnly）∪ 状态栏开启的只读模式 */
 const effectiveReadOnly = computed(() => Boolean(props.tab.readOnly) || isReadOnlyMode.value);
 const { nextFrame } = useUiLoading();
@@ -619,6 +621,14 @@ function syncViewModesToEditor() {
   });
 }
 
+function syncMobileInstantRender(): void {
+  if (!window.electronAPI.isMobile || !props.isActive || !editor) return;
+  editor.setInstantRenderEnabled(mobileInstantRenderEnabled.value);
+}
+
+// 后台文档可能错过外壳事件；激活时从共享状态同步，无需再次读取存储。
+watch([() => props.isActive, mobileInstantRenderEnabled], syncMobileInstantRender);
+
 watch(
   () => [appConfig.value.view?.focusMode, appConfig.value.view?.typewriterMode],
   () => syncViewModesToEditor()
@@ -732,6 +742,7 @@ function createEditorInstance() {
     content: "",
     readonly: effectiveReadOnly.value,
     sourceView: preservedSourceView,
+    instantRender: !window.electronAPI.isMobile || mobileInstantRenderEnabled.value,
     viewModes: {
       focusMode: Boolean(appConfig.value.view?.focusMode),
       typewriterMode: Boolean(appConfig.value.view?.typewriterMode),
@@ -759,6 +770,9 @@ function createEditorInstance() {
   };
 
   editor = createLivemdEditor(containerRef.value, config);
+
+  // 按需懒创建时，外壳的模式切换事件可能早于编辑器实例。
+  syncMobileInstantRender();
 
   // ============ 批注桥接（与书签的 emitter 桥完全同构）============
   // ① 持久化批注 / 折叠 / 书签 / 光标的恢复都在 hydrateEditorContent 中随内容一次性完成
@@ -1011,6 +1025,7 @@ onUnmounted(() => {
   if (newlyLoadedTimer) clearTimeout(newlyLoadedTimer);
   if (outlineTimer) clearTimeout(outlineTimer);
   emitter.off("sourceView:toggle", handleSourceViewToggle);
+  emitter.off("instantRender:set", handleInstantRenderSet);
   emitter.off("outline:scrollTo", handleOutlineScrollTo);
   emitter.off("editor:reload", handleEditorReload);
   emitter.off("editor:command", handleEditorCommand);
@@ -1041,6 +1056,12 @@ function handleSourceViewToggle() {
   emitter.emit("sourceView:changed", editor.isSourceViewEnabled());
 }
 
+// 处理移动端视图模式对即时渲染的要求（仅活跃编辑器响应）
+function handleInstantRenderSet(enabled: boolean) {
+  if (!window.electronAPI.isMobile || !props.isActive || !editor) return;
+  editor.setInstantRenderEnabled(Boolean(enabled));
+}
+
 /**
  * 文档检查结果定位：把 1-based 行号换算为顶层块序号后复用 revealBlock
  *
@@ -1068,6 +1089,7 @@ function handleLintReveal(line: number): void {
   editor.revealBlock({ index: targetIndex });
 }
 emitter.on("sourceView:toggle", handleSourceViewToggle);
+emitter.on("instantRender:set", handleInstantRenderSet);
 
 // 处理大纲点击滚动（仅活跃编辑器响应）
 function handleOutlineScrollTo(pos: unknown) {

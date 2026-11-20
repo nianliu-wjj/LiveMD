@@ -31,7 +31,12 @@ import {
 } from "./clipboard";
 import { MarkdownParser } from "./parser";
 import { serializeSliceToMarkdownText, serializeMarkdown, MarkdownSerializer } from "./serializer";
-import { createInstantRenderPlugin } from "./plugins/instant-render";
+import {
+  createInstantRenderPlugin,
+  disableInstantRender,
+  enableInstantRender,
+  getInstantRenderState,
+} from "./plugins/instant-render";
 import { createInputRulesPlugin } from "./plugins/input-rules";
 import { createAutoPairPlugin } from "./plugins/auto-pair";
 import { createTableResizePlugin } from "./plugins/table-resize";
@@ -158,6 +163,7 @@ const defaultConfig: LivemdConfig = {
   content: "",
   readonly: false,
   sourceView: false,
+  instantRender: true,
 };
 
 // Flow text uses ProseMirror's semantic clipboard DOM; live DOM is for bounded nodes.
@@ -309,7 +315,7 @@ export class LivemdEditor implements ILivemdEditor {
       // 基础快捷键
       keymap(baseKeymap),
       // 即时渲染插件
-      ...createInstantRenderPlugin(),
+      ...createInstantRenderPlugin({ enabled: this.config.instantRender }),
       // 引用告示块同步/装饰插件（需晚于 instant-render，读取源码模式状态）
       createBlockquoteAlertSyncPlugin(),
       // 输入规则
@@ -1017,6 +1023,10 @@ export class LivemdEditor implements ILivemdEditor {
     // 处理源码视图变更
     if (config.sourceView !== undefined) {
       setSourceView(this.view.state, config.sourceView, this.view.dispatch.bind(this.view));
+    }
+
+    if (config.instantRender !== undefined) {
+      this.setInstantRenderEnabled(config.instantRender);
     }
 
     // 处理视图模式变更（专注模式 / 打字机模式）
@@ -2938,6 +2948,23 @@ export class LivemdEditor implements ILivemdEditor {
   isSourceViewEnabled(): boolean {
     const state = decorationPluginKey.getState(this.view.state);
     return state?.sourceView ?? false;
+  }
+
+  /**
+   * 设置即时渲染开关
+   *
+   * 即时渲染开启时，光标附近的 Markdown 标记会显示为源码；
+   * 关闭后装饰层隐藏标记，用于「所见即所得」与「分屏预览」模式。
+   */
+  setInstantRenderEnabled(enabled: boolean): void {
+    this.config.instantRender = enabled;
+    if (this._destroyed || getInstantRenderState(this.view.state)?.enabled === enabled) return;
+    const dispatch = this.view.dispatch.bind(this.view);
+    if (enabled) {
+      enableInstantRender(this.view.state, dispatch);
+    } else {
+      disableInstantRender(this.view.state, dispatch);
+    }
   }
 
   /**

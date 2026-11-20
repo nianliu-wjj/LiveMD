@@ -40,34 +40,39 @@ const defaultConfig: InstantRenderConfig = {
  * 创建即时渲染插件
  */
 export function createInstantRenderPlugin(config: InstantRenderConfig = {}): Plugin[] {
-  const mergedConfig = { ...defaultConfig, ...config };
+  const mergedConfig = { ...defaultConfig, ...config, enabled: config.enabled ?? true };
 
-  const decorationPlugin = createDecorationPlugin(false);
+  const decorationPlugin = createDecorationPlugin(false, mergedConfig.enabled);
 
   const controlPlugin = new Plugin<InstantRenderState>({
     key: instantRenderPluginKey,
 
     state: {
-      init() {
+      init(_, state) {
         return {
           enabled: mergedConfig.enabled!,
-          activeRegions: [],
-          lastCursorPos: 0,
+          activeRegions: mergedConfig.enabled
+            ? (decorationPluginKey.getState(state)?.activeRegions ?? [])
+            : [],
+          lastCursorPos: state.selection.head,
         };
       },
 
       apply(tr, state, _oldEditorState, newEditorState) {
         const meta = tr.getMeta(instantRenderPluginKey);
+        const enabled = meta?.enabled ?? state.enabled;
+        const cursorPos = newEditorState.selection.head;
 
-        if (meta?.enabled !== undefined) {
+        if (!enabled) {
           return {
             ...state,
-            enabled: meta.enabled,
+            enabled: false,
+            activeRegions: [],
+            lastCursorPos: cursorPos,
           };
         }
 
-        const cursorPos = newEditorState.selection.head;
-        if (cursorPos !== state.lastCursorPos || tr.docChanged) {
+        if (enabled !== state.enabled || cursorPos !== state.lastCursorPos || tr.docChanged) {
           // 复用装饰插件的缓存区域：装饰插件在文档变化/选区变化时已重新扫描语法标记区域，
           // 这里再独立扫一遍全文档纯属重复劳动（大文档每次光标移动都省一次 O(块数) 遍历）
           const cached = decorationPluginKey.getState(newEditorState);
@@ -77,6 +82,7 @@ export function createInstantRenderPlugin(config: InstantRenderConfig = {}): Plu
 
           return {
             ...state,
+            enabled,
             activeRegions,
             lastCursorPos: cursorPos,
           };
@@ -90,6 +96,25 @@ export function createInstantRenderPlugin(config: InstantRenderConfig = {}): Plu
   return [decorationPlugin, controlPlugin];
 }
 
+/** 控制状态与装饰状态在同一事务中更新，不修改 Markdown 或选区。 */
+function setInstantRender(
+  state: EditorState,
+  enabled: boolean,
+  dispatch?: (tr: Transaction) => void
+): boolean {
+  const pluginState = instantRenderPluginKey.getState(state);
+  if (!pluginState) return false;
+  if (dispatch && pluginState.enabled !== enabled) {
+    dispatch(
+      state.tr
+        .setMeta(instantRenderPluginKey, { enabled })
+        .setMeta(decorationPluginKey, { instantRenderEnabled: enabled })
+        .setMeta("addToHistory", false)
+    );
+  }
+  return true;
+}
+
 /**
  * 启用即时渲染
  */
@@ -97,11 +122,7 @@ export function enableInstantRender(
   state: EditorState,
   dispatch?: (tr: Transaction) => void
 ): boolean {
-  if (dispatch) {
-    const tr = state.tr.setMeta(instantRenderPluginKey, { enabled: true });
-    dispatch(tr);
-  }
-  return true;
+  return setInstantRender(state, true, dispatch);
 }
 
 /**
@@ -111,11 +132,7 @@ export function disableInstantRender(
   state: EditorState,
   dispatch?: (tr: Transaction) => void
 ): boolean {
-  if (dispatch) {
-    const tr = state.tr.setMeta(instantRenderPluginKey, { enabled: false });
-    dispatch(tr);
-  }
-  return true;
+  return setInstantRender(state, false, dispatch);
 }
 
 /**
@@ -128,11 +145,7 @@ export function toggleInstantRender(
   const pluginState = instantRenderPluginKey.getState(state);
   if (!pluginState) return false;
 
-  if (dispatch) {
-    const tr = state.tr.setMeta(instantRenderPluginKey, { enabled: !pluginState.enabled });
-    dispatch(tr);
-  }
-  return true;
+  return setInstantRender(state, !pluginState.enabled, dispatch);
 }
 
 /**

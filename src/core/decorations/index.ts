@@ -62,6 +62,7 @@ export interface DecorationPluginState {
   decorations: DecorationSet;
   activeRegions: SyntaxMarkerRegion[];
   sourceView: boolean;
+  instantRenderEnabled: boolean;
   cachedSyntaxRegions: SyntaxMarkerRegion[];
   cachedMathInlineRegions: MathInlineRegion[];
 }
@@ -542,7 +543,8 @@ export function computeDecorations(
   cursorPos: number,
   sourceView: boolean,
   precomputedSyntaxRegions?: SyntaxMarkerRegion[],
-  precomputedMathRegions?: MathInlineRegion[]
+  precomputedMathRegions?: MathInlineRegion[],
+  instantRenderEnabled = true
 ): {
   decorations: DecorationSet;
   activeRegions: SyntaxMarkerRegion[];
@@ -572,7 +574,7 @@ export function computeDecorations(
   const $cursor = doc.resolve(Math.min(Math.max(cursorPos, 0), doc.content.size));
   let focusDepth = $cursor.depth;
   while (focusDepth > 0 && !$cursor.node(focusDepth).isTextblock) focusDepth--;
-  if (focusDepth > 0 && $cursor.node(focusDepth).isTextblock) {
+  if (instantRenderEnabled && focusDepth > 0 && $cursor.node(focusDepth).isTextblock) {
     const blockStart = $cursor.before(focusDepth);
     decorations.push(
       Decoration.node(blockStart, blockStart + $cursor.node(focusDepth).nodeSize, {
@@ -598,7 +600,8 @@ export function computeDecorations(
   // 为行内数学公式添加渲染装饰
   for (const mathRegion of mathInlineRegions) {
     // 检查光标是否在这个数学公式区域内
-    const cursorInMath = cursorPos >= mathRegion.from && cursorPos <= mathRegion.to;
+    const cursorInMath =
+      instantRenderEnabled && cursorPos >= mathRegion.from && cursorPos <= mathRegion.to;
 
     if (!cursorInMath && !sourceView && mathRegion.content.trim()) {
       // 光标不在公式内，隐藏源码并显示渲染结果
@@ -627,7 +630,9 @@ export function computeDecorations(
 
   return {
     decorations: DecorationSet.create(doc, decorations),
-    activeRegions: syntaxRegions.filter((r) => cursorPos >= r.from && cursorPos <= r.to),
+    activeRegions: instantRenderEnabled
+      ? syntaxRegions.filter((r) => cursorPos >= r.from && cursorPos <= r.to)
+      : [],
     syntaxRegions,
     mathInlineRegions,
   };
@@ -651,7 +656,10 @@ export function getActiveRegions(cursorPos: number, regions: any[]): any[] {
 /**
  * 创建装饰插件
  */
-export function createDecorationPlugin(initialSourceView = false): Plugin<DecorationPluginState> {
+export function createDecorationPlugin(
+  initialSourceView = false,
+  initialInstantRenderEnabled = true
+): Plugin<DecorationPluginState> {
   return new Plugin<DecorationPluginState>({
     key: decorationPluginKey,
 
@@ -660,12 +668,16 @@ export function createDecorationPlugin(initialSourceView = false): Plugin<Decora
         const { decorations, activeRegions, syntaxRegions, mathInlineRegions } = computeDecorations(
           state.doc,
           state.selection.head,
-          initialSourceView
+          initialSourceView,
+          undefined,
+          undefined,
+          initialInstantRenderEnabled
         );
         return {
           decorations,
           activeRegions,
           sourceView: initialSourceView,
+          instantRenderEnabled: initialInstantRenderEnabled,
           cachedSyntaxRegions: syntaxRegions,
           cachedMathInlineRegions: mathInlineRegions,
         };
@@ -677,8 +689,14 @@ export function createDecorationPlugin(initialSourceView = false): Plugin<Decora
 
         const meta = tr.getMeta(decorationPluginKey);
         const sourceView = meta?.sourceView ?? pluginState.sourceView;
+        const instantRenderEnabled = meta?.instantRenderEnabled ?? pluginState.instantRenderEnabled;
 
-        if (docChanged || selectionChanged || meta?.sourceView !== undefined) {
+        if (
+          docChanged ||
+          selectionChanged ||
+          meta?.sourceView !== undefined ||
+          meta?.instantRenderEnabled !== undefined
+        ) {
           // 仅在文档变化或源码模式切换时重新扫描区域，选区变化时复用缓存
           const needRescan = docChanged || meta?.sourceView !== undefined;
           const syntaxRegions = needRescan ? undefined : pluginState.cachedSyntaxRegions;
@@ -694,12 +712,14 @@ export function createDecorationPlugin(initialSourceView = false): Plugin<Decora
             newState.selection.head,
             sourceView,
             syntaxRegions,
-            mathRegions
+            mathRegions,
+            instantRenderEnabled
           );
           return {
             decorations,
             activeRegions,
             sourceView,
+            instantRenderEnabled,
             cachedSyntaxRegions: newSyntax,
             cachedMathInlineRegions: newMath,
           };
