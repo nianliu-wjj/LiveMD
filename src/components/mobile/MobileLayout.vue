@@ -388,7 +388,7 @@ function submitNameDialog(): void {
 
 async function saveCurrentDocument(): Promise<void> {
   const tab = currentTab.value;
-  if (!tab || tab.readOnly || saving.value || reading.value) return;
+  if (!tab || tab.readOnly || saving.value) return;
 
   saving.value = true;
   if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -624,6 +624,23 @@ watch(
 const keyboard = ref(false);
 const viewMenu = ref(false);
 const formatMore = ref(false);
+const readingToolsOpen = ref(false);
+
+watch([reading, () => props.browsing, () => currentTab.value?.id], () => {
+  readingToolsOpen.value = false;
+});
+
+function toggleReadingTools(): void {
+  readingToolsOpen.value = !readingToolsOpen.value;
+  viewMenu.value = false;
+  formatMore.value = false;
+}
+
+function toggleViewMenu(): void {
+  viewMenu.value = !viewMenu.value;
+  formatMore.value = false;
+  readingToolsOpen.value = false;
+}
 
 function viewport(): void {
   const view = window.visualViewport;
@@ -640,6 +657,7 @@ function command(id: string): void {
 
 function toggleEditing(): void {
   if (currentTab.value?.readOnly) return;
+  readingToolsOpen.value = false;
   if (reading.value) {
     toggleReadOnlyMode(false);
     applyInstantRender();
@@ -652,18 +670,21 @@ function toggleEditing(): void {
 }
 
 function openOutline(): void {
+  readingToolsOpen.value = false;
   viewMenu.value = false;
   (document.activeElement as HTMLElement | null)?.blur();
   emitter.emit("outline:show-bar");
 }
 
 function openBookmarks(): void {
+  readingToolsOpen.value = false;
   viewMenu.value = false;
   (document.activeElement as HTMLElement | null)?.blur();
   emitter.emit("bookmarks:show-bar");
 }
 
 function openAnnotations(): void {
+  readingToolsOpen.value = false;
   viewMenu.value = false;
   (document.activeElement as HTMLElement | null)?.blur();
   hideOtherEdgeBars("annotations");
@@ -686,6 +707,7 @@ function backToFiles(): void {
 }
 
 function openSettings(): void {
+  readingToolsOpen.value = false;
   closeMenus();
   viewMenu.value = false;
   formatMore.value = false;
@@ -984,11 +1006,10 @@ onUnmounted(() => {
     <span class="m-editor-title">{{ documentTitle }}</span>
     <span class="m-word-count">{{ wordCountText }}</span>
     <button
-      v-if="!reading"
       type="button"
       class="m-save"
       :class="{ 'is-dirty': currentTab?.isModified }"
-      :disabled="saving"
+      :disabled="saving || Boolean(currentTab?.readOnly)"
       aria-label="保存文件"
       title="保存到应用文档目录"
       @click="saveCurrentDocument"
@@ -1003,44 +1024,59 @@ onUnmounted(() => {
     <!-- 左侧竖排工具 -->
     <nav
       class="m-editor-rail"
-      :class="{ 'is-keyboard': keyboard, 'is-reading': reading }"
-      aria-label="编辑器工具"
+      :class="{
+        'is-keyboard': keyboard,
+        'is-reading': reading,
+        'is-collapsed': reading && !readingToolsOpen,
+      }"
+      :aria-label="reading ? '阅读工具' : '编辑器工具'"
     >
       <button
+        v-if="reading"
         type="button"
-        :class="{ active: viewMenu }"
-        aria-label="视图模式"
-        title="视图模式"
-        @click="
-          viewMenu = !viewMenu;
-          formatMore = false;
-        "
+        class="m-reading-toggle"
+        :aria-label="readingToolsOpen ? '收起阅读工具' : '展开阅读工具'"
+        :title="readingToolsOpen ? '收起阅读工具' : '展开阅读工具'"
+        :aria-expanded="readingToolsOpen"
+        @click="toggleReadingTools"
       >
-        <WandSparkles :size="20" />
+        <ChevronDown v-if="readingToolsOpen" :size="20" />
+        <WandSparkles v-else :size="22" />
       </button>
-      <button
-        type="button"
-        :disabled="Boolean(currentTab?.readOnly)"
-        :aria-label="reading ? '开始编辑' : '进入阅读模式'"
-        :title="reading ? '开始编辑' : '进入阅读模式'"
-        @click="toggleEditing"
-      >
-        <SquarePen v-if="reading" :size="20" />
-        <Eye v-else :size="20" />
-      </button>
-      <span class="m-rail-divider" />
-      <button type="button" aria-label="大纲" title="大纲" @click="openOutline">
-        <ListTree :size="20" />
-      </button>
-      <button type="button" aria-label="书签" title="书签" @click="openBookmarks">
-        <Bookmark :size="20" />
-      </button>
-      <button type="button" aria-label="批注" title="批注" @click="openAnnotations">
-        <SquarePen :size="20" />
-      </button>
-      <button type="button" aria-label="设置" title="设置" @click="openSettings">
-        <Settings2 :size="20" />
-      </button>
+      <template v-if="!reading || readingToolsOpen">
+        <button
+          type="button"
+          :class="{ active: viewMenu }"
+          aria-label="视图模式"
+          title="视图模式"
+          @click="toggleViewMenu"
+        >
+          <WandSparkles :size="20" />
+        </button>
+        <button
+          type="button"
+          :disabled="Boolean(currentTab?.readOnly)"
+          :aria-label="reading ? '开始编辑' : '进入阅读模式'"
+          :title="reading ? '开始编辑' : '进入阅读模式'"
+          @click="toggleEditing"
+        >
+          <SquarePen v-if="reading" :size="20" />
+          <Eye v-else :size="20" />
+        </button>
+        <span class="m-rail-divider" />
+        <button type="button" aria-label="大纲" title="大纲" @click="openOutline">
+          <ListTree :size="20" />
+        </button>
+        <button type="button" aria-label="书签" title="书签" @click="openBookmarks">
+          <Bookmark :size="20" />
+        </button>
+        <button type="button" aria-label="批注" title="批注" @click="openAnnotations">
+          <SquarePen :size="20" />
+        </button>
+        <button type="button" aria-label="设置" title="设置" @click="openSettings">
+          <Settings2 :size="20" />
+        </button>
+      </template>
     </nav>
 
     <!-- 视图模式菜单 -->
@@ -1804,6 +1840,16 @@ button:disabled {
 
 .m-editor-rail.is-reading {
   bottom: calc(env(safe-area-inset-bottom, 0px) + 20px);
+}
+
+.m-editor-rail.is-collapsed {
+  padding: 0;
+  border-radius: 50%;
+
+  .m-reading-toggle {
+    width: 50px;
+    height: 50px;
+  }
 }
 
 .m-editor-rail.is-keyboard {
