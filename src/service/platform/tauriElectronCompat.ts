@@ -30,10 +30,13 @@ function detectPlatform(): LivePlatform {
 }
 
 const platform: LivePlatform = detectPlatform();
+// 浏览器预览移动端界面的显式开关（仅用于本地调试，壳内仍按 UA / 域名判断）
+const isMobilePreview = new URLSearchParams(window.location.search).get("mobile") === "1";
 const isMobile =
   platform === "android" ||
   /HarmonyOS|OpenHarmony/i.test(navigator.userAgent) ||
-  window.location.hostname === "livemd.local";
+  window.location.hostname === "livemd.local" ||
+  isMobilePreview;
 
 function subscribe(channel: string, listener: Listener): void {
   let disposed = false;
