@@ -3,15 +3,23 @@ import { mkdtempSync, writeFileSync, symlinkSync, rmSync, readFileSync } from "n
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  adaptAndroidProject,
+  ensureAndroidProject,
+  restoreAndroidSources,
+  snapshotAndroidSources,
+} from "./android-project.mjs";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const args = process.argv.slice(2);
 const elevated = args[0] === "--elevated";
 if (elevated) args.shift();
-if (!["build", "dev"].includes(args[0])) {
-  console.error("用法：node scripts/android-run.mjs build [--apk] 或 dev");
+if (!["init", "build", "dev"].includes(args[0])) {
+  console.error("用法：node scripts/android-run.mjs init、build [--apk] 或 dev");
   process.exit(1);
 }
+
+ensureAndroidProject(root);
 
 function canSymlink() {
   const directory = mkdtempSync(join(tmpdir(), "livemd-symlink-"));
@@ -37,7 +45,17 @@ function run(script, scriptArgs = []) {
   return result.status ?? 1;
 }
 
-if (process.platform === "win32" && !canSymlink()) {
+if (args[0] === "init") {
+  const sources = snapshotAndroidSources(root);
+  let status;
+  try {
+    status = run(join(root, "node_modules/@tauri-apps/cli/tauri.js"), ["android", ...args]);
+  } finally {
+    restoreAndroidSources(sources, root);
+    adaptAndroidProject(root);
+  }
+  process.exitCode = status || run(join(root, "scripts/generate-mobile-icons.mjs"));
+} else if (process.platform === "win32" && !canSymlink()) {
   if (elevated) {
     console.error("管理员进程仍不能创建符号链接，请检查 Windows 安全策略。");
     process.exit(1);

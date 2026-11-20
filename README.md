@@ -84,8 +84,12 @@ LiveMD/
 │  ├─ src/file_format.rs      文本归一化和文件特征恢复
 │  ├─ src/watcher.rs          文件监听
 │  ├─ icons/                  图标母版与桌面图标
-│  ├─ gen/android/            Tauri 生成的 Android 工程（忽略入库）
+│  ├─ gen/android/            指向根目录 android/ 的 Tauri 兼容入口（忽略入库）
 │  └─ tauri.conf.json         应用标识、构建、权限与打包配置
+├─ android/                   Android 原生工程源码
+│  ├─ app/                   Manifest、Kotlin 宿主、资源与应用构建配置
+│  ├─ buildSrc/              Gradle 与 Rust 构建桥接
+│  └─ gradle/                Gradle Wrapper
 ├─ harmony/                   ArkTS 壳、资源与 Hvigor 工程
 ├─ lang/                      国际化词典与生成的翻译函数
 ├─ public/                    公共资源与导入的主题素材
@@ -96,7 +100,9 @@ LiveMD/
 └─ pnpm-lock.yaml             锁定 JavaScript 依赖
 ```
 
-`dist/`、`node_modules/`、Rust target、Android 生成工程及鸿蒙构建缓存为本地产物。鸿蒙 `rawfile/www` 由脚本同步，不应手工修改。
+`android/` 和 `harmony/` 中的工程源码纳入 Git。`dist/`、`node_modules/`、Rust target、移动端构建缓存、Tauri 自动生成的 Android 依赖配置与签名文件为本地产物。鸿蒙 `rawfile/www` 由脚本同步，不应手工修改。
+
+Tauri CLI 固定使用 `src-tauri/gen/android/`。脚本会在该路径创建指向根目录 `android/` 的目录联接（Windows junction，macOS/Linux 符号链接）；兼容入口不入库，重新克隆后由 `pnpm android:prepare` 建立。
 
 ## 开发环境与启动
 
@@ -188,13 +194,14 @@ Tauri beforeBuildCommand 会自动构建前端。桌面打包产物位于 `src-t
 
 ```bash
 rustup target add aarch64-linux-android
+pnpm android:prepare
 pnpm android:init
 pnpm android:dev
 pnpm dist:android-apk
 pnpm dist:android
 ```
 
-初始化、开发与打包脚本会更新 Android launcher 图标。APK/AAB 在 `src-tauri/gen/android/app/build/outputs/` 下；正式发布需要配置签名。完整步骤见 [MOBILE.md](MOBILE.md)。
+`android:prepare` 准备兼容入口；首次使用本机工具链时执行 `android:init` 补齐 Tauri 生成配置。初始化、开发与打包命令均使用项目脚本，并更新 Android launcher 图标。Android Studio 打开根目录 `android/`；APK/AAB 输出在 `android/app/build/outputs/`，正式发布需要配置签名。完整步骤见 [MOBILE.md](MOBILE.md) 和 [Android 工程说明](android/README.md)。
 
 ### HarmonyOS NEXT
 

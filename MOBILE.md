@@ -5,7 +5,8 @@
 
 ## 总体说明
 
-- Android 走 Tauri 2 官方移动端工程（`tauri android`），Rust 后端与桌面端共用。
+- Android 原生工程在根目录 `android/`，使用 Tauri 2 官方移动端工具链，Rust 后端与桌面端共用。
+- `src-tauri/gen/android/` 是指向 `android/` 的兼容入口：Windows 使用目录联接，macOS/Linux 使用符号链接。工程源码入库，兼容入口、生成配置、缓存和签名文件不入库。
 - HarmonyOS NEXT 没有官方 Tauri 支持，仓库内 `harmony/` 是 ArkTS（Stage 模型）壳工程：
   用 ArkWeb 以虚拟主机 + rawfile 回源承载 `dist/` 的 web 构建产物。
 - 鸿蒙壳通过 ArkTS 桥接实现 Markdown 文件导入和应用文档目录的读写、列表、删除；
@@ -21,7 +22,7 @@
 | -------------- | ----------------------------------------------------------- |
 | Android Studio | 最新稳定版，安装 Android SDK Platform 与 Build-Tools        |
 | Android NDK    | 与 Tauri 2 当前要求匹配的 LTS 版本（安装后记录 `NDK_HOME`） |
-| JDK            | 17 及以上；本项目已使用 JDK 21 验证构建                      |
+| JDK            | 17 及以上；本项目已使用 JDK 21 验证构建                     |
 | Rust           | 最新稳定版，并安装 Android 交叉编译 target                  |
 | Node.js / pnpm | 见根目录 `README.md`                                        |
 
@@ -50,15 +51,25 @@ java -version          # 17 或更高版本
 adb version
 ```
 
-### 1.3 首次初始化
+### 1.3 工程准备与初始化
 
-每台打包电脑只需执行一次：
+安装 JavaScript 依赖后，先在仓库根目录准备 Tauri 兼容入口：
+
+```bash
+pnpm android:prepare
+```
+
+该命令将旧布局中的实际工程迁到根目录 `android/`（如有），并创建 `src-tauri/gen/android/` 的目录联接。重复运行会检查并复用已有入口。
+
+首次配置 Android 工具链或需要补齐本机生成配置时执行：
 
 ```bash
 pnpm android:init
 ```
 
-该命令生成 `src-tauri/gen/android/`（不纳入版本管理）。
+`android:init` 通过项目脚本调用 Tauri 初始化，并将工程保留在根目录 `android/`。完成后在 Android Studio 打开 `android/`，等待 Gradle 同步。
+
+`android/app/` 的 Manifest、Kotlin 宿主、资源和构建配置，以及 `android/buildSrc/`、Gradle Wrapper 纳入 Git。Tauri 生成的 `tauri.settings.gradle`、`tauri.build.gradle.kts`、原生库链接等由本机工具链维护；构建缓存和本地签名配置也不入库。详细目录见 [Android 工程说明](android/README.md)。
 
 ### 1.4 开发与打包
 
@@ -76,15 +87,16 @@ pnpm dist:android
 APK 产物路径：
 
 ```
-src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+android/app/build/outputs/apk/universal/release/app-universal-release.apk
 ```
 
-> 调试构建可使用 Android 默认调试签名；发布构建需要在
-> `src-tauri/gen/android/app/build.gradle.kts` 中配置 release keystore。
+调试构建可使用 Android 默认调试签名；正式发布需要在本地 `android/keystore.properties` 配置 release keystore，应用构建配置位于 `android/app/build.gradle.kts`。签名配置和密钥不纳入 Git。
 
 ### 1.5 常见问题
 
-- **`Android Studio project directory ... doesn't exist`**：先执行 `pnpm android:init`。
+- **`Android Studio project directory ... doesn't exist`**：先执行 `pnpm android:prepare` 重建兼容入口；首次使用时再执行 `pnpm android:init` 补齐生成配置。
+- **Android Studio 同步时找不到 Tauri 生成的 Gradle 配置**：在仓库根目录执行 `pnpm android:init` 后重新同步。
+- **根目录 `android/` 与旧路径中同时存在两个实际工程**：保留两边文件并核对内容，准备脚本会拒绝自动合并，以免覆盖工程修改。
 - **NDK / OpenSSL 相关链接错误**：Android 的 `reqwest` 已切到 `rustls`；
   若仍报错，确认没有手工把依赖改回 `native-tls`。
 - **Gradle 下载缓慢**：为 Gradle 配置国内镜像或代理，首次构建需要联网。
@@ -94,12 +106,12 @@ src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-rele
 
 ### 2.1 环境要求
 
-| 工具          | 版本 / 说明                                                               |
-| ------------- | ------------------------------------------------------------------------- |
-| DevEco Studio | 26.0；与工程配置及本地 SDK 保持一致                                         |
-| HarmonyOS SDK | 26.0.1 / API 26，以 `harmony/build-profile.json5` 为准                         |
-| JDK           | 21 及以上（DevEco Studio 自带 `jbr` 可用）                                   |
-| 华为账号      | 用于自动签名                                                              |
+| 工具          | 版本 / 说明                                            |
+| ------------- | ------------------------------------------------------ |
+| DevEco Studio | 26.0；与工程配置及本地 SDK 保持一致                    |
+| HarmonyOS SDK | 26.0.1 / API 26，以 `harmony/build-profile.json5` 为准 |
+| JDK           | 21 及以上（DevEco Studio 自带 `jbr` 可用）             |
+| 华为账号      | 用于自动签名                                           |
 
 ### 2.2 同步 web 产物
 
@@ -140,7 +152,7 @@ hvigorw assembleHap --mode module -p product=default -p module=entry@default
 | 资源缺失（`$media:app_icon`、`$string:*` 等） | 先确认已执行 `pnpm dist:harmony`；仓库已包含 `AppScope/resources/base/media/app_icon.png` 与 entry 资源，若仍缺失，检查文件是否被本地清理 |
 | hvigor Sync 卡住 / 依赖下载失败               | 首次 Sync 需要联网，配置内网代理或镜像后重试；删除 `harmony/.hvigor` 缓存再同步                                                           |
 | `modelVersion` 相关异常                       | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应为 `5.0.5`，并与 DevEco Studio 版本匹配                                         |
-| 构建 HAP 提示未签名                           | 未签名 HAP 可用于编译验证；安装前完成 2.3 的自动签名配置并重新构建                                                                       |
+| 构建 HAP 提示未签名                           | 未签名 HAP 可用于编译验证；安装前完成 2.3 的自动签名配置并重新构建                                                                        |
 | SDK 版本号校验失败                            | 当前 SDK 使用纯点分字符串 `"26.0.1"`，不要改成 `"26.0.1(26)"`；兼容版本和目标版本都须在本地 SDK 可用列表中                                |
 | ArkTS 编译报 `getContext` 废弃                | 使用 `getContext(this)`（仓库代码已修正，避免回退）                                                                                       |
 
@@ -160,7 +172,7 @@ Windows / macOS / Linux 生效，避免被拉入 Android 交叉编译。
 
 ### Windows 符号链接权限
 
-Tauri Android 构建会将 Rust .so 链接到 jniLibs。出现 Creation symbolic link is not allowed 时，需要在 Windows 设置中启用开发者模式，或使用管理员终端打包。复制 .so 不能替代 Tauri 后续的符号链接步骤。安卓脚本会在编译前检查权限，避免完成 Rust 编译后才失败。
+`android:prepare` 创建的目录兼容入口使用 Windows junction。Tauri Android 构建还会将 Rust .so 链接到 jniLibs，这一步需要文件符号链接权限。出现 Creation symbolic link is not allowed 时，需要在 Windows 设置中启用开发者模式，或使用管理员终端打包。复制 .so 不能替代 Tauri 后续的符号链接步骤。安卓脚本会在编译前检查权限，避免完成 Rust 编译后才失败。
 
 ### 安卓构建自动提权
 

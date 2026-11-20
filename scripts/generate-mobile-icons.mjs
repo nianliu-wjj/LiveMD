@@ -5,7 +5,7 @@ import sharp from "sharp";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const source = join(root, "src-tauri/icons/app-icon.svg");
-const android = join(root, "src-tauri/gen/android/app/src/main/res");
+const android = join(root, "android/app/src/main/res");
 for (const [density, size] of [
   ["mdpi", 48],
   ["hdpi", 72],
