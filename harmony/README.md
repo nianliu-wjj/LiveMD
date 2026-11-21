@@ -39,9 +39,10 @@ harmony/
 
 2. 用 **DevEco Studio 26.0** 打开 `harmony/` 目录，安装与 `build-profile.json5` 一致的 SDK；
 3. 首次打开按提示等待 hvigor Sync 完成（自动下载依赖）；
-4. 调试签名：`File > Project Structure > Signing Configs` 勾选
-   *Automatically generate signature information*（登录华为账号，自动回填
-   `build-profile.json5` 的 `signingConfigs`）；
+4. 调试签名：`File > Project Structure > Project > Signing Configs` 勾选
+   *Automatically generate signature information*，登录华为账号并为目标设备生成签名；
+   本机签名材料可保存在 `.sign/sign-config.json5`，Hvigor 会自动读取。
+   `build-profile.json5` 的 `default` 产品通过 `"signingConfig": "default"` 选择同名配置；
 5. 菜单 `Build > Build App(s)/Hap(s) > Build Hap(s)`，
    产物：`entry/build/default/outputs/default/entry-default-signed.hap`。
 
@@ -55,9 +56,9 @@ hvigorw assembleHap --mode module -p product=default -p module=entry@default
 ```
 
 DevEco 26.0 的命令行环境需使用 JDK 21 及以上，并设置 `DEVECO_SDK_HOME` 为
-DevEco 安装目录下的 `sdk`。未配置签名时产物是
-`entry/build/default/outputs/default/entry-default-unsigned.hap`；完成编译验证后，
-配置签名并重新构建才能安装到设备。
+DevEco 安装目录下的 `sdk`。本机须有名为 `default` 的签名配置；私有证书、
+描述文件、密钥库与密码不进入版本库。仅验证未签名构建时，可临时移除产品的
+`signingConfig` 字段，产物为 `entry-default-unsigned.hap`。
 
 ## 构建问题排查
 
@@ -67,6 +68,7 @@ DevEco 安装目录下的 `sdk`。未配置签名时产物是
 | 首次 hvigor Sync 卡住或依赖下载失败 | Sync 需要联网，配置内网代理或镜像后重试；可删除 `harmony/.hvigor` 缓存后重新打开工程 |
 | `modelVersion` 相关异常 | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应保持 `5.0.5`，且与 DevEco Studio 版本匹配 |
 | 构建 HAP 提示未签名 | 未签名 HAP 可用于编译验证；安装前完成上文的自动签名配置并重新构建 |
+| `9568320: no signature file` | 安装的是 `unsigned.hap`；检查产品的 `signingConfig` 是否与 `.sign/sign-config.json5` 中的配置名称一致，再重新构建 `signed.hap` |
 | SDK 版本号校验失败 | 当前 SDK 使用纯点分字符串 `"26.0.1"`，不要写成 `"26.0.1(26)"`；以本地 SDK 可用列表为准 |
 | ArkTS 报 `getContext` 已废弃 | 页面内应使用 `getContext(this)`；仓库代码已修正，避免回退为无参调用 |
 

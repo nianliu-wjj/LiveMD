@@ -129,8 +129,10 @@ DevEco 构建时也会检查前端源码指纹，变化时自动重新构建并�
 
 1. 打开 `harmony/` 目录（不是仓库根目录）。
 2. 等待首次 hvigor Sync 完成（需要联网下载依赖）。
-3. `File > Project Structure > Signing Configs`，勾选
-   _Automatically generate signature information_ 并登录华为账号。
+3. `File > Project Structure > Project > Signing Configs`，勾选
+   _Automatically generate signature information_ 并登录华为账号，为目标设备生成签名。
+   Hvigor 会读取本机 `.sign/sign-config.json5`；`default` 产品的 `signingConfig`
+   须与其中的配置名称一致，项目使用 `"signingConfig": "default"`。
 4. `Build > Build App(s)/Hap(s) > Build Hap(s)`。
 5. 产物：`harmony/entry/build/default/outputs/default/entry-default-signed.hap`。
 
@@ -141,9 +143,10 @@ cd harmony
 hvigorw assembleHap --mode module -p product=default -p module=entry@default
 ```
 
-未配置 `signingConfigs` 时仍可完成编译和打包，产物为
+`.sign/` 中的签名材料保留在本机，不进入版本库。新电脑须先创建本地 `default`
+签名配置；仅验证未签名编译时，可临时移除产品的 `signingConfig` 字段，产物为
 `harmony/entry/build/default/outputs/default/entry-default-unsigned.hap`。
-安装到设备前需要按上面的步骤配置签名并重新构建。
+安装到设备前需要选择签名配置并重新构建。
 
 ### 2.4 构建问题排查
 
@@ -153,6 +156,7 @@ hvigorw assembleHap --mode module -p product=default -p module=entry@default
 | hvigor Sync 卡住 / 依赖下载失败               | 首次 Sync 需要联网，配置内网代理或镜像后重试；删除 `harmony/.hvigor` 缓存再同步                                                           |
 | `modelVersion` 相关异常                       | 根 `oh-package.json5` 与 `hvigor/hvigor-config.json5` 均应为 `5.0.5`，并与 DevEco Studio 版本匹配                                         |
 | 构建 HAP 提示未签名                           | 未签名 HAP 可用于编译验证；安装前完成 2.3 的自动签名配置并重新构建                                                                        |
+| `9568320: no signature file`                  | 产品没有选择签名配置，或运行时选择了 `unsigned.hap`；关联本地签名配置并重新构建 `signed.hap`                                              |
 | SDK 版本号校验失败                            | 当前 SDK 使用纯点分字符串 `"26.0.1"`，不要改成 `"26.0.1(26)"`；兼容版本和目标版本都须在本地 SDK 可用列表中                                |
 | ArkTS 编译报 `getContext` 废弃                | 使用 `getContext(this)`（仓库代码已修正，避免回退）                                                                                       |
 
