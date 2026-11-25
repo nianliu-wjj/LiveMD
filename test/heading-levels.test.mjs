@@ -1,12 +1,17 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer } from "./helpers/core-module-server.mjs";
 import { AllSelection, EditorState, TextSelection } from "prosemirror-state";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const server = await createServer({
-  configFile: false,
+  testModules: [
+    "/src/core/parser/index.ts",
+    "/src/core/schema/index.ts",
+    "/src/core/commands/enhanced-commands.ts",
+    "/src/core/serializer/index.ts",
+  ],
   root: projectRoot,
   server: { middlewareMode: true },
 });

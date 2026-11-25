@@ -26,7 +26,7 @@ import { EditorView } from "prosemirror-view";
 // ⚠️ 注意：Mark/Node 仅作类型使用必须用 type 导入 —— 值导入会让 prosemirror-model 的
 // Node 类在运行时遮蔽 DOM 全局 Node（Node.ELEMENT_NODE 变 undefined），导致下方
 // nodeType 守卫恒走 no-op 分支（踩坑实录见文档坑 1）
-import type { Mark, Node } from "prosemirror-model";
+import type { Mark, Node as ProseMirrorNode } from "prosemirror-model";
 import type { SyntaxMarkerRegion } from "./index";
 
 /** 参与区域级显示的语义 mark 类型 */
@@ -57,7 +57,7 @@ const SHELL_MAX_DEPTH = 8;
  * 返回覆盖光标邻域（±1 容错计数偏差）的那个区段，无则 null。
  */
 function markExtentInBlock(
-  parent: Node,
+  parent: ProseMirrorNode,
   parentStart: number,
   mark: Mark,
   cursorOffset: number
@@ -100,7 +100,7 @@ function markExtentInBlock(
  * - math_inline 沿用既有光标驱动渲染机制。
  */
 export function computeCaretRegions(
-  doc: Node,
+  doc: ProseMirrorNode,
   cursorPos: number,
   syntaxRegions?: SyntaxMarkerRegion[] | null
 ): CaretRegion[] {
@@ -154,7 +154,7 @@ function elementFromDomAtPos(view: EditorView, pos: number, bias: -1 | 1): Eleme
  * 取 from+1 处向左取 DOM：落在标记文本内部，避开 PM domAtPos 在 text 边界
  * 返回块级元素的坑（踩坑实录见文档坑 3）。
  */
-function resolveSyntaxSpan(view: EditorView, from: number, to: number): HTMLElement | null {
+function resolveSyntaxSpan(view: EditorView, from: number, to: number): Element | null {
   const inside = Math.min(from + 1, to);
   let el = elementFromDomAtPos(view, inside, -1);
   let hops = 0;
@@ -170,9 +170,9 @@ function resolveSyntaxSpan(view: EditorView, from: number, to: number): HTMLElem
  * 元素计，text 节点不参与），根层锚定 scope class。深度超限放弃该区域（容错
  * 降级——宁可少亮一处，不产生脆弱选择器）。
  */
-function buildSelector(view: EditorView, target: HTMLElement, scopeClass: string): string | null {
+function buildSelector(view: EditorView, target: Element, scopeClass: string): string | null {
   const parts: string[] = [];
-  let el: HTMLElement | null = target;
+  let el: Element | null = target;
   let depth = 0;
   while (el && el !== view.dom) {
     if (el.classList.contains("livemd-focus-block") && parts.length > 0) {

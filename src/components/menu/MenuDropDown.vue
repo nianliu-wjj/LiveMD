@@ -64,6 +64,7 @@ const openSubmenu = ref<SubmenuKind | null>(null);
 const isHoverlessPointer = window.matchMedia?.("(hover: none)").matches ?? false;
 
 function handleSubmenuTap(kind: SubmenuKind): void {
+  if (kind === "export" && currentTab.value?.kind === "html") return;
   if (isHoverlessPointer) {
     openSubmenu.value = openSubmenu.value === kind ? null : kind;
     return;
@@ -449,7 +450,7 @@ onUnmounted(() => {
               currentTab?.kind !== 'html' && !isHoverlessPointer && (openSubmenu = 'export')
             "
             @mouseleave="!isHoverlessPointer && (openSubmenu = null)"
-            @click.stop="currentTab?.kind !== 'html' && handleSubmenuTap('export')"
+            @click.stop="handleSubmenuTap('export')"
           >
             <span class="project-menu__check" />
             <AppIcon name="export-file" class="project-menu__icon" />

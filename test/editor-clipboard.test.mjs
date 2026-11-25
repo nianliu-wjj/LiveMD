@@ -4,7 +4,7 @@ import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
 import { Window } from "happy-dom";
 import { AllSelection } from "prosemirror-state";
-import { createServer } from "vite";
+import { createServer } from "./helpers/core-module-server.mjs";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const window = new Window({ url: "http://localhost" });
@@ -39,7 +39,7 @@ Object.defineProperty(globalThis, "navigator", {
 });
 
 const server = await createServer({
-  configFile: false,
+  testModules: ["/src/core/editor.ts"],
   root: projectRoot,
   server: { middlewareMode: true },
 });

@@ -134,7 +134,6 @@ pub async fn terminal_open<R: Runtime>(
         drop(sessions);
         let monitor_app = app.clone();
         let monitor_id = session_id.clone();
-        let monitor_owner = owner.clone();
         std::thread::spawn(move || loop {
             std::thread::sleep(std::time::Duration::from_millis(50));
             let Some(state) = monitor_app.try_state::<TerminalState>() else {
@@ -155,13 +154,6 @@ pub async fn terminal_open<R: Runtime>(
                         let _ = session.child.kill();
                         let _ = session.child.wait();
                     }
-                    let _ = monitor_app.emit_to(
-                        &monitor_owner,
-                        "terminal:exit",
-                        Exit {
-                            session_id: monitor_id,
-                        },
-                    );
                     return;
                 }
             }

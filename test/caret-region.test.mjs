@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer } from "./helpers/core-module-server.mjs";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const server = await createServer({
-  configFile: false,
+  testModules: ["/src/core/parser/index.ts", "/src/core/decorations/caret-style.ts"],
   root: projectRoot,
   server: { middlewareMode: true },
 });

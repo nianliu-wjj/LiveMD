@@ -1,5 +1,5 @@
 import catalog from "./builtin-themes.json";
-import type { Theme } from "../types/theme";
+import type { Theme } from "../../typings/theme";
 
 export const DEFAULT_THEME = "normal";
 export const DEFAULT_DARK_THEME = "normal-dark";

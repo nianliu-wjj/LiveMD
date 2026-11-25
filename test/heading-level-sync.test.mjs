@@ -1,12 +1,19 @@
 import assert from "node:assert/strict";
 import test, { after } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createServer } from "vite";
+import { createServer } from "./helpers/core-module-server.mjs";
 import { EditorState } from "prosemirror-state";
 
 const projectRoot = fileURLToPath(new URL("..", import.meta.url));
 const server = await createServer({
-  configFile: false,
+  testModules: [
+    "/src/core/schema/index.ts",
+    "/src/core/parser/index.ts",
+    "/src/core/serializer/index.ts",
+    "/src/core/plugins/syntax-fixer.ts",
+    "/src/core/plugins/heading-sync.ts",
+    "/src/core/plugins/syntax-detector.ts",
+  ],
   root: projectRoot,
   server: { middlewareMode: true },
 });
