@@ -10,7 +10,7 @@
         "signingConfig": "default",
         // 与本地已安装的 HarmonyOS SDK 保持一致（DevEco Studio 26.0 内置 SDK：platformVersion 26.0.1 / API 26）
         // DevEco Studio 26 起使用纯点分版本格式（不带括号），两位主版本号必须用新格式
-        "compatibleSdkVersion": "26.0.1",
+        "compatibleSdkVersion": "5.0.0(12)",
         "targetSdkVersion": "26.0.1",
         "runtimeOS": "HarmonyOS",
         "buildOption": {
