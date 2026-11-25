@@ -15,8 +15,7 @@ fn heading_regex() -> &'static Regex {
 fn livemd_markdown_regex() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
     RE.get_or_init(|| {
-        Regex::new(r"!\[([^\]]*)\]\(livemd:///?([^)]+)\)")
-            .expect("valid livemd markdown regex")
+        Regex::new(r"!\[([^\]]*)\]\(livemd:///?([^)]+)\)").expect("valid livemd markdown regex")
     })
 }
 
@@ -54,7 +53,11 @@ pub fn restore_file_traits(content: &str, traits: Option<&FileTraits>) -> String
     }
 
     if traits.has_trailing_newline {
-        let eol = if traits.line_ending == "crlf" { "\r\n" } else { "\n" };
+        let eol = if traits.line_ending == "crlf" {
+            "\r\n"
+        } else {
+            "\n"
+        };
         if !result.ends_with(eol) {
             result.push_str(eol);
         }
@@ -172,13 +175,11 @@ fn sanitize_file_name_base(value: &str) -> String {
 
 fn is_reserved_windows_name(value: &str) -> bool {
     let lower = value.to_ascii_lowercase();
-    matches!(
-        lower.as_str(),
-        "con" | "prn" | "aux" | "nul"
-    ) || (lower.starts_with("com")
-        && lower.len() == 4
-        && lower.as_bytes()[3].is_ascii_digit()
-        && lower.as_bytes()[3] != b'0')
+    matches!(lower.as_str(), "con" | "prn" | "aux" | "nul")
+        || (lower.starts_with("com")
+            && lower.len() == 4
+            && lower.as_bytes()[3].is_ascii_digit()
+            && lower.as_bytes()[3] != b'0')
         || (lower.starts_with("lpt")
             && lower.len() == 4
             && lower.as_bytes()[3].is_ascii_digit()
@@ -214,7 +215,11 @@ pub fn create_default_markdown_file_name(content: &str) -> String {
         None => {
             let collapsed = content.split_whitespace().collect::<Vec<_>>().join(" ");
             let fallback = take_chars(collapsed.trim(), FALLBACK_CONTENT_LENGTH);
-            if fallback.is_empty() { None } else { Some(fallback) }
+            if fallback.is_empty() {
+                None
+            } else {
+                Some(fallback)
+            }
         }
     };
 
@@ -292,6 +297,32 @@ pub fn read_markdown_file(file_path: &str) -> Option<LoadedFile> {
         file_path: normalized,
         content,
         file_traits,
+    })
+}
+
+pub fn is_html_file_path(path: &str) -> bool {
+    Path::new(path)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("html") || ext.eq_ignore_ascii_case("htm"))
+}
+
+pub fn is_document_file_path(path: &str) -> bool {
+    is_markdown_file_path(path) || is_html_file_path(path)
+}
+
+pub fn read_document_file(path: &str) -> Option<LoadedFile> {
+    if !is_html_file_path(path) {
+        return read_markdown_file(path);
+    }
+    let path = absolute_path(path);
+    if !path.is_file() {
+        return None;
+    }
+    Some(LoadedFile {
+        file_path: path.to_string_lossy().to_string(),
+        content: String::new(),
+        file_traits: detect_file_traits(""),
     })
 }
 

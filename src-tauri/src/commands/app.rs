@@ -3,7 +3,10 @@ use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use tauri_plugin_opener::OpenerExt;
 
 use crate::events::{broadcast_editor_args, emit_args_to};
-use crate::file_format::{absolute_path, is_markdown_file_path, read_markdown_file};
+use crate::file_format::{
+    absolute_path, is_document_file_path as is_markdown_file_path,
+    read_document_file as read_markdown_file,
+};
 use crate::models::{FocusResult, ImagePreviewItem, ImagePreviewPayload, LoadedFile};
 use crate::paths::{normalize_external_link, resolve_local_link_path};
 use crate::state::AppState;
@@ -413,4 +416,3 @@ pub async fn open_path<R: Runtime>(app: AppHandle<R>, path: String) -> Result<()
         .open_path(path, None::<&str>)
         .map_err(|error| error.to_string())
 }
-

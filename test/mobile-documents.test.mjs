@@ -34,12 +34,21 @@ afterEach(() => {
 });
 
 test("文档标识移除路径和非法字符，并避免 Windows 设备名", () => {
+  assert.equal(sanitizeMobileDocumentName("../演示.HTML"), "演示.HTML");
   assert.equal(sanitizeMobileDocumentName(" ../../中文.MD "), "中文.MD");
   assert.equal(sanitizeMobileDocumentName("C:\\fakepath\\笔记.markdown"), "笔记.markdown");
   assert.equal(sanitizeMobileDocumentName("../.."), "");
   assert.equal(sanitizeMobileDocumentName("a:\u0000\u007f?. "), "a____.md");
   assert.equal(sanitizeMobileDocumentName("CON.md"), "_CON.md");
   assert.equal(sanitizeMobileDocumentName("lpt²"), "_lpt².md");
+});
+
+test("文档库导入 HTML 后仍以 HTML 扩展名列出和重开", async () => {
+  const content = "<html><script>window.answer = 42</script></html>";
+  await saveMobileDocument("page.htm", content);
+  const documents = await listMobileDocuments();
+  assert.equal(documents[0].name, "page.htm");
+  assert.equal((await readMobileDocument("page.htm")).content, content);
 });
 
 test("浏览器文档完整保存 UTF-8、BOM、CRLF，覆盖短内容并删除指定文档", async () => {

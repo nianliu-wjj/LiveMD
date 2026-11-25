@@ -3,7 +3,7 @@ import type { Tab } from "@/typings/tab";
 // useFile.ts
 import { nextTick } from "vue";
 import emitter from "@/events";
-import { readAndProcessFile } from "@/service/fileService";
+import { isHtmlFilePath, readAndProcessFile } from "@/service/fileService";
 import useContent from "./useContent";
 import { useConfig } from "./useConfig";
 import useTab from "./useTab";
@@ -40,10 +40,10 @@ async function onOpen(result?: { filePath: string; content: string } | null) {
     );
     const { createTabFromFile, switchToTab } = useTab();
     const tab = await createTabFromFile(file.name, decoded.content, decoded.fileTraits, {
-      readOnly: false,
+      readOnly: isHtmlFilePath(file.name),
     });
     tab.filePath = null;
-    tab.isModified = true;
+    tab.isModified = tab.kind !== "html";
     tab.isNewlyLoaded = false;
     await switchToTab(tab.id);
     markdown.value = tab.content;
@@ -112,6 +112,7 @@ async function onSave() {
 }
 
 async function onSaveAs() {
+  if (useTab().currentTab.value?.kind === "html") return;
   const { updateTitle } = useTitle();
   const { markdown, filePath, originalContent } = useContent();
   const { updateCurrentTabContent, currentTab, applySavedTabState, mergeSavedTabIntoExisting } =
@@ -237,6 +238,20 @@ export default function useFile() {
     const files = Array.from(event.dataTransfer?.files ?? []);
 
     if (files.length === 0) return;
+
+    for (const file of files.filter((file) => isHtmlFilePath(file.name))) {
+      const path =
+        window.electronAPI.getPathForFile(file) || (file as File & { path?: string }).path;
+      if (path) await useTab().openFile(path);
+      else {
+        const tab = await createTabFromFile(file.name, await file.text(), undefined, {
+          readOnly: true,
+        });
+        tab.filePath = null;
+        tab.isNewlyLoaded = false;
+        await switchToTab(tab.id);
+      }
+    }
 
     // 查找 Markdown 文件
     const mdFile = files.find((f) => /\.(?:md|markdown)$/i.test(f.name));
@@ -431,6 +446,11 @@ export default function useFile() {
     content,
     fileTraits,
   }: OpenFileAtLaunchPayload): Promise<void> {
+    if (isHtmlFilePath(launchFilePath)) {
+      await useTab().openFile(launchFilePath);
+      updateTitle();
+      return;
+    }
     // 检查文件是否已在当前窗口打开
     const existing = isFileAlreadyOpen(launchFilePath);
     if (existing) {

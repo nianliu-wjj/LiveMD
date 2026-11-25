@@ -82,7 +82,7 @@ class MobileDocsBridge {
       cleaned = '_' + cleaned;
     }
     const lower: string = cleaned.toLowerCase();
-    return lower.endsWith('.md') || lower.endsWith('.markdown') ? cleaned : `${cleaned}.md`;
+    return lower.endsWith('.md') || lower.endsWith('.markdown') || lower.endsWith('.html') || lower.endsWith('.htm') ? cleaned : `${cleaned}.md`;
   }
 
   private info(name: string): MobileDocumentInfo {
@@ -116,7 +116,7 @@ class MobileDocsBridge {
       const documents: MobileDocumentInfo[] = [];
       for (const name of names) {
         const lower: string = name.toLowerCase();
-        if (!lower.endsWith('.md') && !lower.endsWith('.markdown')) {
+        if (!lower.endsWith('.md') && !lower.endsWith('.markdown') && !lower.endsWith('.html') && !lower.endsWith('.htm')) {
           continue;
         }
         const stat: fs.Stat = fs.lstatSync(this.dir + '/' + name);

@@ -19,7 +19,7 @@ function initialize() {
   _markdown = computed({
     get: () => currentTab.value?.content ?? "",
     set: (val) => {
-      if (currentTab.value) currentTab.value.content = val;
+      if (currentTab.value && currentTab.value.kind !== "html") currentTab.value.content = val;
     },
   });
 

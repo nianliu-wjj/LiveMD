@@ -5,6 +5,10 @@ import type { Tab } from "@/typings/tab";
  * 主进程负责文件格式处理（BOM/CRLF/图片路径），渲染层只做简单的内容传递
  */
 
+export function isHtmlFilePath(path: string): boolean {
+  return /\.(html|htm)$/i.test(path);
+}
+
 export interface FileContent {
   filePath: string;
   content: string;
@@ -65,13 +69,14 @@ export function createTabDataFromFile(
   const fileName = filePath.split(/[\\/]/).at(-1) || "Untitled";
 
   return {
+    kind: isHtmlFilePath(filePath) ? "html" : "markdown",
     name: fileName,
     filePath,
     content,
     originalContent: content,
     isModified: false,
     scrollRatio: 0,
-    readOnly,
+    readOnly: isHtmlFilePath(filePath) || readOnly,
     fileTraits,
   };
 }

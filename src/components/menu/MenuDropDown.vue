@@ -227,6 +227,7 @@ function getExportBaseName(): string {
 
 async function handleExport(kind: ExportKind): Promise<void> {
   closeMenu();
+  if (currentTab.value?.kind === "html") return;
   const base = getExportBaseName();
   try {
     if (kind === "pdf") {
@@ -419,12 +420,22 @@ onUnmounted(() => {
             <AppIcon name="app-window" class="project-menu__icon" />
             <span class="project-menu__label">打开新窗口</span>
           </div>
-          <div class="project-menu__item" @click="handleSave">
+          <div
+            class="project-menu__item"
+            :class="{ 'project-menu__item--disabled': currentTab?.kind === 'html' }"
+            :aria-disabled="currentTab?.kind === 'html'"
+            @click="handleSave"
+          >
             <span class="project-menu__check" />
             <AppIcon name="save" class="project-menu__icon" />
             <span class="project-menu__label">保存</span>
           </div>
-          <div class="project-menu__item" @click="handleSaveAs">
+          <div
+            class="project-menu__item"
+            :class="{ 'project-menu__item--disabled': currentTab?.kind === 'html' }"
+            :aria-disabled="currentTab?.kind === 'html'"
+            @click="handleSaveAs"
+          >
             <span class="project-menu__check" />
             <AppIcon name="document-copy" class="project-menu__icon" />
             <span class="project-menu__label">另存为…</span>
@@ -432,9 +443,13 @@ onUnmounted(() => {
 
           <div
             class="project-menu__item"
-            @mouseenter="!isHoverlessPointer && (openSubmenu = 'export')"
+            :class="{ 'project-menu__item--disabled': currentTab?.kind === 'html' }"
+            :aria-disabled="currentTab?.kind === 'html'"
+            @mouseenter="
+              currentTab?.kind !== 'html' && !isHoverlessPointer && (openSubmenu = 'export')
+            "
             @mouseleave="!isHoverlessPointer && (openSubmenu = null)"
-            @click.stop="handleSubmenuTap('export')"
+            @click.stop="currentTab?.kind !== 'html' && handleSubmenuTap('export')"
           >
             <span class="project-menu__check" />
             <AppIcon name="export-file" class="project-menu__icon" />

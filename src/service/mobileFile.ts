@@ -20,8 +20,8 @@ export function decodeMobileMarkdown(
   name: string,
   raw: string
 ): { content: string; fileTraits: FileTraitsDTO } {
-  if (!/\.(md|markdown|mdown|mkd|mkdn)$/i.test(name)) {
-    throw new Error("请选择 Markdown 文件（.md 或 .markdown）");
+  if (!/\.(md|markdown|mdown|mkd|mkdn|html|htm)$/i.test(name)) {
+    throw new Error("请选择 Markdown 或 HTML 文件");
   }
   return {
     content: raw.replace(/^\uFEFF/, "").replace(/\r\n/g, "\n"),

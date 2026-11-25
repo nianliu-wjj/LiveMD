@@ -1,4 +1,5 @@
 export interface Tab {
+  kind?: "markdown" | "html";
   id: string;
   name: string;
   filePath: string | null;

@@ -7,7 +7,7 @@ import { setCurrentMarkdownFilePath } from "@/shared/utils/imagePathPlugin";
 import { isReadOnlyMode } from "@/hooks/useReadOnlyMode";
 import { resolveImageSaveTarget } from "@/shared/utils/imageInsert";
 import emitter from "@/events";
-import { createTabDataFromFile, readAndProcessFile } from "@/service/fileService";
+import { createTabDataFromFile, readAndProcessFile, isHtmlFilePath } from "@/service/fileService";
 import { createInertiaScroll } from "@/utils/inertiaScroll";
 import { normalizeMarkdownForDirtyCheck } from "@/utils/markdown";
 import { randomUUID } from "@/utils/tool";
@@ -53,6 +53,7 @@ async function initFromTearOff(): Promise<boolean> {
     // 已修改的 Tab 不能标记 isNewlyLoaded，否则编辑器归一化会覆盖 originalContent 并重置 isModified
     const tab: Tab = {
       id: randomUUID(), // 生成新 ID，避免与源窗口冲突
+      kind: tabData.kind,
       name: tabData.name,
       filePath: tabData.filePath,
       content: tabData.content,
@@ -77,7 +78,7 @@ async function initFromTearOff(): Promise<boolean> {
     }
 
     // 设置图片路径解析
-    if (tab.filePath) {
+    if (tab.filePath && tab.kind !== "html") {
       setCurrentMarkdownFilePath(tab.filePath);
     }
 
@@ -163,7 +164,7 @@ function getCurrentTab() {
 // 更新当前tab的内容
 function updateCurrentTabContent(content: string, isModified?: boolean) {
   const currentTab = getCurrentTab();
-  if (!currentTab) return;
+  if (!currentTab || currentTab.kind === "html") return;
 
   // 只读模式：拒绝一切标记为"已修改"的内容写入（排版规范化、检查修复等），文档保持不变
   if (isModified && isReadOnlyMode.value) {
@@ -271,7 +272,7 @@ function mergeSavedTabIntoExisting(
 
 // 保存指定tab
 async function saveTab(tab: Tab): Promise<boolean> {
-  if (!tab || tab.readOnly) return false;
+  if (!tab || tab.kind === "html" || tab.readOnly) return false;
 
   try {
     const { config } = useConfig();
@@ -414,13 +415,13 @@ async function createTabFromFile(
     const tab: Tab = {
       id: randomUUID(),
       ...tabData,
-      readOnly: knownReadOnly ?? false,
+      readOnly: tabData.kind === "html" || (knownReadOnly ?? false),
       isNewlyLoaded: true,
     };
     scheduleNewlyLoadedCleanup(tab.id);
 
     const added = add(tab);
-    if (knownReadOnly === undefined) {
+    if (knownReadOnly === undefined && tabData.kind !== "html") {
       void fillReadOnlyAsync(tab.id, filePath);
     }
     return added;
@@ -461,7 +462,9 @@ async function openFile(filePath: string): Promise<Tab | null> {
     didShowLoading = true;
 
     // 使用统一的文件服务读取和处理文件
-    const fileContent = await readAndProcessFile({ filePath });
+    const fileContent = isHtmlFilePath(filePath)
+      ? { filePath, content: "", readOnly: true, fileTraits: undefined }
+      : await readAndProcessFile({ filePath });
     if (!fileContent) {
       console.error("无法读取文件:", filePath);
       return null;
@@ -472,6 +475,7 @@ async function openFile(filePath: string): Promise<Tab | null> {
     // 如果当前活跃tab是未修改的新标签页（无文件路径），则复用该tab
     const currentTab = getCurrentTab();
     if (currentTab && currentTab.filePath === null && !currentTab.isModified) {
+      currentTab.kind = isHtmlFilePath(fileContent.filePath) ? "html" : "markdown";
       currentTab.filePath = fileContent.filePath;
       currentTab.name = getFileName(fileContent.filePath);
       currentTab.content = fileContent.content;
@@ -536,7 +540,7 @@ async function switchToTab(id: string) {
   setActive(id);
 
   // 设置当前文件路径用于图片路径解析
-  if (targetTab.filePath) {
+  if (targetTab.filePath && targetTab.kind !== "html") {
     setCurrentMarkdownFilePath(targetTab.filePath);
   } else {
     setCurrentMarkdownFilePath(null);
@@ -689,6 +693,7 @@ function getTabDataForTearOff(tabId: string): TearOffTabData | null {
   const raw = toRaw(tab);
   return {
     id: raw.id,
+    kind: raw.kind,
     name: raw.name,
     filePath: raw.filePath,
     content: raw.content,
@@ -795,6 +800,7 @@ async function endTearOff(tabId: string, screenX: number, screenY: number): Prom
 
 /** 将跨窗口传入的 Tab 数据应用到现有 Tab（预览 Tab 转正时复用） */
 function applyTearOffData(tab: Tab, tabData: TearOffTabData): void {
+  tab.kind = tabData.kind;
   tab.name = tabData.name;
   tab.filePath = tabData.filePath;
   tab.content = tabData.content;
@@ -842,6 +848,7 @@ function handleTabMergeIn(tabData: TearOffTabData) {
 
   const tab: Tab = {
     id: randomUUID(), // 生成新 ID，避免跨窗口冲突
+    kind: tabData.kind,
     name: tabData.name,
     filePath: tabData.filePath,
     content: tabData.content,
@@ -859,7 +866,7 @@ function handleTabMergeIn(tabData: TearOffTabData) {
     scheduleNewlyLoadedCleanup(tab.id);
   }
 
-  if (tab.filePath) {
+  if (tab.filePath && tab.kind !== "html") {
     setCurrentMarkdownFilePath(tab.filePath);
   }
 }
@@ -922,6 +929,7 @@ function handleTabMergePreview(tabData: TearOffTabData, screenX?: number, screen
 
   const tab: Tab = {
     id: randomUUID(),
+    kind: tabData.kind,
     name: tabData.name,
     filePath: tabData.filePath,
     content: tabData.content,
@@ -941,7 +949,7 @@ function handleTabMergePreview(tabData: TearOffTabData, screenX?: number, screen
     scheduleNewlyLoadedCleanup(tab.id);
   }
 
-  if (tab.filePath) {
+  if (tab.filePath && tab.kind !== "html") {
     setCurrentMarkdownFilePath(tab.filePath);
   }
 

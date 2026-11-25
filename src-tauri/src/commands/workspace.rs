@@ -27,9 +27,21 @@ const IGNORE_PATTERNS: &[&str] = &[
 
 fn is_supported_workspace_file(name: &str) -> bool {
     let lower = name.to_ascii_lowercase();
-    [".md", ".markdown", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp"]
-        .iter()
-        .any(|extension| lower.ends_with(extension))
+    [
+        ".md",
+        ".markdown",
+        ".html",
+        ".htm",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".svg",
+        ".bmp",
+    ]
+    .iter()
+    .any(|extension| lower.ends_with(extension))
 }
 
 fn should_ignore_directory(name: &str) -> bool {
@@ -83,9 +95,7 @@ pub fn natural_name_cmp(left: &str, right: &str) -> std::cmp::Ordering {
             continue;
         }
 
-        let ordering = lc
-            .to_lowercase()
-            .cmp(rc.to_lowercase());
+        let ordering = lc.to_lowercase().cmp(rc.to_lowercase());
         if ordering != Ordering::Equal {
             return ordering;
         }
@@ -330,7 +340,7 @@ pub fn unwatch_directory<R: Runtime>(app: AppHandle<R>) {
 fn supported_file_regex() -> &'static Regex {
     static RE: std::sync::OnceLock<Regex> = std::sync::OnceLock::new();
     RE.get_or_init(|| {
-        Regex::new(r"(?i)\.(?:md|markdown|png|jpe?g|gif|webp|svg|bmp)$")
+        Regex::new(r"(?i)\.(?:md|markdown|html|htm|png|jpe?g|gif|webp|svg|bmp)$")
             .expect("valid workspace file regex")
     })
 }
@@ -349,11 +359,23 @@ mod tests {
 
     #[test]
     fn sorts_mixed_prefix_and_numbers() {
-        let mut names = vec!["第10章.md", "第2章.md", "第1章.md", "chapter-12.md", "chapter-9.md"];
+        let mut names = vec![
+            "第10章.md",
+            "第2章.md",
+            "第1章.md",
+            "chapter-12.md",
+            "chapter-9.md",
+        ];
         names.sort_by(|a, b| natural_name_cmp(a, b));
         assert_eq!(
             names,
-            vec!["chapter-9.md", "chapter-12.md", "第1章.md", "第2章.md", "第10章.md"]
+            vec![
+                "chapter-9.md",
+                "chapter-12.md",
+                "第1章.md",
+                "第2章.md",
+                "第10章.md"
+            ]
         );
     }
 

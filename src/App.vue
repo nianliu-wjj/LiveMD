@@ -28,6 +28,7 @@ import { isMindMapEditorOpen } from "@/utils/mindmapEditorState";
 import { getSidebarContextKey, writeSidebarVisibility } from "@/utils/sidebarVisibility";
 import SaveConfirmDialog from "./components/dialogs/SaveConfirmDialog.vue";
 import UpdateConfirmDialog from "./components/dialogs/UpdateConfirmDialog.vue";
+import HtmlDocumentView from "./components/editor/HtmlDocumentView.vue";
 import LivemdEditor from "./components/editor/LivemdEditor.vue";
 import StatusBar from "./components/menu/StatusBar.vue";
 import TitleBar from "./components/menu/TitleBar.vue";
@@ -517,7 +518,8 @@ const handleInstall = async () => {
         <HomePage v-if="tabs.length === 0" />
 
         <!-- Livemd 编辑器（每个 tab 独立实例） -->
-        <LivemdEditor
+        <component
+          :is="tab.kind === 'html' ? HtmlDocumentView : LivemdEditor"
           v-for="tab in tabs"
           :key="tab.id"
           v-show="tab.id === activeTabId"

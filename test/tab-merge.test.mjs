@@ -28,6 +28,46 @@ function tabData(overrides = {}) {
   };
 }
 
+test("HTML 合并预览、转正与再次分离透传 kind", async (t) => {
+  let payload;
+  const win = createWindow(t, {
+    tearOffTabStart: (data) => {
+      payload = data;
+    },
+  });
+  const source = tabData({
+    kind: "html",
+    name: "page.html",
+    content: "",
+    originalContent: "",
+    isModified: false,
+    readOnly: true,
+  });
+  win.emit("tab:merge-preview", source);
+  assert.equal(win.currentTab.value.kind, "html");
+  win.emit("tab:merge-in", source);
+  assert.equal(win.currentTab.value.kind, "html");
+  assert.equal(win.imagePath, null);
+  win.startTearOff(win.currentTab.value.id, 0, 0, 0, 0);
+  assert.equal(payload.kind, "html");
+});
+test("打开桌面 HTML 不读取 Markdown 内容并拒绝内容更新", async (t) => {
+  let reads = 0;
+  const win = createWindow(t, {
+    readFileByPath: () => {
+      reads++;
+      throw new Error("不应读盘");
+    },
+  });
+  const tab = await win.openFile("C:/docs/page.html");
+  assert.equal(tab.kind, "html");
+  assert.equal(tab.readOnly, true);
+  assert.equal(reads, 0);
+  win.updateCurrentTabContent("overwrite", true);
+  assert.equal(tab.content, "");
+  assert.equal(await win.saveCurrentTab(), false);
+});
+
 function createWindow(t, apiOverrides = {}) {
   const handlers = new Map();
   const calls = [];
@@ -59,7 +99,7 @@ function createWindow(t, apiOverrides = {}) {
       },
     },
     "@/events": { emit() {} },
-    "@/service/fileService": {},
+    "@/service/fileService": { isHtmlFilePath: (path) => /\.(html|htm)$/i.test(path) },
     "@/utils/inertiaScroll": {},
     "@/utils/markdown": { normalizeMarkdownForDirtyCheck: (value) => value },
     "@/utils/tool": { randomUUID: () => `local-tab-${++nextId}` },

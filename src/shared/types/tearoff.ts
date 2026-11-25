@@ -5,6 +5,7 @@ export interface FileTraitsDTO {
 }
 
 export interface TearOffTabData {
+  kind?: "markdown" | "html";
   id: string;
   name: string;
   filePath: string | null;

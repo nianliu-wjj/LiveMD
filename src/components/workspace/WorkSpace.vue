@@ -305,15 +305,19 @@ async function handleOpenInNewWindow() {
   closeContextMenu();
   if (!node) return;
 
-  const fileContent = await window.electronAPI.readFileByPath(node.path);
+  const html = /\.(html|htm)$/i.test(node.path);
+  const fileContent = html
+    ? { content: "", fileTraits: undefined }
+    : await window.electronAPI.readFileByPath(node.path);
   if (!fileContent) {
     autotoast.show("打开新窗口失败", "error");
     return;
   }
 
-  const readOnly = await window.electronAPI.getIsReadOnly(node.path);
+  const readOnly = html || (await window.electronAPI.getIsReadOnly(node.path));
   const opened = await window.electronAPI.createWindowWithTab({
     id: randomUUID(),
+    kind: html ? "html" : "markdown",
     name: node.name,
     filePath: node.path,
     content: fileContent.content,

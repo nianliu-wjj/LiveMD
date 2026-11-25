@@ -1,6 +1,8 @@
-﻿mod commands;
+mod commands;
 mod events;
 mod file_format;
+#[cfg(desktop)]
+mod html_preview;
 // 菜单为桌面专属能力（移动端无原生菜单栏）
 #[cfg(desktop)]
 mod menu;
@@ -34,8 +36,11 @@ pub fn run() {
     // 菜单事件仅桌面有源（移动端无菜单栏）
     #[cfg(desktop)]
     let app = app.on_menu_event(|app, event| menu::handle_event(app, event.id().as_ref()));
-    let app = app.setup(|app| {
+    let app = app
+        .setup(|app| {
             app.manage(AppState::default());
+            #[cfg(desktop)]
+            app.manage(html_preview::HtmlPreviewState::start()?);
 
             // macOS 菜单栏（macOS 必为桌面端，属性门控即可）
             #[cfg(target_os = "macos")]
@@ -99,6 +104,8 @@ pub fn run() {
             commands::drag::drop_merge,
             commands::export::export_pdf,
             commands::export::save_binary_file,
+            #[cfg(desktop)]
+            html_preview::ensure_html_preview,
             commands::file::open_file,
             commands::file::save_file,
             commands::file::save_file_as,

@@ -8,8 +8,7 @@ use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 use tauri_plugin_dialog::DialogExt;
 
 use crate::file_format::{
-    create_default_markdown_file_name, detect_file_traits, normalize_markdown, read_markdown_file,
-    restore_file_traits,
+    create_default_markdown_file_name, detect_file_traits, normalize_markdown, restore_file_traits,
 };
 use crate::models::{
     FileTraits, LoadedFile, MobileDocumentInfo, SaveAsPayload, SavePayload, SaveResult,
@@ -51,12 +50,14 @@ fn save_dialog_path<R: Runtime>(
         .dialog()
         .file()
         .set_parent(window)
-        .add_filter("Markdown", &["md", "markdown"]);
+        .add_filter("Markdown", &["md", "markdown"])
+        .add_filter("HTML", &["html", "htm"]);
     #[cfg(mobile)]
     let builder = app
         .dialog()
         .file()
-        .add_filter("Markdown", &["md", "markdown"]);
+        .add_filter("Markdown", &["md", "markdown"])
+        .add_filter("HTML", &["html", "htm"]);
     #[cfg(mobile)]
     let _ = window;
     let mut builder = builder;
@@ -105,12 +106,14 @@ pub async fn open_file<R: Runtime>(
         .dialog()
         .file()
         .set_parent(&window)
-        .add_filter("Markdown", &["md", "markdown"]);
+        .add_filter("Markdown", &["md", "markdown"])
+        .add_filter("HTML", &["html", "htm"]);
     #[cfg(mobile)]
     let dialog = app
         .dialog()
         .file()
-        .add_filter("Markdown", &["md", "markdown"]);
+        .add_filter("Markdown", &["md", "markdown"])
+        .add_filter("HTML", &["html", "htm"]);
     #[cfg(mobile)]
     let _ = &window;
     let picked = dialog.blocking_pick_file();
@@ -119,7 +122,9 @@ pub async fn open_file<R: Runtime>(
         return Ok(None);
     };
 
-    Ok(read_markdown_file(&path.to_string_lossy()))
+    Ok(crate::file_format::read_document_file(
+        &path.to_string_lossy(),
+    ))
 }
 
 #[tauri::command]
@@ -182,7 +187,7 @@ pub async fn save_file_as<R: Runtime>(
 
 #[tauri::command]
 pub async fn read_file_by_path(file_path: String) -> Result<Option<LoadedFile>, String> {
-    Ok(read_markdown_file(&file_path))
+    Ok(crate::file_format::read_document_file(&file_path))
 }
 
 #[tauri::command]
@@ -248,7 +253,10 @@ fn mobile_documents_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, Strin
 
 fn is_markdown_file_name(name: &str) -> bool {
     let lower = name.to_lowercase();
-    lower.ends_with(".md") || lower.ends_with(".markdown")
+    lower.ends_with(".md")
+        || lower.ends_with(".markdown")
+        || lower.ends_with(".html")
+        || lower.ends_with(".htm")
 }
 
 /// 文件名清洗：只保留最后一段，禁止路径分隔符与 Windows 非法字符，自动补 .md。

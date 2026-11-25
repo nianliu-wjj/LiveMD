@@ -95,7 +95,9 @@ function isResultForCurrentTab(): boolean {
  */
 async function runCheck(): Promise<DocumentLintResult | null> {
   const tab = useTab().currentTab.value;
-  if (!tab) {
+  if (!tab || tab.kind === "html") {
+    ++checkGeneration;
+    isLintRunning.value = false;
     lintResult.value = EMPTY_RESULT;
     lintError.value = null;
     resultTabId.value = null;
@@ -191,6 +193,7 @@ watch(isSpellCheckEnabled, () => {
 
 /** 打开面板：无结果归属时立刻检查，避免出现空面板让人误解 */
 function openLintPanel(): void {
+  if (useTab().currentTab.value?.kind === "html") return;
   isLintPanelVisible.value = true;
   if (!isLintRunning.value && resultTabId.value === null && useTab().currentTab.value) {
     void runCheck();
@@ -213,6 +216,7 @@ function closeLintPanel(): void {
  */
 function scheduleAutoCheck(): void {
   if (debounceTimer) clearTimeout(debounceTimer);
+  if (useTab().currentTab.value?.kind === "html") return;
   debounceTimer = setTimeout(() => {
     debounceTimer = null;
     void runCheck();

@@ -68,6 +68,7 @@ const { setBarVisible: setAnnotationsVisible } = useAnnotations();
 const { mobileViewMode, mobileInstantRenderEnabled, setMobileViewMode } = useMobileViewMode();
 const { config } = useConfig();
 
+const isHtml = computed(() => currentTab.value?.kind === "html");
 const reading = computed(() => isReadOnlyMode.value || Boolean(currentTab.value?.readOnly));
 const activeViewMode = computed(() => mobileViewMode.value);
 const splitActive = computed(
@@ -273,7 +274,7 @@ async function openDocument(name: string): Promise<void> {
       return;
     }
     const tab = await createTabFromFile(name, document.content, document.fileTraits, {
-      readOnly: false,
+      readOnly: /\.(html|htm)$/i.test(name),
     });
     tab.filePath = null;
     tab.mobileDocName = name;
@@ -314,6 +315,28 @@ async function newDocument(): Promise<void> {
   tab.filePath = null;
   if (isReadOnlyMode.value) toggleReadOnlyMode(false);
   emit("browse", false);
+}
+
+async function openTemporaryFile(): Promise<void> {
+  moreMenu.value = false;
+  try {
+    const file = await pickMobileMarkdown();
+    if (!file) return;
+    const decoded = decodeMobileMarkdown(
+      file.name,
+      new TextDecoder("utf-8", { ignoreBOM: true }).decode(await file.arrayBuffer())
+    );
+    const tab = await createTabFromFile(file.name, decoded.content, decoded.fileTraits, {
+      readOnly: /\.(html|htm)$/i.test(file.name),
+    });
+    tab.filePath = null;
+    tab.isModified = tab.kind !== "html";
+    tab.isNewlyLoaded = false;
+    await switchToTab(tab.id);
+    emit("browse", false);
+  } catch (error) {
+    toast(`打开失败：${errorMessage(error)}`);
+  }
 }
 
 async function importDocument(): Promise<void> {
@@ -388,7 +411,7 @@ function submitNameDialog(): void {
 
 async function saveCurrentDocument(): Promise<void> {
   const tab = currentTab.value;
-  if (!tab || tab.readOnly || saving.value) return;
+  if (!tab || tab.kind === "html" || tab.readOnly || saving.value) return;
 
   saving.value = true;
   if (autoSaveTimer) clearTimeout(autoSaveTimer);
@@ -448,6 +471,7 @@ async function autoSaveMobileTab(tabId: string): Promise<void> {
     !tab ||
     !tab.mobileDocName ||
     !tab.isModified ||
+    tab.kind === "html" ||
     tab.readOnly ||
     !config.value.other.autoSave ||
     saving.value
@@ -984,6 +1008,7 @@ onUnmounted(() => {
     <!-- 文件操作菜单 -->
     <div v-if="moreMenu" class="m-popover m-action-menu">
       <button type="button" @click="newDocument"><FilePlus2 :size="20" />新建 md</button>
+      <button type="button" @click="openTemporaryFile"><FolderOpen :size="20" />打开文件</button>
       <button type="button" @click="importDocument"><FileInput :size="20" />导入文件</button>
       <button type="button" @click="enterSelection"><CheckSquare2 :size="20" />选择</button>
     </div>
@@ -1004,9 +1029,10 @@ onUnmounted(() => {
       <ArrowLeft :size="22" />
     </button>
     <span class="m-editor-title">{{ documentTitle }}</span>
-    <span class="m-word-count">{{ wordCountText }}</span>
+    <span v-if="!isHtml" class="m-word-count">{{ wordCountText }}</span>
     <button
       type="button"
+      v-if="!isHtml"
       class="m-save"
       :class="{ 'is-dirty': currentTab?.isModified }"
       :disabled="saving || Boolean(currentTab?.readOnly)"
@@ -1029,6 +1055,7 @@ onUnmounted(() => {
         'is-reading': reading,
         'is-collapsed': reading && !readingToolsOpen,
       }"
+      v-if="!isHtml"
       :aria-label="reading ? '阅读工具' : '编辑器工具'"
     >
       <button

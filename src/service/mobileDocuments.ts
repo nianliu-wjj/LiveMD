@@ -163,7 +163,7 @@ export function sanitizeMobileDocumentName(raw: string): string {
   if (/^(con|prn|aux|nul|com[1-9¹²³]|lpt[1-9¹²³])(?:\.|$)/i.test(cleaned)) {
     cleaned = "_" + cleaned;
   }
-  return /\.(md|markdown)$/i.test(cleaned) ? cleaned : `${cleaned}.md`;
+  return /\.(md|markdown|html|htm)$/i.test(cleaned) ? cleaned : `${cleaned}.md`;
 }
 
 /** 同名时生成「文件名 (2).md」 */
