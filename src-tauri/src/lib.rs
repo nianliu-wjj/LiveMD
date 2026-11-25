@@ -36,9 +36,22 @@ pub fn run() {
     // 菜单事件仅桌面有源（移动端无菜单栏）
     #[cfg(desktop)]
     let app = app.on_menu_event(|app, event| menu::handle_event(app, event.id().as_ref()));
+    #[cfg(desktop)]
+    let app = app.on_window_event(|window, event| {
+        if matches!(event, tauri::WindowEvent::Destroyed) {
+            if let Some(state) = window
+                .app_handle()
+                .try_state::<commands::terminal::TerminalState>()
+            {
+                state.close_for_window(Some(window.label()));
+            }
+        }
+    });
     let app = app
         .setup(|app| {
             app.manage(AppState::default());
+            #[cfg(desktop)]
+            app.manage(commands::terminal::TerminalState::default());
             #[cfg(desktop)]
             app.manage(html_preview::HtmlPreviewState::start()?);
 
@@ -106,6 +119,14 @@ pub fn run() {
             commands::export::save_binary_file,
             #[cfg(desktop)]
             html_preview::ensure_html_preview,
+            #[cfg(desktop)]
+            commands::terminal::terminal_open,
+            #[cfg(desktop)]
+            commands::terminal::terminal_write,
+            #[cfg(desktop)]
+            commands::terminal::terminal_resize,
+            #[cfg(desktop)]
+            commands::terminal::terminal_close,
             commands::file::open_file,
             commands::file::save_file,
             commands::file::save_file_as,
@@ -149,6 +170,12 @@ pub fn run() {
         .expect("error while building LiveMD");
 
     app.run(|app_handle, event| {
+        #[cfg(desktop)]
+        if matches!(&event, tauri::RunEvent::Exit) {
+            if let Some(state) = app_handle.try_state::<commands::terminal::TerminalState>() {
+                state.close_for_window(None);
+            }
+        }
         if let tauri::RunEvent::ExitRequested { api, code, .. } = &event {
             if code.is_none() && window::prepare_quit(app_handle) {
                 api.prevent_exit();

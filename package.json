@@ -77,6 +77,8 @@
     "@tauri-apps/api": "^2.12.4",
     "@vue/runtime-dom": "^3.5.19",
     "@vueuse/core": "^14.0.0",
+    "@xterm/addon-fit": "~0.11.0",
+    "@xterm/xterm": "^6.0.0",
     "animejs": "^4.5.0",
     "autodialog.js": "^0.0.9",
     "autotoast.js": "^3.0.3",
@@ -173,22 +175,6 @@
     "pnpm": ">=10.0.0"
   },
   "packageManager": "pnpm@12.21.0",
-  "pnpm": {
-    "overrides": {
-      "@codemirror/state": "^6.5.2",
-      "@codemirror/view": "^6.38.1",
-      "@lezer/highlight": "^1.2.3",
-      "@lezer/common": "^1.5.0",
-      "@codemirror/language": "^6.12.1"
-    },
-    "onlyBuiltDependencies": [
-      "electron",
-      "electron-winstaller",
-      "esbuild",
-      "sharp",
-      "simple-git-hooks"
-    ]
-  },
   "build": {
     "appId": "io.github.nianliu-wjj.livemd",
     "productName": "LiveMD",

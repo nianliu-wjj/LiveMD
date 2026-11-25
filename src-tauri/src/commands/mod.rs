@@ -6,6 +6,8 @@ pub mod export;
 pub mod file;
 pub mod image;
 pub mod search;
+#[cfg(desktop)]
+pub mod terminal;
 pub mod update;
 pub mod window;
 pub mod workspace;

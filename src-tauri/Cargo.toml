@@ -44,6 +44,7 @@ uuid = { version = "1", features = ["v4"] }
 # rustc 编译期注入的 cfg，Cargo 依赖解析阶段尚未运行 build script，会求值为 false。
 [target.'cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))'.dependencies]
 tauri-plugin-single-instance = "2"
+portable-pty = "0.9"
 
 [target.'cfg(not(target_os = "android"))'.dependencies]
 reqwest = { version = "0.13", default-features = false, features = ["native-tls", "system-proxy"] }

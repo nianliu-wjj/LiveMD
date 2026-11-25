@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from "vue";
+import { terminalVisible, terminalMaximized, toggleTerminal } from "@/hooks/useTerminal";
+const TerminalPanel = defineAsyncComponent(() => import("./components/terminal/TerminalPanel.vue"));
+const terminalMounted = ref(false);
+watch(terminalVisible, (visible) => {
+  if (visible) terminalMounted.value = true;
+});
 import emitter from "@/events";
 import { useContext } from "@/hooks/useContext";
 import { useConfig } from "@/hooks/useConfig";
@@ -303,6 +310,18 @@ function handleGlobalKeydown(event: KeyboardEvent) {
   // 思维导图全屏编辑器打开时，全局快捷键不作用于被遮住的文档
   if (isMindMapEditorOpen()) return;
 
+  if (
+    !isMobile &&
+    event.ctrlKey &&
+    !event.metaKey &&
+    !event.altKey &&
+    !event.shiftKey &&
+    (event.code === "Backquote" || event.key === "`")
+  ) {
+    event.preventDefault();
+    toggleTerminal();
+    return;
+  }
   const mod = event.ctrlKey || event.metaKey;
   if (mod && !event.shiftKey && !event.altKey && event.key.toLowerCase() === "k") {
     const target = event.target as HTMLElement | null;
@@ -504,7 +523,7 @@ const handleInstall = async () => {
   />
   <div
     id="fontRoot"
-    v-show="!isMobile || (!mobileBrowsing && currentTab)"
+    v-show="!terminalMaximized && (!isMobile || (!mobileBrowsing && currentTab))"
     :class="{ 'mobile-editor-root': isMobile }"
   >
     <!-- ✅ 多编辑器实例：每个 tab 拥有独立的编辑器，v-show 保持 DOM 存活 -->
@@ -534,6 +553,7 @@ const handleInstall = async () => {
   <AnnotationBar />
   <BookmarkBar />
   <AnnotationEditorDialog />
+  <TerminalPanel v-if="!isMobile && terminalMounted" v-show="terminalVisible" />
   <StatusBar
     v-if="!isMobile"
     :content="currentTab?.content ?? ''"

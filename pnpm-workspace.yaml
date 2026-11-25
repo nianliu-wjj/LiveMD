@@ -1,4 +1,13 @@
 allowBuilds:
-  esbuild: set this to true or false
-  sharp: set this to true or false
-  simple-git-hooks: set this to true or false
+  electron: true
+  electron-winstaller: true
+  esbuild: true
+  sharp: true
+  simple-git-hooks: true
+
+overrides:
+  "@codemirror/state": "^6.5.2"
+  "@codemirror/view": "^6.38.1"
+  "@lezer/highlight": "^1.2.3"
+  "@lezer/common": "^1.5.0"
+  "@codemirror/language": "^6.12.1"

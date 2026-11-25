@@ -1,3 +1,4 @@
+import { toggleTerminal } from "./useTerminal";
 import { computed } from "vue";
 import autotoast from "autotoast.js";
 import type { ShortcutActionId } from "@/core";
@@ -117,6 +118,15 @@ export function useAppCommands() {
     const hasTab = Boolean(currentTab.value);
 
     const list: PaletteCommand[] = [
+      {
+        id: "view:terminal",
+        title: "切换终端",
+        category: "视图",
+        shortcut: "Ctrl + `",
+        keywords: ["terminal", "shell", "终端"],
+        enabled: !window.electronAPI.isMobile,
+        run: toggleTerminal,
+      },
       // 文件
       {
         id: "file:new",

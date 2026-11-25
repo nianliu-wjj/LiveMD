@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { TerminalSquare } from "lucide-vue-next";
+import { terminalVisible, toggleTerminal } from "@/hooks/useTerminal";
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import autotoast from "autotoast.js";
 import AppIcon from "@/components/ui/AppIcon.vue";
@@ -229,6 +231,16 @@ window.electronAPI.on("view:toggleView", () => {
     </div>
 
     <div class="right-section">
+      <button
+        type="button"
+        class="status-icon-btn terminal-toggle"
+        title="切换终端（Ctrl + `）"
+        aria-label="切换终端"
+        :aria-expanded="terminalVisible"
+        @click.stop="toggleTerminal"
+      >
+        <TerminalSquare :size="16" />
+      </button>
       <!-- 保存状态（状态栏最右）：未保存时高亮、点击即保存 -->
       <span
         class="save-status"
@@ -323,6 +335,18 @@ window.electronAPI.on("view:toggleView", () => {
 </template>
 
 <style lang="less" scoped>
+.terminal-toggle {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.terminal-toggle:hover {
+  background: var(--hover-color);
+}
 .StatusBarBox {
   user-select: none;
   cursor: pointer;
