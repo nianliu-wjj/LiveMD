@@ -22,6 +22,7 @@
     "dev:web": "vite",
     "build": "tauri build",
     "build:web": "vite build",
+    "delete": "node scripts/delete.mjs",
     "tauri": "tauri",
     "generate-icons": "node scripts/generate-icons.mjs",
     "generate-tauri-icons": "node scripts/generate-tauri-icons.mjs",

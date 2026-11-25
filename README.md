@@ -225,12 +225,15 @@ hvigorw assembleHap --mode module -p product=default -p module=entry@default
 
 | 命令                         | 用途                     |
 | ---------------------------- | ------------------------ |
+| `pnpm delete`                | 清理构建产物与项目缓存   |
 | `pnpm format`                | 静态问题自动修复与格式化 |
 | `pnpm generate-icons`        | 文件关联与兼容图标生成   |
 | `pnpm generate-tauri-icons`  | 桌面 Tauri 图标生成      |
 | `pnpm generate-mobile-icons` | Android 与鸿蒙图标生成   |
 | `pnpm import:typora-themes`  | 更新导入主题             |
 | `pnpm release`               | 生成发布日志             |
+
+`pnpm delete` 清理 `dist/`、`dist-electron/`、`out/`、`build/`、`target/`、`src-tauri/target/`、Vite 缓存、测试覆盖率，以及 Android 和鸿蒙的构建目录、Gradle/Kotlin/Hvigor 缓存与鸿蒙同步的 `rawfile/www`。不存在的路径自动跳过，可重复执行；使用 `pnpm delete --dry-run` 仅预览待删除项。源码、`node_modules` 中的依赖、本地环境与签名配置、Tauri Android 兼容入口和全局包缓存均保留；遇到符号链接或目录联接时停止清理，避免通过链接误删其他目录。
 
 ## 贡献与许可证
 
