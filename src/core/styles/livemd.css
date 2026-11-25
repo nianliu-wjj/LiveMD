@@ -2645,10 +2645,55 @@ body.livemd-fullscreen-open {
 
 .livemd-html-block-preview pre {
   padding: 1em;
+  border: 1px solid var(--livemd-border-color, var(--border-color-1));
+  border-radius: 8px;
+  background: var(--livemd-code-background, var(--background-color-1));
   overflow-x: auto;
   white-space: pre;
 }
 .livemd-html-block-preview pre code {
-  font-family: monospace;
+  font-family: var(--livemd-font-code, monospace);
+  font-size: var(--livemd-font-size-code, 0.9em);
   white-space: pre;
+}
+
+.livemd-html-block-preview {
+  --preview-keyword: #cf222e;
+  --preview-blue: #0550ae;
+  --preview-string: #0a3069;
+  --preview-comment: #6e7781;
+  --preview-type: #953800;
+  --preview-tag: #116329;
+  --preview-definition: #8250df;
+}
+html[class*="theme-"][class*="dark"] .livemd-html-block-preview {
+  --preview-keyword: #ff7b72;
+  --preview-blue: #79c0ff;
+  --preview-string: #a5d6ff;
+  --preview-comment: #8b949e;
+  --preview-type: #ffa657;
+  --preview-tag: #7ee787;
+  --preview-definition: #d2a8ff;
+}
+.livemd-html-block-preview .tok-keyword {
+  color: var(--preview-keyword);
+}
+.livemd-html-block-preview
+  :is(.tok-operator, .tok-number, .tok-atom, .tok-bool, .tok-propertyName, .tok-attributeName) {
+  color: var(--preview-blue);
+}
+.livemd-html-block-preview :is(.tok-string, .tok-string2) {
+  color: var(--preview-string);
+}
+.livemd-html-block-preview :is(.tok-comment, .tok-meta) {
+  color: var(--preview-comment);
+}
+.livemd-html-block-preview :is(.tok-typeName, .tok-className) {
+  color: var(--preview-type);
+}
+.livemd-html-block-preview .tok-tagName {
+  color: var(--preview-tag);
+}
+.livemd-html-block-preview :is(.tok-definition, .tok-labelName) {
+  color: var(--preview-definition);
 }

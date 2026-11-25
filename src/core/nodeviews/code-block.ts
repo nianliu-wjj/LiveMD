@@ -21,11 +21,9 @@ import { defaultKeymap, history, historyKeymap, indentWithTab } from "@codemirro
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
-  HighlightStyle,
   indentOnInput,
   indentUnit,
 } from "@codemirror/language";
-import { tags } from "@lezer/highlight";
 import {
   CODE_BLOCK_LAZY,
   CODE_BLOCK_ROOT_MARGIN,
@@ -64,38 +62,8 @@ const UNFOLD_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"
 /** Mermaid 显示模式 */
 type MermaidDisplayMode = "code" | "mixed" | "diagram";
 
-/** 暗色主题高亮样式 */
-export const darkHighlightStyle = HighlightStyle.define([
-  { tag: tags.keyword, color: "#ff7b72" },
-  { tag: tags.operator, color: "#79c0ff" },
-  { tag: tags.special(tags.variableName), color: "#ffa657" },
-  { tag: tags.typeName, color: "#ffa657" },
-  { tag: tags.atom, color: "#79c0ff" },
-  { tag: tags.number, color: "#79c0ff" },
-  { tag: tags.definition(tags.variableName), color: "#d2a8ff" },
-  { tag: tags.string, color: "#a5d6ff" },
-  { tag: tags.special(tags.string), color: "#a5d6ff" },
-  { tag: tags.comment, color: "#8b949e", fontStyle: "italic" },
-  { tag: tags.variableName, color: "#c9d1d9" },
-  { tag: tags.tagName, color: "#7ee787" },
-  { tag: tags.propertyName, color: "#79c0ff" },
-  { tag: tags.attributeName, color: "#79c0ff" },
-  { tag: tags.className, color: "#ffa657" },
-  { tag: tags.labelName, color: "#d2a8ff" },
-  { tag: tags.namespace, color: "#ff7b72" },
-  { tag: tags.macroName, color: "#d2a8ff" },
-  { tag: tags.literal, color: "#79c0ff" },
-  { tag: tags.bool, color: "#79c0ff" },
-  { tag: tags.null, color: "#79c0ff" },
-  { tag: tags.punctuation, color: "#c9d1d9" },
-  { tag: tags.bracket, color: "#c9d1d9" },
-  { tag: tags.meta, color: "#8b949e" },
-  { tag: tags.link, color: "#58a6ff", textDecoration: "underline" },
-  { tag: tags.heading, color: "#79c0ff", fontWeight: "bold" },
-  { tag: tags.emphasis, fontStyle: "italic" },
-  { tag: tags.strong, fontWeight: "bold" },
-  { tag: tags.strikethrough, textDecoration: "line-through" },
-]);
+import { darkHighlightStyle } from "./highlight-style";
+export { darkHighlightStyle } from "./highlight-style";
 
 /**
  * 检测当前主题是否为暗色模式

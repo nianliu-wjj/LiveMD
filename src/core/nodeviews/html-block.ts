@@ -1,4 +1,9 @@
-import { renderMarkdownWithinHtmlFragment } from "./html-markdown-preview";
+import {
+  extractMarkdownCodeFences,
+  restoreMarkdownCodeFences,
+  renderMarkdownWithinHtmlFragment,
+} from "./html-markdown-preview";
+import { highlightHtmlPreviewCodeBlocks } from "./html-block-highlight";
 /**
  * Livemd HTML 块 NodeView
  *
@@ -245,7 +250,7 @@ export class HtmlBlockView implements NodeView {
     this.setEditing(false);
 
     // 点击预览区域进入编辑模式
-    this.preview.addEventListener("click", () => this.enterEditMode());
+    this.preview.addEventListener("dblclick", () => this.enterEditMode());
 
     // 初始检查光标位置
     const { from, to } = view.state.selection;
@@ -258,10 +263,13 @@ export class HtmlBlockView implements NodeView {
   private updatePreview(content: string): void {
     this.preview.innerHTML = "";
     if (content.trim()) {
-      const fragment = sanitizeHtml(content);
+      const { html, fences } = extractMarkdownCodeFences(content);
+      const fragment = sanitizeHtml(html);
+      restoreMarkdownCodeFences(fragment, fences);
       renderMarkdownWithinHtmlFragment(fragment);
       sanitizeNode(fragment);
       this.preview.appendChild(fragment);
+      void highlightHtmlPreviewCodeBlocks(this.preview);
     } else {
       this.preview.innerHTML = '<span class="html-placeholder">输入 HTML...</span>';
     }
