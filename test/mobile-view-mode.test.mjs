@@ -38,6 +38,7 @@ await esbuild.build({
     contents: [
       'export { LivemdEditor } from "./src/core/editor.ts";',
       'export { getInstantRenderState } from "./src/core/plugins/instant-render.ts";',
+      'export { createMobileEditorPresentation } from "./src/hooks/useMobileViewMode.ts";',
     ].join("\n"),
     resolveDir: projectRoot,
     loader: "ts",
@@ -64,7 +65,9 @@ await esbuild.build({
     },
   ],
 });
-const { LivemdEditor, getInstantRenderState } = await import(pathToFileURL(editorModule).href);
+const { LivemdEditor, getInstantRenderState, createMobileEditorPresentation } = await import(
+  pathToFileURL(editorModule).href
+);
 const styles = document.createElement("style");
 styles.textContent = readFileSync(
   new URL("../src/core/styles/livemd.css", import.meta.url),
@@ -125,6 +128,147 @@ function markerDisplay(editor, type) {
   assert.ok(marker, `应存在 ${type} 语法标记`);
   return getComputedStyle(marker).display;
 }
+
+function applyPresentation(presentation, editor, readOnly, instantRender) {
+  editor.updateConfig({ readonly: readOnly });
+  presentation.sync(editor, readOnly, instantRender, (enabled) => {
+    if (editor.isSourceViewEnabled() !== enabled) editor.toggleSourceView();
+  });
+}
+
+test("移动只读预览在各编辑模式下都隐藏光标附近标题、强调和公式源码", () => {
+  const source = "## 标题\n\n**粗体** 与 $x^2$ 公式";
+  for (const mode of ["instant", "split", "wysiwyg"]) {
+    for (const savedSourceView of [false, true]) {
+      const presentation = createMobileEditorPresentation(true);
+      const { editor, dispose } = createEditor(source, {
+        readonly: true,
+        ...presentation.initialConfig(true, savedSourceView, mode === "instant"),
+      });
+      try {
+        const markdown = editor.getMarkdown();
+        const doc = editor.view.state.doc;
+        assert.equal(editor.view.editable, false);
+        assert.equal(editor.isSourceViewEnabled(), false);
+        assert.equal(getInstantRenderState(editor.view.state).enabled, false);
+
+        putCaretInside(editor, "标题");
+        assert.equal(markerDisplay(editor, "heading"), "none", mode);
+        putCaretInside(editor, "粗体");
+        assert.equal(markerDisplay(editor, "strong"), "none", mode);
+        putCaretInside(editor, "x^2");
+        assert.ok(editor.view.dom.querySelector(".livemd-math-source-hidden"));
+        assert.ok(editor.view.dom.querySelector(".livemd-math-rendered, .livemd-math-pending"));
+        assert.equal(editor.view.dom.querySelector(".livemd-focus-block"), null);
+
+        const state = editor.view.state;
+        applyPresentation(presentation, editor, true, true);
+        assert.equal(editor.view.state, state, "模式事件不能重新打开只读预览的语法标记");
+        assert.equal(editor.view.state.doc, doc);
+        assert.equal(editor.getMarkdown(), markdown);
+      } finally {
+        dispose();
+      }
+    }
+  }
+});
+
+test("移动阅读与编辑切换恢复选择的编辑模式，保持正文、选区和撤销历史", () => {
+  const presentation = createMobileEditorPresentation(true);
+  const { editor, dispose } = createEditor("## 标题\n\n**粗体** 与普通文本", {
+    ...presentation.initialConfig(false, false, true),
+  });
+  try {
+    putCaretInside(editor, "粗体");
+    assert.equal(markerDisplay(editor, "strong"), "inline");
+    const doc = editor.view.state.doc;
+    const selection = editor.view.state.selection;
+    const markdown = editor.getMarkdown();
+
+    applyPresentation(presentation, editor, true, true);
+    assert.equal(editor.view.editable, false);
+    assert.equal(markerDisplay(editor, "strong"), "none");
+    assert.equal(editor.view.state.doc, doc);
+    assert.ok(editor.view.state.selection.eq(selection));
+
+    applyPresentation(presentation, editor, false, false);
+    assert.equal(editor.view.editable, true);
+    assert.equal(markerDisplay(editor, "strong"), "none", "所见即所得编辑仍隐藏源码");
+    applyPresentation(presentation, editor, false, true);
+    assert.equal(markerDisplay(editor, "strong"), "inline", "即时渲染编辑恢复光标区域源码");
+    applyPresentation(presentation, editor, true, true);
+    assert.equal(markerDisplay(editor, "strong"), "none");
+    assert.equal(editor.view.state.doc, doc);
+    assert.ok(editor.view.state.selection.eq(selection));
+    assert.equal(editor.getMarkdown(), markdown);
+    assert.equal(undo(editor.view.state), false);
+  } finally {
+    dispose();
+  }
+});
+
+test("移动阅读临时退出源码视图，重建后进入编辑仍恢复原有源码视图", () => {
+  const source = "## 标题\n\n**粗体** 与普通文本";
+  const presentation = createMobileEditorPresentation(true);
+  const first = createEditor(source, presentation.initialConfig(false, true, true));
+  let recreated;
+  try {
+    const markdown = first.editor.getMarkdown();
+    assert.equal(first.editor.isSourceViewEnabled(), true);
+    applyPresentation(presentation, first.editor, true, true);
+    assert.equal(first.editor.isSourceViewEnabled(), false);
+    assert.equal(getInstantRenderState(first.editor.view.state).enabled, false);
+    assert.equal(first.editor.getMarkdown(), markdown);
+
+    recreated = createEditor(markdown, {
+      readonly: true,
+      ...presentation.initialConfig(true, false, true),
+    });
+    putCaretInside(recreated.editor, "标题");
+    assert.equal(markerDisplay(recreated.editor, "heading"), "none");
+    applyPresentation(presentation, recreated.editor, false, true);
+    assert.equal(recreated.editor.isSourceViewEnabled(), true);
+    assert.equal(recreated.editor.view.editable, true);
+    assert.equal(recreated.editor.getMarkdown(), markdown);
+  } finally {
+    first.dispose();
+    recreated?.dispose();
+  }
+});
+
+test("移动阅读控制独立于其它文档，桌面的只读与源码行为保持不变", () => {
+  const source = "## 标题\n\n**粗体** 与普通文本";
+  const readingPresentation = createMobileEditorPresentation(true);
+  const editingPresentation = createMobileEditorPresentation(true);
+  const desktopPresentation = createMobileEditorPresentation(false);
+  const reading = createEditor(source, {
+    readonly: true,
+    ...readingPresentation.initialConfig(true, false, true),
+  });
+  const editing = createEditor(source, editingPresentation.initialConfig(false, false, true));
+  const desktop = createEditor(source, {
+    readonly: true,
+    ...desktopPresentation.initialConfig(true, true, false),
+  });
+  try {
+    putCaretInside(reading.editor, "粗体");
+    putCaretInside(editing.editor, "粗体");
+    assert.equal(markerDisplay(reading.editor, "strong"), "none");
+    assert.equal(markerDisplay(editing.editor, "strong"), "inline");
+    assert.equal(desktop.editor.isSourceViewEnabled(), true);
+    const desktopState = desktop.editor.view.state;
+    desktopPresentation.sync(desktop.editor, true, false, () => {
+      assert.fail("移动阅读控制不能改变桌面源码模式");
+    });
+    assert.equal(desktop.editor.view.state, desktopState);
+    assert.equal(getInstantRenderState(desktop.editor.view.state).enabled, true);
+    assert.equal(desktop.editor.view.editable, false);
+  } finally {
+    reading.dispose();
+    editing.dispose();
+    desktop.dispose();
+  }
+});
 
 test("即时渲染切换会实际隐藏语法标记，保留文档、选区与文本 DOM", () => {
   const { editor, dispose } = createEditor("## 标题\n\n**粗体** 与普通文本");

@@ -294,6 +294,60 @@ html.mobile-reading .livemd-code-block-header {
   display: none;
 }
 
+// A retained selection must not reveal Markdown markers in reading mode.
+html.mobile-reading .livemd-editor .livemd-syntax-meta {
+  display: none !important;
+}
+
+// Constrain themed documents to their available pane, including narrow desktop panes.
+.editor-box,
+.editor-zoom-surface,
+.livemd-container {
+  min-width: 0;
+}
+
+.livemd-editor {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.livemd-table-block,
+.livemd-table-scroll {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.livemd-table-scroll {
+  overflow-x: auto;
+}
+
+html.mobile-layout .mobile-editor-root {
+  --livemd-editor-padding-effective: clamp(14px, 4vw, 24px);
+  .editorArea,
+  .editorBox,
+  .editor-box,
+  .editor-zoom-surface,
+  .livemd-container {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .scrollView {
+    overflow-x: hidden;
+  }
+
+  .livemd-editor {
+    width: 100%;
+    margin-inline: 0;
+  }
+
+  .livemd-editor table {
+    max-width: 100%;
+  }
+}
+
 // 分屏预览：编辑区缩至左侧一半，预览面板由 MobileLayout 固定到右半屏。
 html.mobile-split-mode {
   #fontRoot {

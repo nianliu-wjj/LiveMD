@@ -26,7 +26,7 @@ import { undo, redo } from "prosemirror-history";
 import { uploadImage } from "@/service/api";
 import useEditorZoom from "@/hooks/useEditorZoom";
 import useReadOnlyMode from "@/hooks/useReadOnlyMode";
-import useMobileViewMode from "@/hooks/useMobileViewMode";
+import useMobileViewMode, { createMobileEditorPresentation } from "@/hooks/useMobileViewMode";
 import {
   formatInsertedImagePath,
   isCopyAction,
@@ -71,6 +71,9 @@ const LARGE_DOCUMENT_LINE_THRESHOLD = 4_000;
 const { config: appConfig, watchConf } = useConfig();
 const { isReadOnlyMode } = useReadOnlyMode();
 const { mobileInstantRenderEnabled } = useMobileViewMode();
+const mobileEditorPresentation = createMobileEditorPresentation(
+  Boolean(window.electronAPI.isMobile)
+);
 /** 有效只读态 = 文件系统只读（tab.readOnly）∪ 状态栏开启的只读模式 */
 const effectiveReadOnly = computed(() => Boolean(props.tab.readOnly) || isReadOnlyMode.value);
 const { nextFrame } = useUiLoading();
@@ -623,7 +626,24 @@ function syncViewModesToEditor() {
 
 function syncMobileInstantRender(): void {
   if (!window.electronAPI.isMobile || !props.isActive || !editor) return;
-  editor.setInstantRenderEnabled(mobileInstantRenderEnabled.value);
+  mobileEditorPresentation.sync(
+    editor,
+    effectiveReadOnly.value,
+    mobileInstantRenderEnabled.value,
+    setSourceViewForPresentation
+  );
+}
+
+function setSourceViewForPresentation(enabled: boolean): void {
+  if (!editor || editor.isSourceViewEnabled() === enabled) return;
+  const previous = isSourceViewToggling;
+  isSourceViewToggling = true;
+  try {
+    editor.toggleSourceView();
+  } finally {
+    isSourceViewToggling = previous;
+  }
+  emitter.emit("sourceView:changed", editor.isSourceViewEnabled());
 }
 
 // 后台文档可能错过外壳事件；激活时从共享状态同步，无需再次读取存储。
@@ -741,8 +761,11 @@ function createEditorInstance() {
   const config: LivemdConfig = {
     content: "",
     readonly: effectiveReadOnly.value,
-    sourceView: preservedSourceView,
-    instantRender: !window.electronAPI.isMobile || mobileInstantRenderEnabled.value,
+    ...mobileEditorPresentation.initialConfig(
+      effectiveReadOnly.value,
+      preservedSourceView,
+      mobileInstantRenderEnabled.value
+    ),
     viewModes: {
       focusMode: Boolean(appConfig.value.view?.focusMode),
       typewriterMode: Boolean(appConfig.value.view?.typewriterMode),
@@ -1050,6 +1073,7 @@ onUnmounted(() => {
 // 处理源码模式切换事件（仅活跃编辑器响应）
 function handleSourceViewToggle() {
   if (!props.isActive || !editor) return;
+  if (window.electronAPI.isMobile && effectiveReadOnly.value) return;
   isSourceViewToggling = true;
   editor.toggleSourceView();
   isSourceViewToggling = false;
@@ -1059,7 +1083,12 @@ function handleSourceViewToggle() {
 // 处理移动端视图模式对即时渲染的要求（仅活跃编辑器响应）
 function handleInstantRenderSet(enabled: boolean) {
   if (!window.electronAPI.isMobile || !props.isActive || !editor) return;
-  editor.setInstantRenderEnabled(Boolean(enabled));
+  mobileEditorPresentation.sync(
+    editor,
+    effectiveReadOnly.value,
+    Boolean(enabled),
+    setSourceViewForPresentation
+  );
 }
 
 /**
@@ -1194,6 +1223,7 @@ watch(
 // 监听有效只读态变化（文件只读 / 状态栏只读模式），两者任一开启即不可编辑
 watch(effectiveReadOnly, (newValue) => {
   editor?.updateConfig({ readonly: newValue });
+  syncMobileInstantRender();
 });
 
 // 监听 isActive 变化：激活时同步全局状态

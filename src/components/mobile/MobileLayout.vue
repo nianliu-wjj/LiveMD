@@ -20,12 +20,12 @@ import {
   List,
   ListOrdered,
   ListTree,
+  MessageSquareText,
   MoreHorizontal,
   Quote,
   Redo2,
   Save,
   Search,
-  Settings2,
   SquarePen,
   Strikethrough,
   Trash2,
@@ -261,6 +261,7 @@ async function openDocument(name: string): Promise<void> {
   const existingTab = tabs.value.find((tab) => tab.mobileDocName === name);
   if (existingTab) {
     await switchToTab(existingTab.id);
+    toggleReadOnlyMode(true);
     recordMobileDocumentOpened(name);
     emit("browse", false);
     return;
@@ -284,6 +285,7 @@ async function openDocument(name: string): Promise<void> {
     tab.isNewlyLoaded = false;
     recordMobileDocumentOpened(name);
     await switchToTab(tab.id);
+    toggleReadOnlyMode(true);
     emit("browse", false);
   } catch (error) {
     toast(`打开失败：${errorMessage(error)}`);
@@ -297,7 +299,10 @@ async function openContinueItem(item: ContinueItem): Promise<void> {
   }
   if (item.tabId) {
     await switchToTab(item.tabId);
-    if (item.name) recordMobileDocumentOpened(item.name);
+    if (item.name) {
+      recordMobileDocumentOpened(item.name);
+      toggleReadOnlyMode(true);
+    }
     emit("browse", false);
     return;
   }
@@ -588,7 +593,8 @@ let previewTimer: ReturnType<typeof setTimeout> | null = null;
 let previewSeq = 0;
 
 function applyInstantRender(): void {
-  if (!props.browsing) emitter.emit("instantRender:set", mobileInstantRenderEnabled.value);
+  if (!props.browsing)
+    emitter.emit("instantRender:set", !reading.value && mobileInstantRenderEnabled.value);
 }
 
 function applySplitClass(): void {
@@ -812,7 +818,7 @@ watch(reading, (value) => {
     viewMenu.value = false;
   }
   applySplitClass();
-  if (!value) applyInstantRender();
+  applyInstantRender();
 });
 
 watch(settings, (value) => {
@@ -1074,6 +1080,7 @@ onUnmounted(() => {
         <button
           type="button"
           :class="{ active: viewMenu }"
+          v-if="!reading"
           aria-label="视图模式"
           title="视图模式"
           @click="toggleViewMenu"
@@ -1098,10 +1105,7 @@ onUnmounted(() => {
           <Bookmark :size="20" />
         </button>
         <button type="button" aria-label="批注" title="批注" @click="openAnnotations">
-          <SquarePen :size="20" />
-        </button>
-        <button type="button" aria-label="设置" title="设置" @click="openSettings">
-          <Settings2 :size="20" />
+          <MessageSquareText :size="20" />
         </button>
       </template>
     </nav>

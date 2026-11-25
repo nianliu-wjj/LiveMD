@@ -9,6 +9,49 @@ import { computed, ref } from "vue";
  */
 export type MobileViewMode = "instant" | "split" | "wysiwyg";
 
+interface MobileEditorPresentationTarget {
+  isSourceViewEnabled(): boolean;
+  setInstantRenderEnabled(enabled: boolean): void;
+}
+
+/** 阅读临时隐藏源码，不覆盖用户为编辑选择的视图模式。每个编辑器实例独立保存状态。 */
+export function createMobileEditorPresentation(isMobile: boolean) {
+  let sourceViewBeforeReading: boolean | undefined;
+
+  return {
+    initialConfig(readOnly: boolean, sourceView: boolean, instantRender: boolean) {
+      const reading = isMobile && readOnly;
+      if (reading) sourceViewBeforeReading ??= sourceView;
+      return {
+        sourceView: reading ? false : sourceView,
+        instantRender: !isMobile || (!readOnly && instantRender),
+      };
+    },
+
+    sync(
+      editor: MobileEditorPresentationTarget,
+      readOnly: boolean,
+      instantRender: boolean,
+      setSourceView: (enabled: boolean) => void
+    ): void {
+      if (!isMobile) return;
+      if (readOnly) {
+        sourceViewBeforeReading ??= editor.isSourceViewEnabled();
+        editor.setInstantRenderEnabled(false);
+        if (editor.isSourceViewEnabled()) setSourceView(false);
+        return;
+      }
+
+      const sourceView = sourceViewBeforeReading;
+      sourceViewBeforeReading = undefined;
+      editor.setInstantRenderEnabled(instantRender);
+      if (sourceView !== undefined && editor.isSourceViewEnabled() !== sourceView) {
+        setSourceView(sourceView);
+      }
+    },
+  };
+}
+
 const STORAGE_KEY = "livemd-mobile-view-mode";
 const MODES: MobileViewMode[] = ["instant", "split", "wysiwyg"];
 
