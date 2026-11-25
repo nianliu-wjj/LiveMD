@@ -2697,3 +2697,21 @@ html[class*="theme-"][class*="dark"] .livemd-html-block-preview {
 .livemd-html-block-preview :is(.tok-definition, .tok-labelName) {
   color: var(--preview-definition);
 }
+
+.livemd-editor details.livemd-details {
+  margin: 1em 0;
+  border: 1px solid var(--livemd-border-color, var(--border-color-1));
+  border-radius: 8px;
+  background: var(--livemd-code-background, var(--background-color-1));
+}
+.livemd-editor details.livemd-details > summary {
+  padding: 0.6em 1em;
+  cursor: pointer;
+}
+.livemd-editor details.livemd-details[open] > summary {
+  border-bottom: 1px solid var(--livemd-border-color, var(--border-color-1));
+}
+.livemd-editor details.livemd-details > :not(summary) {
+  margin-left: 1em;
+  margin-right: 1em;
+}

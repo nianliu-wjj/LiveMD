@@ -1102,6 +1102,21 @@ export class LivemdEditor implements ILivemdEditor {
   private handleEditorClick(view: EditorView, pos: number, event: MouseEvent): boolean {
     // 批注高亮点击：不拦截（光标仍正常落位），仅通知渲染层定位对应卡片
     const target = event.target as Element | null;
+    const summary = target?.closest?.("summary");
+    const details = summary?.parentElement;
+    if (details?.tagName === "DETAILS" && !details.closest(".livemd-html-block-preview")) {
+      const nodePos = view.posAtDOM(details, 0) - 1;
+      if (view.state.doc.nodeAt(nodePos)?.type.name === "details") {
+        event.preventDefault();
+        (details as HTMLDetailsElement).open = !(details as HTMLDetailsElement).open;
+        view.dispatch(
+          view.state.tr
+            .setNodeAttribute(nodePos, "open", (details as HTMLDetailsElement).open)
+            .setMeta("addToHistory", false)
+        );
+        return false;
+      }
+    }
     const annotationEl = target?.closest?.("[data-annotation-id]") ?? null;
     if (annotationEl) {
       const id = annotationEl.getAttribute("data-annotation-id");

@@ -964,6 +964,11 @@ export class MarkdownParser {
     const tagMatch = startLine.match(BLOCK_PATTERNS.html_block_start);
     const tagName = tagMatch ? tagMatch[1] : "";
 
+    if (tagName.toLowerCase() === "details") {
+      const details = this.parseDetailsBlock(lines, startIndex);
+      if (details) return details;
+    }
+
     // HTML 自闭合标签列表
     const voidElements = new Set([
       "area",
@@ -1039,6 +1044,59 @@ export class MarkdownParser {
   /**
    * 解析引用块
    */
+  private parseDetailsBlock(
+    lines: string[],
+    startIndex: number
+  ): { node: Node; endIndex: number } | null {
+    let depth = 0;
+    let fence: string | null = null;
+    let endIndex = startIndex;
+    let closingOffset = -1;
+    const collected: string[] = [];
+    for (; endIndex < lines.length; endIndex++) {
+      const line = lines[endIndex];
+      collected.push(line);
+      const marker = line.match(/^ {0,3}(`{3,}|~{3,})/);
+      if (fence) {
+        if (new RegExp(`^ {0,3}${fence[0]}{${fence.length},}\\s*$`).test(line)) fence = null;
+        continue;
+      }
+      if (marker) {
+        fence = marker[1];
+        continue;
+      }
+      for (const tag of line.matchAll(/<\s*(\/?)details\b[^>]*>/gi)) {
+        depth += tag[1] ? -1 : 1;
+        if (depth === 0) {
+          closingOffset = tag.index!;
+          break;
+        }
+      }
+      if (closingOffset >= 0) break;
+    }
+    if (closingOffset < 0) return null;
+    collected[collected.length - 1] = collected[collected.length - 1].slice(0, closingOffset);
+    const opening = collected[0].match(/^<details\b([^>]*)>/i);
+    if (!opening) return null;
+    collected[0] = collected[0].slice(opening[0].length);
+    let content = collected.join("\n").trim();
+    const summaryMatch = content.match(/^<summary\b[^>]*>([\s\S]*?)<\/summary\s*>/i);
+    const summary = this.schema.node(
+      "summary",
+      {},
+      summaryMatch ? this.parseInlineWithSyntax(summaryMatch[1]) : []
+    );
+    if (summaryMatch) content = content.slice(summaryMatch[0].length).trim();
+    const blocks = content ? this.parseBlocks(content.split("\n")) : [];
+    return {
+      node: this.schema.node("details", { open: /(?:^|\s)open(?:\s|=|$)/i.test(opening[1]) }, [
+        summary,
+        ...blocks,
+      ]),
+      endIndex,
+    };
+  }
+
   private parseBlockquote(lines: string[], startIndex: number): { node: Node; endIndex: number } {
     let endIndex = startIndex;
     const contentLines: string[] = [];

@@ -287,6 +287,17 @@ export class MarkdownSerializer {
       if (!this.options.compact) lines.push("");
     },
 
+    details: (node, lines, indent) => {
+      lines.push(indent + (node.attrs.open ? "<details open>" : "<details>"));
+      lines.push(indent + "<summary>" + this.serializeInline(node.firstChild!) + "</summary>");
+      if (node.childCount > 1) {
+        lines.push("");
+        this.serializeFragment(node.content.cut(node.firstChild!.nodeSize), lines, indent);
+      }
+      lines.push(indent + "</details>");
+      if (!this.options.compact) lines.push("");
+    },
+
     container: (node, lines, indent) => {
       const type = node.attrs.type || "note";
       const title = node.attrs.title || "";

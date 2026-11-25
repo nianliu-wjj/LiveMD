@@ -451,6 +451,29 @@ const math_block: NodeSpec = {
   },
 };
 
+const details: NodeSpec = {
+  group: "block",
+  content: "summary block*",
+  attrs: { open: { default: false } },
+  isolating: true,
+  defining: true,
+  parseDOM: [
+    { tag: "details", getAttrs: (dom) => ({ open: (dom as HTMLElement).hasAttribute("open") }) },
+  ],
+  toDOM: (node) => [
+    "details",
+    { class: "livemd-details", ...(node.attrs.open ? { open: "" } : {}) },
+    0,
+  ],
+};
+
+const summary: NodeSpec = {
+  content: "inline*",
+  defining: true,
+  parseDOM: [{ tag: "summary" }],
+  toDOM: () => ["summary", 0],
+};
+
 const html_block: NodeSpec = {
   content: "text*",
   marks: "",
@@ -758,6 +781,8 @@ export const livemdSchema = new Schema({
     table_header,
     math_block,
     html_block,
+    details,
+    summary,
     container,
     image,
     text,
